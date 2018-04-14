@@ -24,9 +24,10 @@ class Stockcode(models.Model):
 
 class ZXG(models.Model):
     code = models.ForeignKey(Stockcode, on_delete=models.PROTECT)
-    createDate = models.DateTimeField(verbose_name='创建时间', default=django.utils.timezone.now)
     remark = models.CharField(verbose_name= '备注', max_length=250, default= '')
     isactived = models.BooleanField("有效", choices=YES_NO)
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_time = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
     # class Meta:
     #     app_label ='我的自选股'

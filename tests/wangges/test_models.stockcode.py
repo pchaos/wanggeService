@@ -16,14 +16,14 @@ Change Activity:
 -------------------------------------------------
 """
 
-from django.test import TestCase as DTEST
+from django.test import TestCase as TC
 # from unittest import TestCase
 
 __author__ = 'pchaos'
 
 from wangges.models import Stockcode as SC, ZXG, MARKET_CHOICES, YES_NO
 
-class TestStockcode(DTEST):
+class TestStockcode(TC):
     def setup(self):
         print("======in setUp")
 
@@ -37,4 +37,4 @@ class TestStockcode(DTEST):
         self.assertTrue(i > 0, 'Stockcode count:{}'.format(i))
 
 if __name__ == '__main__':
-    DTEST.run()
+    TC.run()

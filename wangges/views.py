@@ -92,7 +92,7 @@ def ZXG_detail(request, pk, format=None):
     """
     try:
         values = ZXG.objects.get(pk=pk)
-    except SC.DoesNotExist:
+    except ZXG.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':

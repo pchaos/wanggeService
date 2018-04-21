@@ -1,7 +1,7 @@
 from django.contrib import admin
-from wangges.models import Stockcode
-from wangges.models import BK
-from wangges.models import ZXG
+from stocks.models import Stockcode
+from stocks.models import BK
+from stocks.models import ZXG
 
 
 # Register your models here.

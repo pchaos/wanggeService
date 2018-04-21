@@ -5,11 +5,11 @@ from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from wangges.serializers import UserSerializer, GroupSerializer
-from wangges.models import Stockcode as SC
-from wangges.serializers import StockcodeSerializer
-from wangges.models import ZXG
-from wangges.serializers import ZXGSerializer
+from stocks.serializers import UserSerializer, GroupSerializer
+from stocks.models import Stockcode as SC
+from stocks.serializers import StockcodeSerializer
+from stocks.models import ZXG
+from stocks.serializers import ZXGSerializer
 
 class UserViewSet(viewsets.ModelViewSet):
     """

@@ -19,11 +19,11 @@ from . import views
 
 
 
-app_name="wangges"
+app_name="stocks"
 
 urlpatterns = [
-    url(r'^wangges/stocks/$', views.stockcode_list, name='stockcodeList'),
-    url(r'^wangges/stocks/(?P<pk>[0-9]+)$', views.stockcode_detail, name='stockcodeDetail'),
+    url(r'^stocks/stocks/$', views.stockcode_list, name='stockcodeList'),
+    url(r'^stocks/stocks/(?P<pk>[0-9]+)$', views.stockcode_detail, name='stockcodeDetail'),
     url(r'^ZXG/$', views.ZXG_list, name='ZXGList'),
     url(r'^ZXG/(?P<pk>[0-9]+)$', views.ZXG_detail, name='ZXGDetail'),
 ]

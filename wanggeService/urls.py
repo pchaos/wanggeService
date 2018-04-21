@@ -17,18 +17,18 @@ from django.contrib import admin
 from django.urls import path
 from django.conf.urls import url, include
 from rest_framework import routers
-from wangges import views
+from stocks import views
 
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet)
 router.register(r'groups', views.GroupViewSet)
 
-# router.register(r'api/wangges/stocks', views.stockcode_list)
+# router.register(r'api/stocks/stocks', views.stockcode_list)
 # router.register(r'stockcodedetail', views.stockcode_detail)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    url(r'^api/', include('wangges.urls', namespace='wangges')),
+    url(r'^api/', include('stocks.urls', namespace='stocks')),
 ]

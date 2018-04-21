@@ -21,7 +21,7 @@ from django.test import TestCase as TC
 
 __author__ = 'pchaos'
 
-from wangges.models import Stockcode as SC, ZXG, MARKET_CHOICES, YES_NO
+from stocks.models import Stockcode as SC, ZXG, MARKET_CHOICES, YES_NO
 
 class TestStockcode(TC):
     def setup(self):

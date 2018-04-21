@@ -29,6 +29,7 @@ class BK(models.Model):
     板块
     """
     name = models.CharField(verbose_name='板块名称', max_length=60, blank=True)
+    parent = models.ForeignKey('self', verbose_name='上级板块', blank=True, null=True, related_name='name')
     remark = models.CharField(verbose_name='备注', max_length=250, default='')
     isactived = models.BooleanField("有效", choices=YES_NO)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')

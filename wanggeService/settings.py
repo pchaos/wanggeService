@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'stocks.apps.WanggesConfig',
     'comment.apps.CommentConfig',
     'polls.apps.PollsConfig',
+    'strategies.apps.StrategyConfig',
 ]
 
 MIDDLEWARE = [

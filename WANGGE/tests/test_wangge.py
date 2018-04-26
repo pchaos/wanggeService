@@ -95,5 +95,13 @@ class TestWangge(TestCase):
         self.assertTrue(self.isequal(wangge[-1][1], self.low), "计算错误，计算结果和实际网格最小值不相等: {0} != {1}".format(wangge[-1][1], self.low))
         self.assertTrue(self.isequal(wangge[0][1], self.high), "计算错误，计算结果和实际网格最大值不相等: {0} != {1}".format(wangge[0][1], self.high))
 
-    def isequal(self, value1, value2):
-        return np.abs(value1 - value2) < 0.0001
+    def isequal(self, value1, value2, diff = 0.0001):
+        """
+        比较两个值的差是否在diff区间内
+        :param value1: 值一
+        :param value2: 值二
+        :param diff: 相差范围
+        :return: 两个值的差在diff范围内，True
+                 两个值的差不在diff范围内，False
+        """
+        return np.abs(value1 - value2) < diff

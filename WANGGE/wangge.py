@@ -16,7 +16,7 @@ __author__ = 'pchaos'
 import numpy as np
 
 
-class wangGebase():
+class WangGebase():
     """
     网格基础类
     返回举例：
@@ -111,14 +111,14 @@ class wangGebase():
             self._wangge[i][4] = np.round((self._wangge[i][1] - jz) * 100 / jz, 2)
 
 
-class simpleWange(wangGebase):
+class simpleWange(WangGebase):
     """
     简单网格
     """
     pass
 
 
-class ROEWangge(wangGebase):
+class ROEWangge(WangGebase):
     """
     双等等比网格（ratio of equality）
 

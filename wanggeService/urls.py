@@ -33,4 +33,5 @@ urlpatterns = [
     url(r'^api/', include('stocks.urls', namespace='stocks')),
     url(r'^api/comment/', include('comment.urls', namespace='comments')),
     url(r'^polls/', include('polls.urls')),
+    url(r'^strategies/', include('strategies.urls')),
 ]

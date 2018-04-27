@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Strategy List</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'polls/style.css' %}" />
+</head>
+
+<body>
+{% if strategy_list %}
+    <ul>
+    {% for a in strategy_list %}
+    <li><a href="{% url 'strategies:detail' a.id %}">{{ a.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No strategy are available.</p>
+{% endif %}
+</body>
+</html>

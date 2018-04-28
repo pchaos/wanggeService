@@ -11,7 +11,7 @@
 {% if strategy_list %}
     <ul>
     {% for a in strategy_list %}
-    <li><a href="{% url 'strategies:detail' a.id %}">{{ a.name }}</a></li>
+    <li><a href="{% url 'strategies:detail' a.id %}">{{ a.code }} {{ a.name }}</a></li>
     {% endfor %}
     </ul>
 {% else %}

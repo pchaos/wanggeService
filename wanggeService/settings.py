@@ -81,7 +81,7 @@ WSGI_APPLICATION = 'wanggeService.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'wanggedb.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'wg.sqlite3'),
     },
     'polls': {
         'ENGINE': 'django.db.backends.sqlite3',

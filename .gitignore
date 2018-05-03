@@ -102,3 +102,6 @@ ENV/
 
 # pycharm
 .idea/
+
+# my DB
+wg.sqlite3

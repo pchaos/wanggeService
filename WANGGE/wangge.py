@@ -48,21 +48,23 @@ class WangGebase():
     # 保存网格
     _wangge = None  # 计算后的网格
 
-    def __init__(self, wghigh, wglow, fgN=20):
+    def __init__(self, wghigh, wglow, fgN=20, actualDecimalPoint = 4):
         """
         初始化网格
         :param wghigh: 网格顶部价格
         :param wglow: 网格底部价格
         :param fgN: 网格拆分份数 默认为20间隔
+        :param actualDecimalPoint: 价格保留小数位数；默认为4位小数
         """
-        self._setvaues(wghigh, wglow, fgN)
+        self._setvaues(wghigh, wglow, fgN, actualDecimalPoint)
 
-    def _setvaues(self, wghigh, wglow, fgN):
+    def _setvaues(self, wghigh, wglow, fgN, actualDecimalPoint):
         checked = self.__checkValue(wghigh, fgN)
         assert checked, "网格顶部价格或者分隔份数不能为0！"
         self._high = wghigh
         self._low = wglow
         self._n = fgN + 1
+        self._actualDecimalPoint = actualDecimalPoint
 
     def __checkValue(self, wghigh, fgN, wglow=0):
         """
@@ -74,17 +76,23 @@ class WangGebase():
         """
         return wghigh * fgN > 0
 
-    def __call__(self, wghigh=0, wglow=0, fgN=0):
+    def __call__(self, wghigh=0, wglow=0, fgN=0, actualDecimalPoint = 4):
         if (wghigh != self._high or wglow != self._low or fgN != self._n or self._wangge is None or self.__checkValue(
                 wghigh, fgN)):
             # 计算网格
             if self.__checkValue(wghigh, fgN):
-                self._setvaues(wghigh, wglow, fgN)
+                self._setvaues(wghigh, wglow, fgN, actualDecimalPoint)
             self.__caculateWangge()
         return self._wangge
 
     def __caculateWangge(self):
+        """
+         计算网格价格；
+         小数位数对齐
+        :return:
+        """
         self.doCaculate()
+        self._wangge['当时价格'] = np.round(self._wangge['当时价格'], self._actualDecimalPoint)
 
     def doCaculate(self):
         """
@@ -146,3 +154,4 @@ class ROEWangge(WangGebase):
             self._wangge[i][2] = self._wangge[i][1] * (jianju - 1)
             self._wangge[i][3] = 100 * i / (self._n - 1)
             self._wangge[i][4] = np.round((self._wangge[i][1] - jz) * 100 / jz, 2)
+        # self._wangge

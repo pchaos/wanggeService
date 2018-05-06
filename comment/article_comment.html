@@ -1,0 +1,44 @@
+{% if page_obj.number == 1 %}
+<div class="title">{{ paginator.count }}条评论</div>
+{% if user.is_authenticated %}
+<form id="comment-form" action="{% url 'blog:create_article_comment' %}" method="post" data-login-user="{{ user.id }}">
+    {% csrf_token %}
+    {% for field in form %}
+    {{ field }}
+    {% endfor %}
+    <div class="submit">
+        <input type="submit" class="button" value="评论">
+    </div>
+</form>
+{% else %}
+<div class="need-login">
+    <a href="{% url 'account:login' %}?next={% url 'blog:detail' article_id %}">登录后即可评论</a>
+</div>
+{% endif %}
+{% endif %}
+
+<ul class="comment-list" data-page="{{ page_obj.number }}" data-next="{{ page_obj.has_next }}">
+    {% for i, comment in comment_list %}
+    <li class="comment-item">
+        <a class="username" href="#">{{ comment.user.username }}</a>
+        <span style="float: right;">#{{ i }}</span>
+        <div class="content">{{ comment.content }}</div>
+        <span>{{ comment.time }}&emsp;</span>
+        <span class="reply-this" data-comment-id="{{ comment.id }}" data-user-id="{{ comment.user.id }}">回复</span>
+        <ul class="reply-list">
+            {% for reply in comment.replies.all %}
+            <li class="reply-item">
+                <a class="username" href="#">{{ reply.user.username }}</a>
+                {% if reply.reply.id %}
+                <span> 回复 </span>
+                <a class="username" href="#">{{ reply.reply.user.username }}</a>
+                {% endif %}
+                <div class="content">{{ reply.content }}</div>
+                <span>{{ reply.time }}&emsp;</span>
+                <span class="reply-this" data-reply-id="{{ reply.id }}" data-user-id="{{ reply.user.id }}">回复</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </li>
+    {% empty %} 暂无评论 {% endfor %}
+</ul>

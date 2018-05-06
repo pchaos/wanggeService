@@ -1,8 +1,14 @@
 from django.db import models
 import django.utils.timezone
 
-YES_NO = ((False, "否"),
-          (True, "是"))
+STOCK_CATEGORY = ((10, "股票"),
+                  (11, "指数"),
+                  (12, "分级基金"),
+                  (13, "债券"),
+                  (14, "逆回购"),)
+
+YES_NO = ((True, "是"),
+          (False, "否"))
 
 MARKET_CHOICES = ((0, "深市"), (1, "沪市"))
 
@@ -12,8 +18,8 @@ class Stockcode(models.Model):
     name = models.CharField(verbose_name='名称', max_length=8)
     usedName = models.CharField(verbose_name='曾用名', max_length=255, default='')
     market = models.IntegerField('市场', default=0, choices=MARKET_CHOICES)
-    update = models.DateField(verbose_name='上市日期')
-    isindex = models.SmallIntegerField("是否指数", default=False, choices=YES_NO)
+    timeToMarket = models.DateField(verbose_name='上市日期')
+    category = models.SmallIntegerField("交易类别", default=10, choices=STOCK_CATEGORY)
     isdelisted = models.SmallIntegerField("是否退市", default=False, choices=YES_NO)
 
     def __str__(self):
@@ -35,6 +41,9 @@ class BK(models.Model):
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_time = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
+    def __str__(self):
+        return '{0} - {1}'.format(self.parent, self.name)
+
 
 class ZXG(models.Model):
     """
@@ -46,6 +55,9 @@ class ZXG(models.Model):
     isactived = models.BooleanField("有效", choices=YES_NO)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_time = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    def __str__(self):
+        return '{0} - {1}'.format(self.code, self.bkname)
 
     # class Meta:
     #     app_label ='我的自选股'

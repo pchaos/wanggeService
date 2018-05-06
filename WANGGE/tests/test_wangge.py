@@ -14,6 +14,7 @@ Change Activity:
 from unittest import TestCase
 from WANGGE.wangge import *
 
+
 __author__ = 'pchaos'
 
 
@@ -64,9 +65,9 @@ class TestWangge(TestCase):
         self.assertTrue(wangge[self.n // 2][1] < (self.high + self.low) / 2,
                         "计算错误，计算结果和实际网格中间值: {0} < {1}".format(wangge[self.n // 2][1], (self.high + self.low) / 2))
 
-        self.high = 200
-        self.low = 144
-        self.n = 13  # 网格为30格
+        self.high = 1.323
+        self.low = 0.414
+        self.n = 39  # 网格为39格
         # self.wg = wangGebase(self.high, self.low, self.n)
         self.wg = ROEWangge(self.high, self.low, self.n)
         wangge = self.wg()
@@ -84,16 +85,18 @@ class TestWangge(TestCase):
         self.assertTrue(self.isequal(wangge[-1][1], self.low), "计算错误，计算结果和实际网格最小值不相等: {0} != {1}".format(wangge[-1][1], self.low))
         self.assertTrue(self.isequal(wangge[0][1], self.high), "计算错误，计算结果和实际网格最大值不相等: {0} != {1}".format(wangge[0][1], self.high))
 
-        # 603180 2018 04 20
-        self.high = 179.9
-        self.low = np.round(self.high * 0.8, 2)
-        self.n = 9  # 网格为8格
+        # 603180 2018 05 05
+        self.high = np.round(179.9*1.015, 2)
+        self.low = np.round(133.53*0.985, 2)
+        # self.low = np.round(self.high * 0.75, 2)
+        self.n = 11  # 网格为11格
+        adp = 3 # 计算结果保留3位小数
         # self.wg = wangGebase(self.high, self.low, self.n)
-        self.wg = ROEWangge(self.high, self.low, self.n)
+        self.wg = ROEWangge(self.high, self.low, self.n, adp)
         wangge = self.wg()
         print(wangge)
-        self.assertTrue(self.isequal(wangge[-1][1], self.low), "计算错误，计算结果和实际网格最小值不相等: {0} != {1}".format(wangge[-1][1], self.low))
-        self.assertTrue(self.isequal(wangge[0][1], self.high), "计算错误，计算结果和实际网格最大值不相等: {0} != {1}".format(wangge[0][1], self.high))
+        self.assertTrue(self.isequal(wangge[-1][1], self.low, diff=0.001), "计算错误，计算结果和实际网格最小值不相等: {0} != {1}".format(wangge[-1][1], self.low))
+        self.assertTrue(self.isequal(wangge[0][1], self.high, diff= 0.001), "计算错误，计算结果和实际网格最大值不相等: {0} != {1}".format(wangge[0][1], self.high))
 
     def isequal(self, value1, value2, diff = 0.0001):
         """

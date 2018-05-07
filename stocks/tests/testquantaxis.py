@@ -161,6 +161,10 @@ class testQuantaxis(TestCase):
         self.assertTrue(values[n] > 0, 'Ma计算值前{}个应为大于零。'.format(n + 1))
 
     def test_QA_indicator_diff(self):
+        """
+         QA.DIFF 计算欧奈尔rps时，需要用到
+        :return:
+        """
         n = 1
         count = 100
         data = pd.Series(np.arange(count))
@@ -183,3 +187,13 @@ class testQuantaxis(TestCase):
         self.assertTrue(values[n] == (data1[n]),
                         'Ma计算值前{}个应为NaN。\n{}\n{}\n长度：{} ： {}'.format(n, values[n:], data1[n:], len(values[n:]),
                                                                      len(data1[n:])))
+
+    def test_QA_indicator_atr(self):
+        n = 14
+        code = '603180'
+        data = QA.QA_fetch_stock_day_adv(code, '2016-12-01', '2018-05-01')  # [可选to_qfq(),to_hfq()]
+        s = QA.QAAnalysis_stock(data)
+        qa = QA.QA_indicator_ATR(s.data, n)
+        qr = qa > 0
+        self.assertTrue(qr[n-1] == False, '第一个ATR应该为空：{}'.format(qa[0]))
+        self.assertTrue(qr[n] == True, '第2个ATR不应该为空：{}'.format(qa[1]))

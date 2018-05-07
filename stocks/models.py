@@ -19,6 +19,8 @@ class Stockcode(models.Model):
     usedName = models.CharField(verbose_name='曾用名', max_length=255, default='')
     market = models.IntegerField('市场', default=0, choices=MARKET_CHOICES)
     timeToMarket = models.DateField(verbose_name='上市日期')
+    decimalpoint = models.SmallIntegerField("价格小数位数", default=2)
+    volunit = models.IntegerField("每次交易最小成交单位", default=100)
     category = models.SmallIntegerField("交易类别", default=10, choices=STOCK_CATEGORY)
     isdelisted = models.SmallIntegerField("是否退市", default=False, choices=YES_NO)
 

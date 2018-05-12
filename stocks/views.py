@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from stocks.serializers import UserSerializer, GroupSerializer
 from stocks.models import Stockcode as SC
 from stocks.serializers import StockcodeSerializer
-from stocks.models import ZXG
+from stocks.models import BKDetail
 from stocks.serializers import ZXGSerializer
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -74,7 +74,7 @@ def ZXG_list(request, format=None):
     List all snippets, or create a new snippet.
     """
     if request.method == 'GET':
-        values = ZXG.objects.all()
+        values = BKDetail.objects.all()
         serializer = ZXGSerializer(values, many=True)
         return Response(serializer.data)
 
@@ -91,8 +91,8 @@ def ZXG_detail(request, pk, format=None):
     Retrieve, update or delete a snippet instance.
     """
     try:
-        values = ZXG.objects.get(pk=pk)
-    except ZXG.DoesNotExist:
+        values = BKDetail.objects.get(pk=pk)
+    except BKDetail.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
@@ -160,7 +160,7 @@ def BK_list(request, format=None):
     List all snippets, or create a new snippet.
     """
     if request.method == 'GET':
-        values = ZXG.objects.all()
+        values = BKDetail.objects.all()
         serializer = ZXGSerializer(values, many=True)
         return Response(serializer.data)
 
@@ -177,8 +177,8 @@ def BK_detail(request, pk, format=None):
     Retrieve, update or delete a snippet instance.
     """
     try:
-        values = ZXG.objects.get(pk=pk)
-    except ZXG.DoesNotExist:
+        values = BKDetail.objects.get(pk=pk)
+    except BKDetail.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':

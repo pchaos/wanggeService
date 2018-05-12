@@ -17,7 +17,7 @@ Change Activity:
 """
 
 from django.test import TestCase
-from stocks.models import Stockcode, ZXG, MARKET_CHOICES, YES_NO, STOCK_CATEGORY
+from stocks.models import Stockcode, BKDetail, MARKET_CHOICES, YES_NO, STOCK_CATEGORY
 from django.utils import timezone
 from datetime import datetime
 
@@ -30,7 +30,7 @@ class TestStockcode(TestCase):
     def test_Stockcode(self):
         a, b = MARKET_CHOICES[0]
         up_date = timezone.now()
-        sc = Stockcode(code='tt0001', name='Test0001', update=up_date, market=a)
+        sc = Stockcode(code='tt0001', name='Test0001', timeToMarket=up_date, market=a)
         sc.save()
         i = Stockcode.objects.all().count()
         self.assertTrue(i > 0, 'Stockcode count:{}'.format(i))

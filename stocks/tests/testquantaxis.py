@@ -24,6 +24,9 @@ import pandas as pd
 
 
 class testQuantaxis(TestCase):
+    def setUp(self):
+        self.code = '000001'
+
     def testQA_fetch_stock_day_adv(self):
         QA.logo = ''
         code = '600066'
@@ -191,9 +194,68 @@ class testQuantaxis(TestCase):
     def test_QA_indicator_atr(self):
         n = 14
         code = '603180'
-        data = QA.QA_fetch_stock_day_adv(code, '2016-12-01', '2018-05-01')  # [可选to_qfq(),to_hfq()]
+        data = QA.QA_fetch_stock_day_adv(code, '2016-12-01')  # [可选to_qfq(),to_hfq()]
         s = QA.QAAnalysis_stock(data)
+        # 传入为pd dataframe
         qa = QA.QA_indicator_ATR(s.data, n)
         qr = qa > 0
-        self.assertTrue(qr[n-1] == False, '第一个ATR应该为空：{}'.format(qa[0]))
+        self.assertTrue(qr[n - 1] == False, '第一个ATR应该为空：{}'.format(qa[0]))
         self.assertTrue(qr[n] == True, '第2个ATR不应该为空：{}'.format(qa[1]))
+        '''
+        获取周线数据
+        from QUANTAXIS.QAUtil.QAParameter import FREQUENCE
+        (QA_quotation('000001', '2017-01-01', '2017-01-31', frequence=FREQUENCE.DAY,
+                      market=MARKET_TYPE.STOCK_CN, source=DATASOURCE.TDX, output=OUTPUT_FORMAT.DATAFRAME))
+
+        '''
+
+    def test_QA_indicator_stocklist(self):
+        # 获取股票代码列表
+        QA.QA_util_log_info('ETF列表')
+        data = QA.QAFetch.QATdx.QA_fetch_get_stock_list('stock')
+        print(data.loc['000001'])
+        self.assertTrue(data.loc['000001'].volunit is not None, '未获取股票代码列表:{}'.format(data))
+
+    def test_QA_indicator_index(self):
+        QA.QA_util_log_info('指数列表')
+        data = QA.QAFetch.QATdx.QA_fetch_get_stock_list('index')
+        # data['name']包含字符 '399'
+        a = data.code.str.find('399') != -1
+        # data.loc[a, 'code']
+        self.assertTrue(data['code'].count() > 0, '未找到指数')
+        self.assertTrue(data.loc[a, 'code'].count() > 0, '未找到指数')
+        self.assertTrue(data['code'].count() > data.loc[a, 'code'].count(), '指数全局比局部小？')
+
+
+    def test_QA_indicator_ETF(self):
+        QA.QA_util_log_info('ETF列表')
+        data = QA.QAFetch.QATdx.QA_fetch_get_stock_list('etf')
+        # data['name']包含字符 '150'
+        a = data.code.str.find('150') != -1
+        # data.loc[a, 'code']
+        self.assertTrue(data['code'].count()  > 0, '未找到分级基金')
+        self.assertTrue(data.loc[a, 'code'].count() > 0, '未找到分级基金')
+
+    def test_QA_indicator_tradedate(self):
+        # 交易日期
+        data = QA.QA_fetch_trade_date()
+        for a in data:
+            print(a)
+        self.assertTrue(len(data) > 250*20, '2018年,总交易日期数大于20*250天：{}'.format(len(data)))
+
+    def test_QA_fetch_index(self):
+        # 从网上获取指数/基金日线
+        QA.QA_util_log_info('从网上获取指数/基金日线')
+        code = '000001'
+        data = QA.QAFetch.QATdx.QA_fetch_get_index_day(code, '2017-01-01', '2017-09-01')
+        self.assertTrue(data['code'].count() > 0, '未找到指数{}'.format(code))
+        self.assertTrue(data.close.count() > 0, '未找到指数{}'.format(code))
+        code = '150153'
+        data = QA.QAFetch.QATdx.QA_fetch_get_index_day(code, '2017-01-01', '2017-09-01')
+        self.assertTrue(data['code'].count() > 0, '未找到指数{}'.format(code))
+        # 从本地获取指数/基金日线
+        QA.QA_util_log_info('从本地获取指数/基金日线')
+        data = QA.QA_fetch_index_day_adv(code, '2017-01-01', '2017-09-01')
+        QA.QA_util_log_info(data)
+        self.assertTrue(data.close.count() > 0, '未找到指数{}'.format(code))
+        # self.assertTrue(data['code'].count() > 0, '未找到指数{}'.format(code)) 这样写会报错,返回结果为：QA_DataStruct_Index_day

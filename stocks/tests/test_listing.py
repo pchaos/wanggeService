@@ -54,7 +54,7 @@ class TestListing(TestCase):
         print(df[:10]['timeToMarket'], df['name'])
         print(df.index[:10])
 
-    def test_importAllStockcode(self):
+    def test_importAllisting(self):
         """
         插入所有的A股股票代码
         :return:

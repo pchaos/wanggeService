@@ -2,7 +2,7 @@
 """
 -------------------------------------------------
 
-@File    : test_stockcode.py
+@File    : test_listing.py
 
 Description :
 
@@ -26,7 +26,7 @@ __author__ = 'pchaos'
 import json
 
 
-class TestStockcode(TestCase):
+class TestListing(TestCase):
     def test_Stockcode(self):
         a, b = MARKET_CHOICES[0]
         up_date = timezone.now()
@@ -59,24 +59,8 @@ class TestStockcode(TestCase):
         插入所有的A股股票代码
         :return:
         """
-        from oneilquant.ONEIL.Oneil import OneilKDZD as oneil
-        oq = oneil()
-        n1 = 0
-        df = oq.listingDate(n1)
-        # 批量创建对象，减少SQL查询次数
         oldcounts = Stockcode.objects.all().count()
-        querysetlist = []
-        for i in df.index:
-            a = df.loc[i]
-            d = int(a.timeToMarket)
-            if a[0] == '6':
-                category = 10
-            else:
-                category = 11
-            querysetlist.append(
-                Stockcode(code=a.name, name=a['name'], timeToMarket=datetime(d // 10000, d // 100 % 100, d % 100),
-                          category=category))
-        Stockcode.objects.bulk_create(querysetlist)
+        df = Stockcode.importAllListing()
         print(Stockcode.objects.all().count())
         self.assertTrue(Stockcode.objects.all().count() == oldcounts + len(df),
                         '插入未成功, after :{} before : {}; 应插入：{}条记录'.format(Stockcode.objects.all().count(), oldcounts,

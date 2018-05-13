@@ -1,5 +1,6 @@
 from django.db import models
 import django.utils.timezone
+from datetime import datetime
 
 STOCK_CATEGORY = ((10, "股票"),
                   (11, "指数"),
@@ -15,7 +16,7 @@ MARKET_CHOICES = ((0, "深市"), (1, "沪市"))
 
 class Stockcode(models.Model):
     code = models.CharField(verbose_name='代码', max_length=10, unique=True, db_index=True)
-    name = models.CharField(verbose_name='名称', max_length=8)
+    name = models.CharField(verbose_name='公司简称', max_length=8)
     shortcut = models.CharField(verbose_name='快捷键', default='', max_length=8)
     usedName = models.CharField(verbose_name='曾用名', max_length=255, default='')
     market = models.IntegerField('市场', default=0, choices=MARKET_CHOICES)
@@ -30,8 +31,34 @@ class Stockcode(models.Model):
 
     # class Meta:
     #     app_label ='我的股票'
-    #     verbose_name = '股票代码'
-from django.utils import timezone
+    #     verbose_name = '上市公司'
+
+    @classmethod
+    def importAllListing(self):
+        """
+        插入所有上市公司
+        :return:
+        """
+        from oneilquant.ONEIL.Oneil import OneilKDZD as oneil
+        oq = oneil()
+        n1 = 0
+        df = oq.listingDate(n1)
+        # 批量创建对象，减少SQL查询次数
+        querysetlist = []
+        for i in df.index:
+            a = df.loc[i]
+            d = int(a.timeToMarket)
+            if a[0] == '6':
+                category = 10
+            else:
+                category = 11
+            querysetlist.append(
+                Stockcode(code=a.name, name=a['name'], timeToMarket=datetime(d // 10000, d // 100 % 100, d % 100),
+                          category=category))
+        Stockcode.objects.bulk_create(querysetlist)
+        return df
+
+
 class StockDay(models.Model):
     code = models.ForeignKey(Stockcode, verbose_name='代码', on_delete=models.PROTECT)
     open = models.DecimalField(verbose_name='开盘价', max_digits=9, decimal_places=3, null=True)
@@ -43,19 +70,17 @@ class StockDay(models.Model):
     date = models.DateField(verbose_name='日期', db_index=True)
 
 
-
-
 class BK(models.Model):
     """
     板块
     最上层的板块为：通达信 同花顺 自定义
     """
-    code = models.CharField(verbose_name='编码',  default='', max_length=18, db_index=True)
+    code = models.CharField(verbose_name='编码', default='', max_length=18, db_index=True)
     name = models.CharField(verbose_name='板块名称', max_length=60, blank=True, unique=True)
-    parent = models.ForeignKey('self', verbose_name='上级板块', blank=True, null=True,  on_delete=models.CASCADE)
-    value1 = models.CharField(verbose_name='预留1',  default='', max_length=50)
-    value2 = models.CharField(verbose_name='预留2',  default='', max_length=50)
-    value3 = models.CharField(verbose_name='预留3',  default='', max_length=50)
+    parent = models.ForeignKey('self', verbose_name='上级板块', blank=True, null=True, on_delete=models.CASCADE)
+    value1 = models.CharField(verbose_name='预留1', default='', max_length=50)
+    value2 = models.CharField(verbose_name='预留2', default='', max_length=50)
+    value3 = models.CharField(verbose_name='预留3', default='', max_length=50)
     remarks = models.CharField(verbose_name='备注', max_length=250, default='')
     isactived = models.BooleanField("有效", default=True, choices=YES_NO)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
@@ -82,3 +107,11 @@ class BKDetail(models.Model):
     # class Meta:
     #     app_label ='我的自选股'
     #     verbose_name = '自选股'
+
+
+class RPS(models.Model):
+    """欧奈尔PRS"""
+    code = models.ForeignKey(Stockcode, verbose_name='代码', on_delete=models.PROTECT)
+    bkname = models.ForeignKey(BK, on_delete=models.PROTECT)
+    rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
+    rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)

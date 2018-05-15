@@ -65,3 +65,5 @@ class TestListing(TestCase):
         self.assertTrue(Stockcode.objects.all().count() == oldcounts + len(df),
                         '插入未成功, after :{} before : {}; 应插入：{}条记录'.format(Stockcode.objects.all().count(), oldcounts,
                                                                          len(df)))
+        # 再次导入，不会报错
+        df = Stockcode.importAllListing()

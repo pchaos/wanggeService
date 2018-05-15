@@ -43,19 +43,23 @@ class Stockcode(models.Model):
         oq = oneil()
         n1 = 0
         df = oq.listingDate(n1)
-        # 批量创建对象，减少SQL查询次数
-        querysetlist = []
-        for i in df.index:
-            a = df.loc[i]
-            d = int(a.timeToMarket)
-            if a[0] == '6':
-                category = 10
-            else:
-                category = 11
-            querysetlist.append(
-                Stockcode(code=a.name, name=a['name'], timeToMarket=datetime(d // 10000, d // 100 % 100, d % 100),
-                          category=category))
-        Stockcode.objects.bulk_create(querysetlist)
+        # todo 如果已经插入，则判断是否有更新
+        try:
+            # 批量创建对象，减少SQL查询次数
+            querysetlist = []
+            for i in df.index:
+                a = df.loc[i]
+                d = int(a.timeToMarket)
+                if a[0] == '6':
+                    category = 10
+                else:
+                    category = 11
+                querysetlist.append(
+                    Stockcode(code=a.name, name=a['name'], timeToMarket=datetime(d // 10000, d // 100 % 100, d % 100),
+                              category=category))
+            Stockcode.objects.bulk_create(querysetlist)
+        except Exception as e:
+            pass
         return df
 
 
@@ -115,3 +119,12 @@ class RPS(models.Model):
     bkname = models.ForeignKey(BK, on_delete=models.PROTECT)
     rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
     rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
+
+class RPSprepare(models.Model):
+    """欧奈尔PRS预计算"""
+    code = models.ForeignKey(Stockcode, verbose_name='代码', on_delete=models.PROTECT)
+    rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
+    rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
+    class Meta:
+        # app_label ='我的自选股'
+        verbose_name = 'RPS'

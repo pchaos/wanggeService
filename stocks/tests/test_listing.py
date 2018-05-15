@@ -55,7 +55,7 @@ class TestListing(TestCase):
         print(df[:10]['timeToMarket'], df['name'])
         print(df.index[:10])
 
-    def test_importAllisting(self):
+    def test_importStocklisting(self):
         """
         插入所有的A股股票代码
         :return:
@@ -68,3 +68,8 @@ class TestListing(TestCase):
                                                                          len(df)))
         # 再次导入，不会报错
         df = Stockcode.importStockListing()
+
+    def test_getCodelist(self):
+        oldcounts = Stockcode.getCodelist().count()
+        self.assertTrue(Stockcode.getCodelist('all').count() >= oldcounts,
+                        '所有类型代码数量比股票代码数量多, after :{} before : {}; '.format(Stockcode.objects.all().count(), oldcounts))

@@ -74,7 +74,7 @@ class testQuantaxis(TestCase):
         # 导入股票列表
         # from .test_listing import TestListing
         # tsc = TestListing()
-        Stockcode.importAllListing()
+        Stockcode.importStockListing()
         listings = Stockcode.objects.all()
         df = pd.DataFrame()
         codelist = []

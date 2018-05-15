@@ -34,7 +34,7 @@ class Stockcode(models.Model):
     #     verbose_name = '上市公司'
 
     @classmethod
-    def importAllListing(self):
+    def importStockListing(self):
         """
         插入所有上市股票公司
         :return:
@@ -64,7 +64,7 @@ class Stockcode(models.Model):
         return df
 
     @classmethod
-    def getCodelist(self, stock_category=10):
+    def getCodelist(self, type_='stock'):
         """
         返回stock_category类型列表
         :param stock_category: 证券类型
@@ -75,7 +75,18 @@ class Stockcode(models.Model):
                   (14, "逆回购"),)
         :return: Stockcode.objects.all().filter(category=stock_category)
         """
-        return Stockcode.objects.all().filter(category=stock_category)
+        if type_ in ['stock', 'gp']:
+            category = 10
+        elif type_ in ['index', 'zs']:
+            category = 11
+        elif type_ in ['etf', 'ETF']:
+            category = 12
+        elif type_ in ['ZAIQ', 'ZQ']:
+            category = 13
+        elif type_ in ['NIHUIGOU', 'NHG']:
+            category = 14
+
+        return Stockcode.objects.all().filter(category=category)
 
 
 class StockDay(models.Model):
@@ -135,11 +146,13 @@ class RPS(models.Model):
     rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
     rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
 
+
 class RPSprepare(models.Model):
     """欧奈尔PRS预计算"""
     code = models.ForeignKey(Stockcode, verbose_name='代码', on_delete=models.PROTECT)
     rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
     rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
+
     class Meta:
         # app_label ='我的自选股'
         verbose_name = 'RPS'

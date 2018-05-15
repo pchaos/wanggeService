@@ -18,7 +18,8 @@ Change Activity:
 __author__ = 'pchaos'
 
 from django.test import TestCase
-import QUANTAXIS as QA
+import datetime
+import QUANTAXIS as qa
 import numpy as np
 import pandas as pd
 from stocks.models import Stockcode, STOCK_CATEGORY
@@ -29,10 +30,10 @@ class testQuantaxis(TestCase):
         self.code = '000001'
 
     def testQA_fetch_stock_day_adv(self):
-        QA.logo = ''
+        qa.logo = ''
         code = '600066'
-        data = QA.QA_fetch_stock_day_adv(code, '2013-12-01', '2017-10-01')  # [可选to_qfq(),to_hfq()]
-        s = QA.QAAnalysis_stock(data)
+        data = qa.QA_fetch_stock_day_adv(code, '2013-12-01', '2017-10-01')  # [可选to_qfq(),to_hfq()]
+        s = qa.QAAnalysis_stock(data)
         # s 的属性是( < QAAnalysis_Stock > )
         '''
         s.open  # 开盘价序列
@@ -84,7 +85,7 @@ class testQuantaxis(TestCase):
         for a in listings[:100]:
             code = a.code
             try:
-                data = QA.QA_fetch_stock_day_adv(code, '2015-12-01', '2017-10-01').to_qfq()  # [可选to_qfq(),to_hfq()]
+                data = qa.QA_fetch_stock_day_adv(code, '2015-12-01', '2017-10-01').to_qfq()  # [可选to_qfq(),to_hfq()]
                 print(data.code)
                 dftmp = pd.DataFrame()
                 # 120日rps
@@ -96,7 +97,7 @@ class testQuantaxis(TestCase):
                 df = df.append(dftmp.reset_index())
             except Exception as e:
                 # print(e.args)
-                QA.QA_util_log_info('{} {}'.format(code, e.args))
+                qa.QA_util_log_info('{} {}'.format(code, e.args))
         df.set_index('date', inplace=True)
         day = '2017-9-29'
         # dfd = caculateRPS(df, day, [121, 251])
@@ -212,15 +213,15 @@ class testQuantaxis(TestCase):
             :return:
         """
         code = '603889'
-        data = QA.QA_fetch_stock_day_adv(code, '2013-12-01', '2017-10-01')  # [可选to_qfq(),to_hfq()]
-        s = QA.QAAnalysis_stock(data)
+        data = qa.QA_fetch_stock_day_adv(code, '2013-12-01', '2017-10-01')  # [可选to_qfq(),to_hfq()]
+        s = qa.QAAnalysis_stock(data)
         n = 20
-        values = QA.MA(data.CLOSE, n)
+        values = qa.MA(data.CLOSE, n)
         print(values[:30])
         # print(QA.DIFF(data.CLOSE), 250)
 
         data = pd.Series(np.arange(100))
-        values = QA.MA(data, n)
+        values = qa.MA(data, n)
         data1 = pd.Series(np.arange(n - 1))
         data1 = data1.apply(lambda x: pd.np.nan)
         print(values[:n - 1], data1)
@@ -236,7 +237,7 @@ class testQuantaxis(TestCase):
         n = 1
         count = 100
         data = pd.Series(np.arange(count))
-        values = QA.DIFF(data, n)
+        values = qa.DIFF(data, n)
         data1 = pd.Series(np.arange(n))
         data1 = data1.apply(lambda x: pd.np.nan)
         print('{}\n{}'.format(values[:n], data1))
@@ -245,7 +246,7 @@ class testQuantaxis(TestCase):
 
         n = 10
         data = pd.Series(np.arange(count))
-        values = QA.DIFF(data, n)
+        values = qa.DIFF(data, n)
         data1 = pd.Series(np.arange(n))
         data1 = data1.apply(lambda x: pd.np.nan)
         self.assertTrue(values[:n].equals(data1),
@@ -259,10 +260,10 @@ class testQuantaxis(TestCase):
     def test_QA_indicator_atr(self):
         n = 14
         code = '000001'
-        data = QA.QA_fetch_stock_day_adv(code, '2016-12-01', '2017-02-01')  # [可选to_qfq(),to_hfq()]
-        s = QA.QAAnalysis_stock(data)
+        data = qa.QA_fetch_stock_day_adv(code, '2016-12-01', '2017-02-01')  # [可选to_qfq(),to_hfq()]
+        s = qa.QAAnalysis_stock(data)
         # 传入为pd dataframe
-        qa = QA.QA_indicator_ATR(s.data, n)
+        qa = qa.QA_indicator_ATR(s.data, n)
         qr = qa > 0
         self.assertTrue(not qr.iloc[0].ATR, '第一个ATR应该为空：{}'.format(qr.iloc[0].ATR))
         self.assertTrue(qr.iloc[n].ATR, '第{}个ATR不应该为空：{}'.format(n, qr.iloc[n].ATR))
@@ -276,14 +277,14 @@ class testQuantaxis(TestCase):
 
     def test_QA_indicator_stocklist(self):
         # 获取股票代码列表
-        QA.QA_util_log_info('stock列表')
-        data = QA.QAFetch.QATdx.QA_fetch_get_stock_list('stock')
+        qa.QA_util_log_info('stock列表')
+        data = qa.QAFetch.QATdx.QA_fetch_get_stock_list('stock')
         print(data.loc['000001'])
         self.assertTrue(data.loc['000001'].volunit is not None, '未获取股票代码列表:{}'.format(data))
 
-    def test_QA_indicator_index(self):
-        QA.QA_util_log_info('指数列表')
-        data = QA.QAFetch.QATdx.QA_fetch_get_stock_list('index')
+    def test_QA_fetch_indexList(self):
+        qa.QA_util_log_info('指数列表')
+        data = qa.QAFetch.QATdx.QA_fetch_get_stock_list('index')
         # data['name']包含字符 '399'
         a = data.code.str.find('399') != -1
         # data.loc[a, 'code']
@@ -291,9 +292,9 @@ class testQuantaxis(TestCase):
         self.assertTrue(data.loc[a, 'code'].count() > 0, '未找到指数')
         self.assertTrue(data['code'].count() > data.loc[a, 'code'].count(), '指数全局比局部小？')
 
-    def test_QA_indicator_ETF(self):
-        QA.QA_util_log_info('ETF列表')
-        data = QA.QAFetch.QATdx.QA_fetch_get_stock_list('etf')
+    def test_QA_fetch_ETFList(self):
+        qa.QA_util_log_info('ETF列表')
+        data = qa.QAFetch.QATdx.QA_fetch_get_stock_list('etf')
         # data['name']包含字符 '150'
         a = data.code.str.find('150') != -1
         # data.loc[a, 'code']
@@ -302,24 +303,45 @@ class testQuantaxis(TestCase):
 
     def test_QA_indicator_tradedate(self):
         # 交易日期
-        data = QA.QA_fetch_trade_date()
+        data = qa.QA_fetch_trade_date()
         for a in data:
             print(a)
         self.assertTrue(len(data) > 250 * 20, '2018年,总交易日期数大于20*250天：{}'.format(len(data)))
 
     def test_QA_fetch_index(self):
         # 从网上获取指数/基金日线
-        QA.QA_util_log_info('从网上获取指数/基金日线')
+        qa.QA_util_log_info('从网上获取指数/基金日线')
         code = '000001'
-        data = QA.QAFetch.QATdx.QA_fetch_get_index_day(code, '2017-01-01', '2017-09-01')
+        data = qa.QAFetch.QATdx.QA_fetch_get_index_day(code, '2017-01-01', '2017-09-01')
         self.assertTrue(data['code'].count() > 0, '未找到指数{}'.format(code))
         self.assertTrue(data.close.count() > 0, '未找到指数{}'.format(code))
         code = '150153'
-        data = QA.QAFetch.QATdx.QA_fetch_get_index_day(code, '2017-01-01', '2017-09-01')
+        data = qa.QAFetch.QATdx.QA_fetch_get_index_day(code, '2017-01-01', '2017-09-01')
         self.assertTrue(data['code'].count() > 0, '未找到指数{}'.format(code))
         # 从本地获取指数/基金日线
-        QA.QA_util_log_info('从本地获取指数/基金日线')
-        data = QA.QA_fetch_index_day_adv(code, '2017-01-01', '2017-09-01')
-        QA.QA_util_log_info(data)
+        qa.QA_util_log_info('从本地获取指数/基金日线')
+        data = qa.QA_fetch_index_day_adv(code, '2017-01-01', '2017-09-01')
+        qa.QA_util_log_info(data)
         self.assertTrue(data.close.count() > 0, '未找到指数{}'.format(code))
         # self.assertTrue(data['code'].count() > 0, '未找到指数{}'.format(code)) 这样写会报错,返回结果为：QA_DataStruct_Index_day
+
+    def test_QA_fetch_indexlisting(self):
+        # 从网上获取指数/基金日线
+        qa.QA_util_log_info('从网上获取指数/基金日线')
+        df = qa.QAFetch.QATdx.QA_fetch_get_stock_list('index')
+        querysetlist = []
+        for i in df.index[:10]:
+            a = df.loc[i]
+            # 本地获取指数日线数据
+            data = qa.QA_fetch_index_day_adv(a.code, '1990-01-01', str(datetime.date.today()))
+            d = data.data.date[0].strftime("%Y-%m-%d")
+            if a.sse == 'sh':
+                market = 1
+            else:
+                market = 0
+            category = 11
+            querysetlist.append(
+                Stockcode(code=a.code, name=a['name'], timeToMarket=d, volunit=a.volunit, decimalpoint=a.decimal_point,
+                          category=category, market=market))
+        Stockcode.objects.bulk_create(querysetlist)
+        self.assertTrue(Stockcode.getCodelist('index').count() > 0, '未插入成功:{}'.format(querysetlist))

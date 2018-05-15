@@ -15,7 +15,7 @@ MARKET_CHOICES = ((0, "深市"), (1, "沪市"))
 
 
 class Stockcode(models.Model):
-    code = models.CharField(verbose_name='代码', max_length=10, unique=True, db_index=True)
+    code = models.CharField(verbose_name='代码', max_length=10, db_index=True)
     name = models.CharField(verbose_name='公司简称', max_length=8)
     shortcut = models.CharField(verbose_name='快捷键', default='', max_length=8)
     usedName = models.CharField(verbose_name='曾用名', max_length=255, default='')
@@ -64,6 +64,36 @@ class Stockcode(models.Model):
         return df
 
     @classmethod
+    def importIndexListing(self):
+        """
+        插入所有上市股票公司
+        :return:
+        """
+        import QUANTAXIS as qa
+        df = qa.QAFetch.QATdx.QA_fetch_get_stock_list('index')
+        # todo 如果已经插入，则判断是否有更新
+        try:
+            # 批量创建对象，减少SQL查询次数
+            querysetlist = []
+            for i in df.index:
+                a = df.loc[i]
+                # 本地获取指数日线数据
+                data = qa.QA_fetch_index_day_adv(a.code, '1990-01-01', str(datetime.date.today()))
+                d = data.data.date[0].strftime("%Y-%m-%d") # 起始交易日期 上市日期
+                if a.sse == 'sh':
+                    market = 1
+                else:
+                    market = 0
+                category = 11
+                querysetlist.append(
+                    Stockcode(code=a.code, name=a['name'], timeToMarket=d, volunit=a.volunit, decimalpoint=a.decimal_point,
+                              category=category, market=market))
+            Stockcode.objects.bulk_create(querysetlist)
+        except Exception as e:
+            print(e.args)
+        return df
+
+    @classmethod
     def getCodelist(self, type_='stock'):
         """
         返回stock_category类型列表
@@ -75,6 +105,10 @@ class Stockcode(models.Model):
                   (14, "逆回购"),)
         :return: Stockcode.objects.all().filter(category=stock_category)
         """
+        if type_ in ['ALL', 'all']:
+            # 返回所有代码
+            return Stockcode.objects.all()
+
         if type_ in ['stock', 'gp']:
             category = 10
         elif type_ in ['index', 'zs']:

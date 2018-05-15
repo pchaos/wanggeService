@@ -36,7 +36,7 @@ class Stockcode(models.Model):
     @classmethod
     def importAllListing(self):
         """
-        插入所有上市公司
+        插入所有上市股票公司
         :return:
         """
         from oneilquant.ONEIL.Oneil import OneilKDZD as oneil
@@ -51,16 +51,31 @@ class Stockcode(models.Model):
                 a = df.loc[i]
                 d = int(a.timeToMarket)
                 if a[0] == '6':
-                    category = 10
+                    market = 1
                 else:
-                    category = 11
+                    market = 0
+                category = 10
                 querysetlist.append(
                     Stockcode(code=a.name, name=a['name'], timeToMarket=datetime(d // 10000, d // 100 % 100, d % 100),
-                              category=category))
+                              category=category, market=market))
             Stockcode.objects.bulk_create(querysetlist)
         except Exception as e:
             pass
         return df
+
+    @classmethod
+    def getCodelist(self, stock_category=10):
+        """
+        返回stock_category类型列表
+        :param stock_category: 证券类型
+            STOCK_CATEGORY = ((10, "股票"),
+                  (11, "指数"),
+                  (12, "分级基金"),
+                  (13, "债券"),
+                  (14, "逆回购"),)
+        :return: Stockcode.objects.all().filter(category=stock_category)
+        """
+        return Stockcode.objects.all().filter(category=stock_category)
 
 
 class StockDay(models.Model):

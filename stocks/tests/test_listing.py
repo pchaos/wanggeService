@@ -32,7 +32,8 @@ class TestListing(TestCase):
         up_date = timezone.now()
         sc = Stockcode(code='tt0001', name='Test0001', timeToMarket=up_date, market=a)
         sc.save()
-        i = Stockcode.objects.all().count()
+        # i = Stockcode.objects.all().count()
+        i = Stockcode.getCodelist().count()
         self.assertTrue(i > 0, 'Stockcode count:{}'.format(i))
         # object to json
         print('sc.__dict__ : {}'.format(sc.__dict__))
@@ -59,10 +60,10 @@ class TestListing(TestCase):
         插入所有的A股股票代码
         :return:
         """
-        oldcounts = Stockcode.objects.all().count()
+        oldcounts = Stockcode.getCodelist().count()
         df = Stockcode.importAllListing()
-        print(Stockcode.objects.all().count())
-        self.assertTrue(Stockcode.objects.all().count() == oldcounts + len(df),
+        print(Stockcode.getCodelist().count())
+        self.assertTrue(Stockcode.getCodelist().count() == oldcounts + len(df),
                         '插入未成功, after :{} before : {}; 应插入：{}条记录'.format(Stockcode.objects.all().count(), oldcounts,
                                                                          len(df)))
         # 再次导入，不会报错

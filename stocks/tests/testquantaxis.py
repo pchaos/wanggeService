@@ -263,8 +263,8 @@ class testQuantaxis(TestCase):
         data = qa.QA_fetch_stock_day_adv(code, '2016-12-01', '2017-02-01')  # [可选to_qfq(),to_hfq()]
         s = qa.QAAnalysis_stock(data)
         # 传入为pd dataframe
-        qa = qa.QA_indicator_ATR(s.data, n)
-        qr = qa > 0
+        atr = qa.QA_indicator_ATR(s.data, n)
+        qr = atr > 0
         self.assertTrue(not qr.iloc[0].ATR, '第一个ATR应该为空：{}'.format(qr.iloc[0].ATR))
         self.assertTrue(qr.iloc[n].ATR, '第{}个ATR不应该为空：{}'.format(n, qr.iloc[n].ATR))
         '''
@@ -334,6 +334,12 @@ class testQuantaxis(TestCase):
             a = df.loc[i]
             # 本地获取指数日线数据
             data = qa.QA_fetch_index_day_adv(a.code, '1990-01-01', str(datetime.date.today()))
+            """
+            从本地数据库获取数据
+            data = qa.QA_fetch_index_day_adv(a.code, '1990-01-01', datetime.now().strftime("%Y-%m-%d"))
+            从网络获取数据
+            data = qa.QAFetch.QATdx.QA_fetch_get_index_day(code, '2017-01-01', '2017-09-01')
+            """
             d = data.data.date[0].strftime("%Y-%m-%d")
             if a.sse == 'sh':
                 market = 1

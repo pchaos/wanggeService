@@ -66,7 +66,7 @@ class Stockcode(models.Model):
     @classmethod
     def importIndexListing(self):
         """
-        插入所有上市股票公司
+        插入所有股票指数
         :return:
         """
         import QUANTAXIS as qa
@@ -75,7 +75,7 @@ class Stockcode(models.Model):
         try:
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
-            delisted = []
+            delisted = [] # quantaxis中无数据list
             for i in df.index:
                 print(i)
                 a = df.loc[i]
@@ -94,6 +94,7 @@ class Stockcode(models.Model):
                                   category=category, market=market))
 
                 else:
+                    # quantaxis中无数据
                     delisted.append(a)
                     isdelisted = True
             # print('delisted count {} :\n {}'.format(len(delisted), delisted))

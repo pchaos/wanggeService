@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 ('low', models.DecimalField(decimal_places=3, max_digits=9, null=True, verbose_name='最低价')),
                 ('volumn', models.DecimalField(decimal_places=3, max_digits=9, null=True, verbose_name='vol')),
                 ('amount', models.DecimalField(decimal_places=3, max_digits=9, null=True, verbose_name='金额')),
-                ('date', models.DateField(db_index=True, verbose_name='日期')),
+                ('tradedate', models.DateField(db_index=True, verbose_name='日期')),
             ],
         ),
         migrations.RemoveField(

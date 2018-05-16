@@ -8,7 +8,7 @@ Description :
 
 @Author :       pchaos
 
-date：          2018-4-21
+tradedate：          2018-4-21
 -------------------------------------------------
 Change Activity:
                2018-4-21:

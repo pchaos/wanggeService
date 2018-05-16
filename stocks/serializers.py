@@ -4,7 +4,7 @@
 @File    : serializers.py.py
 Description :
 @Author :       pchaos
-date：          18-4-3
+tradedate：          18-4-3
 -------------------------------------------------
 Change Activity:
                18-4-3:

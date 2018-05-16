@@ -8,7 +8,7 @@ Description :
 
 @Author :       pchaos
 
-date：          2018-5-6
+tradedate：          2018-5-6
 -------------------------------------------------
 Change Activity:
                2018-5-6:
@@ -42,7 +42,7 @@ class testQuantaxis(TestCase):
         s.low  # 最低价序列
         s.vol  # 量
         s.volume  # 同vol
-        s.date  # 日期
+        s.tradedate  # 日期
         s.datetime
         s.index  # 索引
         s.price  # 平均价(O+H+L+C)/4
@@ -98,7 +98,7 @@ class testQuantaxis(TestCase):
             except Exception as e:
                 # print(e.args)
                 qa.QA_util_log_info('{} {}'.format(code, e.args))
-        df.set_index('date', inplace=True)
+        df.set_index('tradedate', inplace=True)
         day = '2017-9-29'
         # dfd = caculateRPS(df, day, [121, 251])
         dfd = self.caculateRPS(df, day, [120, 250])
@@ -117,7 +117,7 @@ class testQuantaxis(TestCase):
         """
         dfd = df[df.index == dateStr]
         dfd.reset_index(inplace=True)
-        # del dfd['date']
+        # del dfd['tradedate']
         for n in nlist:
             dfd.reset_index(inplace=True)
             rpsname = 'rps{}'.format(str(n))
@@ -132,7 +132,7 @@ class testQuantaxis(TestCase):
                 dfd[rpsname] = pd.np.nan
             dfd.loc[:, (rpsname)] = rpsn['a']
         dfd.reset_index(inplace=True)
-        dfd.set_index('date', inplace=True)
+        dfd.set_index('tradedate', inplace=True)
         return dfd[['code', 'rps120', 'rps250']]
 
     def test_QA_indicator_ma(self):
@@ -263,8 +263,8 @@ class testQuantaxis(TestCase):
         data = qa.QA_fetch_stock_day_adv(code, '2016-12-01', '2017-02-01')  # [可选to_qfq(),to_hfq()]
         s = qa.QAAnalysis_stock(data)
         # 传入为pd dataframe
-        atr = qa.QA_indicator_ATR(s.data, n)
-        qr = atr > 0
+        qaatr = qa.QA_indicator_ATR(s.data, n)
+        qr = qaatr > 0
         self.assertTrue(not qr.iloc[0].ATR, '第一个ATR应该为空：{}'.format(qr.iloc[0].ATR))
         self.assertTrue(qr.iloc[n].ATR, '第{}个ATR不应该为空：{}'.format(n, qr.iloc[n].ATR))
         '''
@@ -352,8 +352,4 @@ class testQuantaxis(TestCase):
         Stockcode.objects.bulk_create(querysetlist)
         self.assertTrue(Stockcode.getCodelist('index').count() > 0, '未插入成功:{}'.format(querysetlist))
 
-    def test_QA_fetch_indexlisting2(self):
-        oldcount = Stockcode.getCodelist('index').count()
-        Stockcode.importIndexListing()
-        count = Stockcode.getCodelist('index').count()
-        self.assertTrue(count - oldcount > 500, '2018-05 指数数量应大于500， {}'.format(count - oldcount))
+

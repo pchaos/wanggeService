@@ -8,7 +8,7 @@ Description :
 
 @Author :       pchaos
 
-date：          18-4-12
+tradedate：          18-4-12
 -------------------------------------------------
 Change Activity:
                18-4-12:
@@ -62,14 +62,25 @@ class TestListing(TestCase):
         """
         oldcounts = Stockcode.getCodelist().count()
         df = Stockcode.importStockListing()
-        print(Stockcode.getCodelist().count())
+        print('before:{} after: {}'.format(oldcounts, Stockcode.getCodelist().count()))
         self.assertTrue(Stockcode.getCodelist().count() == oldcounts + len(df),
                         '插入未成功, after :{} before : {}; 应插入：{}条记录'.format(Stockcode.objects.all().count(), oldcounts,
                                                                          len(df)))
         # 再次导入，不会报错
         df = Stockcode.importStockListing()
 
+    def test_importIndexlisting(self):
+        oldcount = Stockcode.getCodelist('index').count()
+        Stockcode.importIndexListing()
+        count = Stockcode.getCodelist('index').count()
+        self.assertTrue(count - oldcount > 500, '2018-05 指数数量应大于500， {}'.format(count - oldcount))
+
     def test_getCodelist(self):
         oldcounts = Stockcode.getCodelist().count()
         self.assertTrue(Stockcode.getCodelist('all').count() >= oldcounts,
                         '所有类型代码数量比股票代码数量多, after :{} before : {}; '.format(Stockcode.objects.all().count(), oldcounts))
+        counts = 0
+        for category, b in STOCK_CATEGORY:
+            counts += Stockcode.objects.all().filter(category=category).count()
+        count = Stockcode.getCodelist('all').count()
+        self.assertTrue(counts == count, '明细汇总应该和总体数量一样：{} - {}'.format(counts, count))

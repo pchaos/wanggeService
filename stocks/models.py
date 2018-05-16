@@ -1,6 +1,7 @@
 from django.db import models
-import django.utils.timezone
+from django.utils import timezone
 from datetime import datetime
+import pandas as pd
 
 STOCK_CATEGORY = ((10, "股票"),
                   (11, "指数"),
@@ -12,7 +13,6 @@ YES_NO = ((True, "是"),
           (False, "否"))
 
 MARKET_CHOICES = ((0, "深市"), (1, "沪市"))
-
 
 class Stockcode(models.Model):
     code = models.CharField(verbose_name='代码', max_length=10, db_index=True)
@@ -58,9 +58,9 @@ class Stockcode(models.Model):
                 querysetlist.append(
                     Stockcode(code=a.name, name=a['name'], timeToMarket=datetime(d // 10000, d // 100 % 100, d % 100),
                               category=category, market=market))
-            Stockcode.objects.bulk_create(querysetlist)
+            self.objects.bulk_create(querysetlist)
         except Exception as e:
-            pass
+            print(e.args)
         return df
 
     @classmethod
@@ -80,7 +80,7 @@ class Stockcode(models.Model):
                 print(i)
                 a = df.loc[i]
                 # 本地获取指数日线数据
-                data = qa.QA_fetch_index_day_adv(a.code, '1990-01-01', datetime.now().strftime("%Y-%m-%d"))
+                data = qa.QA_fetch_index_day_adv(a.code, '1990-01-01', timezone.now().strftime("%Y-%m-%d"))
                 if len(data) > 0:
                     d = data.data.date[0].strftime("%Y-%m-%d")  # 起始交易日期 上市日期
                     if a.sse == 'sh':
@@ -98,10 +98,10 @@ class Stockcode(models.Model):
                     delisted.append(a)
                     isdelisted = True
             # print('delisted count {} :\n {}'.format(len(delisted), delisted))
-            Stockcode.objects.bulk_create(querysetlist)
+            self.objects.bulk_create(querysetlist)
         except Exception as e:
             print(a, e.args)
-        return df
+        return self.getCodelist('index')
 
     @classmethod
     def getCodelist(self, type_='stock'):
@@ -113,11 +113,11 @@ class Stockcode(models.Model):
                   (12, "分级基金"),
                   (13, "债券"),
                   (14, "逆回购"),)
-        :return: Stockcode.objects.all().filter(category=stock_category)
+        :return: .objects.all().filter(category=stock_category)
         """
         if type_ in ['ALL', 'all']:
             # 返回所有代码
-            return Stockcode.objects.all()
+            return self.objects.all()
 
         if type_ in ['stock', 'gp']:
             category = 10
@@ -130,11 +130,12 @@ class Stockcode(models.Model):
         elif type_ in ['NIHUIGOU', 'NHG']:
             category = 14
 
-        return Stockcode.objects.all().filter(category=category)
+        return self.objects.all().filter(category=category)
 
     class Meta:
         # app_label ='证券列表'
         verbose_name = '证券列表'
+        unique_together = (('code', 'market', 'category'))
 
 
 class StockDay(models.Model):
@@ -145,8 +146,12 @@ class StockDay(models.Model):
     low = models.DecimalField(verbose_name='最低价', max_digits=9, decimal_places=3, null=True)
     volumn = models.DecimalField(verbose_name='vol', max_digits=9, decimal_places=3, null=True)
     amount = models.DecimalField(verbose_name='金额', max_digits=9, decimal_places=3, null=True)
-    date = models.DateField(verbose_name='日期', db_index=True)
+    tradedate = models.DateField(verbose_name='日期', db_index=True)
 
+
+    class Meta:
+        verbose_name = '日数据'
+        unique_together = (('code', 'tradedate'))
 
 class BK(models.Model):
     """
@@ -166,6 +171,10 @@ class BK(models.Model):
 
     def __str__(self):
         return '{} - {} - {}'.format(self.parent, self.code, self.name)
+    #
+    # class Meta:
+    #     verbose_name = '板块'
+    #     unique_together = (('name', 'parent'))
 
 
 class BKDetail(models.Model):
@@ -193,14 +202,88 @@ class RPS(models.Model):
     bkname = models.ForeignKey(BK, on_delete=models.PROTECT)
     rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
     rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
+    tradedate = models.DateTimeField(verbose_name='交易日期', auto_now_add=True)
 
+    class Meta:
+        # app_label ='rps计算'
+        verbose_name = 'RPS'
+        unique_together = (('code', 'tradedate'))
 
 class RPSprepare(models.Model):
     """欧奈尔PRS预计算"""
     code = models.ForeignKey(Stockcode, verbose_name='代码', on_delete=models.PROTECT)
     rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
     rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
+    tradedate = models.DateTimeField(verbose_name='交易日期', auto_now_add=True)
 
     class Meta:
         # app_label ='rps计算中间量'
         verbose_name = 'RPS准备'
+        unique_together = (('code', 'tradedate'))
+
+    @classmethod
+    def importIndexListing(self):
+        """
+        插入所有股票指数
+        :return:
+        """
+        import QUANTAXIS as qa
+        codelist = Stockcode.getCodelist('index')
+        # todo 如果已经插入，则判断是否有更新
+        try:
+            # 批量创建对象，减少SQL查询次数
+            querysetlist = []
+            delisted = [] # quantaxis中无数据list
+            for v in codelist.values():
+                print(v)
+                # get stockcode
+                code = Stockcode.objects.get(code=v['code'], category=11)
+                # 本地获取指数日线数据
+                data = qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', timezone.now().strftime("%Y-%m-%d"))
+                if len(data) > 120:
+                    df = pd.DataFrame(data.close)
+                    df['rps120'] = df.close / df.close.shift(120)
+                    df['rps250'] = df.close / df.close.shift(250)
+                    del df['close']
+                    df = df[120:]
+                    for a,b in df.values:
+                        querysetlist.append(
+                            RPSprepare(code=code, rps120=a, rps250=b if b > 0 else None))
+
+                else:
+                    # quantaxis中无数据
+                    delisted.append(a)
+            print('delisted count {} :\n {}'.format(len(delisted), delisted))
+            RPSprepare.objects.bulk_create(querysetlist)
+        except Exception as e:
+            print(e.args)
+        return self.getCodelist('index')
+
+    @classmethod
+    def getCodelist(self, type_='stock'):
+        """
+        返回stock_category类型列表
+        :param stock_category: 证券类型
+            STOCK_CATEGORY = ((10, "股票"),
+                  (11, "指数"),
+                  (12, "分级基金"),
+                  (13, "债券"),
+                  (14, "逆回购"),)
+        :return: .objects.all().filter(category=stock_category)
+        """
+        if type_ in ['ALL', 'all']:
+            # 返回所有代码
+            return self.objects.all()
+
+        if type_ in ['stock', 'gp']:
+            category = 10
+        elif type_ in ['index', 'zs']:
+            category = 11
+        elif type_ in ['etf', 'ETF']:
+            category = 12
+        elif type_ in ['ZAIQ', 'ZQ']:
+            category = 13
+        elif type_ in ['NIHUIGOU', 'NHG']:
+            category = 14
+
+        return self.objects.all().filter(code__category=category)

@@ -102,12 +102,12 @@ class testQuantaxis(TestCase):
         day = '2017-9-29'
         # dfd = caculateRPS(df, day, [121, 251])
         dfd = self.caculateRPS(df, day, [120, 250])
-        self.assertTrue(dfd[dfd['code'] =='000001'] is not None, 'result must not None!')
+        self.assertTrue(dfd[dfd['code'] == '000001'] is not None, 'result must not None!')
         # dfd = self.caculateRPS(df, day, [121, 250]) # 会报错
 
         # self.assertTrue(dfd.sort_values(by=['rps120'])['rps120'].equals(rps120.a), '按照code排序以后应该相同，{} != {}'.format(dfd['rps120'], rps120['a']))
 
-    def caculateRPS(self, df, dateStr, nlist = [120, 250]):
+    def caculateRPS(self, df, dateStr, nlist=[120, 250]):
         """
         计算n日rps
         :param df: dataframe
@@ -345,3 +345,9 @@ class testQuantaxis(TestCase):
                           category=category, market=market))
         Stockcode.objects.bulk_create(querysetlist)
         self.assertTrue(Stockcode.getCodelist('index').count() > 0, '未插入成功:{}'.format(querysetlist))
+
+    def test_QA_fetch_indexlisting2(self):
+        oldcount = Stockcode.getCodelist('index').count()
+        Stockcode.importIndexListing()
+        count = Stockcode.getCodelist('index').count()
+        self.assertTrue(count - oldcount > 500, '2018-05 指数数量应大于500， {}'.format(count - oldcount))

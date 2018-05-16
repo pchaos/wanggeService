@@ -75,22 +75,31 @@ class Stockcode(models.Model):
         try:
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
+            delisted = []
             for i in df.index:
+                print(i)
                 a = df.loc[i]
                 # 本地获取指数日线数据
-                data = qa.QA_fetch_index_day_adv(a.code, '1990-01-01', str(datetime.date.today()))
-                d = data.data.date[0].strftime("%Y-%m-%d") # 起始交易日期 上市日期
-                if a.sse == 'sh':
-                    market = 1
+                data = qa.QA_fetch_index_day_adv(a.code, '1990-01-01', datetime.now().strftime("%Y-%m-%d"))
+                if len(data) > 0:
+                    d = data.data.date[0].strftime("%Y-%m-%d")  # 起始交易日期 上市日期
+                    if a.sse == 'sh':
+                        market = 1
+                    else:
+                        market = 0
+                    category = 11
+                    querysetlist.append(
+                        Stockcode(code=a.code, name=a['name'], timeToMarket=d, volunit=a.volunit,
+                                  decimalpoint=a.decimal_point,
+                                  category=category, market=market))
+
                 else:
-                    market = 0
-                category = 11
-                querysetlist.append(
-                    Stockcode(code=a.code, name=a['name'], timeToMarket=d, volunit=a.volunit, decimalpoint=a.decimal_point,
-                              category=category, market=market))
+                    delisted.append(a)
+                    isdelisted = True
+            # print('delisted count {} :\n {}'.format(len(delisted), delisted))
             Stockcode.objects.bulk_create(querysetlist)
         except Exception as e:
-            print(e.args)
+            print(a, e.args)
         return df
 
     @classmethod
@@ -121,6 +130,10 @@ class Stockcode(models.Model):
             category = 14
 
         return Stockcode.objects.all().filter(category=category)
+
+    class Meta:
+        # app_label ='证券列表'
+        verbose_name = '证券列表'
 
 
 class StockDay(models.Model):
@@ -188,5 +201,5 @@ class RPSprepare(models.Model):
     rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
 
     class Meta:
-        # app_label ='我的自选股'
-        verbose_name = 'RPS'
+        # app_label ='rps计算中间量'
+        verbose_name = 'RPS准备'

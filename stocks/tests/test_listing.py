@@ -40,7 +40,8 @@ class TestListing(TestCase):
         self.assertTrue(c == 14, '类型不对：{}'.format(c))
         c = Listing.getCategory(10)
         self.assertTrue(c == 10, '类型不对：{}'.format(c))
-
+        c = Listing.getCategory(11)
+        self.assertTrue(c == 11, '类型不对：{}'.format(c))
 
     def test_Stockcode(self):
         a, b = MARKET_CHOICES[0]

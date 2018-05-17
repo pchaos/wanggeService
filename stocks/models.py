@@ -14,7 +14,26 @@ YES_NO = ((True, "是"),
 
 MARKET_CHOICES = ((0, "深市"), (1, "沪市"))
 
-class Stockcode(models.Model):
+class stockABS(models.Model):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def getCategory(cls, type_='stock'):
+        if type_ in ['stock', 'gp']:
+            category = 10
+        elif type_ in ['index', 'zs']:
+            category = 11
+        elif type_ in ['etf', 'ETF']:
+            category = 12
+        elif type_ in ['ZAIQ', 'ZQ']:
+            category = 13
+        elif type_ in ['NIHUIGOU', 'NHG']:
+            category = 14
+        return category
+
+
+class Listing(stockABS):
     code = models.CharField(verbose_name='代码', max_length=10, db_index=True)
     name = models.CharField(verbose_name='公司简称', max_length=8)
     shortcut = models.CharField(verbose_name='快捷键', default='', max_length=8)
@@ -56,8 +75,8 @@ class Stockcode(models.Model):
                     market = 0
                 category = 10
                 querysetlist.append(
-                    Stockcode(code=a.name, name=a['name'], timeToMarket=datetime(d // 10000, d // 100 % 100, d % 100),
-                              category=category, market=market))
+                    Listing(code=a.name, name=a['name'], timeToMarket=datetime(d // 10000, d // 100 % 100, d % 100),
+                            category=category, market=market))
             self.objects.bulk_create(querysetlist)
         except Exception as e:
             print(e.args)
@@ -89,9 +108,9 @@ class Stockcode(models.Model):
                         market = 0
                     category = 11
                     querysetlist.append(
-                        Stockcode(code=a.code, name=a['name'], timeToMarket=d, volunit=a.volunit,
-                                  decimalpoint=a.decimal_point,
-                                  category=category, market=market))
+                        Listing(code=a.code, name=a['name'], timeToMarket=d, volunit=a.volunit,
+                                decimalpoint=a.decimal_point,
+                                category=category, market=market))
 
                 else:
                     # quantaxis中无数据
@@ -119,16 +138,7 @@ class Stockcode(models.Model):
             # 返回所有代码
             return self.objects.all()
 
-        if type_ in ['stock', 'gp']:
-            category = 10
-        elif type_ in ['index', 'zs']:
-            category = 11
-        elif type_ in ['etf', 'ETF']:
-            category = 12
-        elif type_ in ['ZAIQ', 'ZQ']:
-            category = 13
-        elif type_ in ['NIHUIGOU', 'NHG']:
-            category = 14
+        category = self.getCategory(type_)
 
         return self.objects.all().filter(category=category)
 
@@ -139,7 +149,7 @@ class Stockcode(models.Model):
 
 
 class StockDay(models.Model):
-    code = models.ForeignKey(Stockcode, verbose_name='代码', on_delete=models.PROTECT)
+    code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
     open = models.DecimalField(verbose_name='开盘价', max_digits=9, decimal_places=3, null=True)
     close = models.DecimalField(verbose_name='收盘价', max_digits=9, decimal_places=3, null=True)
     high = models.DecimalField(verbose_name='最高价', max_digits=9, decimal_places=3, null=True)
@@ -181,7 +191,7 @@ class BKDetail(models.Model):
     """
     自选股
     """
-    code = models.ForeignKey(Stockcode, verbose_name='代码', on_delete=models.PROTECT)
+    code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
     bkname = models.ForeignKey(BK, on_delete=models.PROTECT)
     remark = models.CharField(verbose_name='备注', max_length=250, default='')
     isactived = models.BooleanField("有效", choices=YES_NO)
@@ -198,7 +208,7 @@ class BKDetail(models.Model):
 
 class RPS(models.Model):
     """欧奈尔PRS"""
-    code = models.ForeignKey(Stockcode, verbose_name='代码', on_delete=models.PROTECT)
+    code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
     bkname = models.ForeignKey(BK, on_delete=models.PROTECT)
     rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
     rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
@@ -209,9 +219,9 @@ class RPS(models.Model):
         verbose_name = 'RPS'
         unique_together = (('code', 'tradedate'))
 
-class RPSprepare(models.Model):
+class RPSprepare(stockABS):
     """欧奈尔PRS预计算"""
-    code = models.ForeignKey(Stockcode, verbose_name='代码', on_delete=models.PROTECT)
+    code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
     rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
     rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
     tradedate = models.DateTimeField(verbose_name='交易日期', auto_now_add=True)
@@ -228,7 +238,7 @@ class RPSprepare(models.Model):
         :return:
         """
         import QUANTAXIS as qa
-        codelist = Stockcode.getCodelist('index')
+        codelist = Listing.getCodelist('index')
         # todo 如果已经插入，则判断是否有更新
         try:
             # 批量创建对象，减少SQL查询次数
@@ -237,7 +247,7 @@ class RPSprepare(models.Model):
             for v in codelist.values():
                 print(v)
                 # get stockcode
-                code = Stockcode.objects.get(code=v['code'], category=11)
+                code = Listing.objects.get(code=v['code'], category=11)
                 # 本地获取指数日线数据
                 data = qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', timezone.now().strftime("%Y-%m-%d"))
                 if len(data) > 120:
@@ -275,15 +285,21 @@ class RPSprepare(models.Model):
             # 返回所有代码
             return self.objects.all()
 
-        if type_ in ['stock', 'gp']:
-            category = 10
-        elif type_ in ['index', 'zs']:
-            category = 11
-        elif type_ in ['etf', 'ETF']:
-            category = 12
-        elif type_ in ['ZAIQ', 'ZQ']:
-            category = 13
-        elif type_ in ['NIHUIGOU', 'NHG']:
-            category = 14
+        category = self.getCategory(type_)
 
         return self.objects.all().filter(code__category=category)
+
+# from django.conf import settings
+# if not settings.TESTING:
+#     # 非测试环境,自动插入股票代码
+#     from django import db
+#     import os
+#     db_name = db.utils.settings.DATABASES['default']['NAME']
+#     if os.path.isfile(db_name):
+#         # from . import Listing
+#         if Listing.getCodelist().count() == 0:
+#             print('importing stock listing ...')
+#             Listing.importStockListing()
+#         if Listing.getCodelist('index') == 0:
+#             print('importing index listing ...')
+#             Listing.importIndexListing()

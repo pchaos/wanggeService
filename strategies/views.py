@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.template import loader
 from django.views import generic
+from django.shortcuts import redirect
 from .models import StrategyType, Strategy, StrategyDetail
 # from django.http import HttpResponse
 # from polls.models import Question
@@ -19,5 +20,12 @@ class IndexView(generic.ListView):
         """返回"""
         return Strategy.objects.order_by('code')
 
+class DetailView(generic.DetailView):
+    model = StrategyDetail
+    template_name = 'strategies/detail.html'
+
 def detail(request, strategy_id):
     pass
+
+def index(request):
+    return redirect('/strategies/')

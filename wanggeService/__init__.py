@@ -5,7 +5,7 @@
 @File    : __init__.py
 Description :
 @Author :       pchaos
-date：          2018-4-7
+tradedate：          2018-4-7
 -------------------------------------------------
 Change Activity:
                2018-4-7:

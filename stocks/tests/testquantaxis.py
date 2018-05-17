@@ -22,7 +22,7 @@ import datetime
 import QUANTAXIS as qa
 import numpy as np
 import pandas as pd
-from stocks.models import Stockcode, STOCK_CATEGORY
+from stocks.models import Listing, STOCK_CATEGORY
 
 
 class testQuantaxis(TestCase):
@@ -75,8 +75,8 @@ class testQuantaxis(TestCase):
         # 导入股票列表
         # from .test_listing import TestListing
         # tsc = TestListing()
-        Stockcode.importStockListing()
-        listings = Stockcode.objects.all()
+        Listing.importStockListing()
+        listings = Listing.objects.all()
         df = pd.DataFrame()
         codelist = []
         for a in listings[:100]:
@@ -98,7 +98,7 @@ class testQuantaxis(TestCase):
             except Exception as e:
                 # print(e.args)
                 qa.QA_util_log_info('{} {}'.format(code, e.args))
-        df.set_index('tradedate', inplace=True)
+        df.set_index('date', inplace=True)
         day = '2017-9-29'
         # dfd = caculateRPS(df, day, [121, 251])
         dfd = self.caculateRPS(df, day, [120, 250])
@@ -132,7 +132,7 @@ class testQuantaxis(TestCase):
                 dfd[rpsname] = pd.np.nan
             dfd.loc[:, (rpsname)] = rpsn['a']
         dfd.reset_index(inplace=True)
-        dfd.set_index('tradedate', inplace=True)
+        dfd.set_index('date', inplace=True)
         return dfd[['code', 'rps120', 'rps250']]
 
     def test_QA_indicator_ma(self):
@@ -347,9 +347,9 @@ class testQuantaxis(TestCase):
                 market = 0
             category = 11
             querysetlist.append(
-                Stockcode(code=a.code, name=a['name'], timeToMarket=d, volunit=a.volunit, decimalpoint=a.decimal_point,
-                          category=category, market=market))
-        Stockcode.objects.bulk_create(querysetlist)
-        self.assertTrue(Stockcode.getCodelist('index').count() > 0, '未插入成功:{}'.format(querysetlist))
+                Listing(code=a.code, name=a['name'], timeToMarket=d, volunit=a.volunit, decimalpoint=a.decimal_point,
+                        category=category, market=market))
+        Listing.objects.bulk_create(querysetlist)
+        self.assertTrue(Listing.getCodelist('index').count() > 0, '未插入成功:{}'.format(querysetlist))
 
 

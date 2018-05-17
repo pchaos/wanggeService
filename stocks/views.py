@@ -6,10 +6,10 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from stocks.serializers import UserSerializer, GroupSerializer
-from stocks.models import Stockcode as SC
-from stocks.serializers import StockcodeSerializer
+from stocks.models import Listing as SC
+from stocks.serializers import ListingSerializer
 from stocks.models import BKDetail
-from stocks.serializers import ZXGSerializer
+from stocks.serializers import BKDetailSerializer
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -33,11 +33,11 @@ def stockcode_list(request, format=None):
     """
     if request.method == 'GET':
         values = SC.objects.all()
-        serializer = StockcodeSerializer(values, many=True)
+        serializer = ListingSerializer(values, many=True)
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        serializer = StockcodeSerializer(data=request.data)
+        serializer = ListingSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -54,11 +54,11 @@ def stockcode_detail(request, pk, format=None):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = StockcodeSerializer(values)
+        serializer = ListingSerializer(values)
         return Response(serializer.data)
 
     elif request.method == 'PUT':
-        serializer = StockcodeSerializer(values, data=request.data)
+        serializer = ListingSerializer(values, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -75,11 +75,11 @@ def ZXG_list(request, format=None):
     """
     if request.method == 'GET':
         values = BKDetail.objects.all()
-        serializer = ZXGSerializer(values, many=True)
+        serializer = BKDetailSerializer(values, many=True)
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        serializer = ZXGSerializer(data=request.data)
+        serializer = BKDetailSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -96,11 +96,11 @@ def ZXG_detail(request, pk, format=None):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = ZXGSerializer(values)
+        serializer = BKDetailSerializer(values)
         return Response(serializer.data)
 
     elif request.method == 'PUT':
-        serializer = ZXGSerializer(values, data=request.data)
+        serializer = BKDetailSerializer(values, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -119,11 +119,11 @@ def stockcode_list(request, format=None):
     """
     if request.method == 'GET':
         values = SC.objects.all()
-        serializer = StockcodeSerializer(values, many=True)
+        serializer = ListingSerializer(values, many=True)
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        serializer = StockcodeSerializer(data=request.data)
+        serializer = ListingSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -140,11 +140,11 @@ def stockcode_detail(request, pk, format=None):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = StockcodeSerializer(values)
+        serializer = ListingSerializer(values)
         return Response(serializer.data)
 
     elif request.method == 'PUT':
-        serializer = StockcodeSerializer(values, data=request.data)
+        serializer = ListingSerializer(values, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -161,11 +161,11 @@ def BK_list(request, format=None):
     """
     if request.method == 'GET':
         values = BKDetail.objects.all()
-        serializer = ZXGSerializer(values, many=True)
+        serializer = BKDetailSerializer(values, many=True)
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        serializer = ZXGSerializer(data=request.data)
+        serializer = BKDetailSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -182,11 +182,11 @@ def BK_detail(request, pk, format=None):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = ZXGSerializer(values)
+        serializer = BKDetailSerializer(values)
         return Response(serializer.data)
 
     elif request.method == 'PUT':
-        serializer = ZXGSerializer(values, data=request.data)
+        serializer = BKDetailSerializer(values, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

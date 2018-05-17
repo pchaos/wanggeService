@@ -17,7 +17,7 @@ Change Activity:
 """
 from django.test import TestCase
 from strategies.models import Strategy, StrategyType
-from stocks.models import Stockcode
+from stocks.models import Listing
 
 __author__ = 'pchaos'
 

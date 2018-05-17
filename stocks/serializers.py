@@ -15,7 +15,7 @@ __author__ = 'pchaos'
 
 from django.contrib.auth.models import User, Group
 from rest_framework import serializers
-from stocks.models import Stockcode
+from stocks.models import Listing
 from stocks.models import BKDetail
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -29,12 +29,12 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
         model = Group
         fields = ('url', 'name')
 
-class StockcodeSerializer(serializers.HyperlinkedModelSerializer):
+class ListingSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = Stockcode
+        model = Listing
         fields = ('code', 'name', 'market', 'isindex')
 
-class ZXGSerializer(serializers.HyperlinkedModelSerializer):
+class BKDetailSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = BKDetail
         fields = ('code', 'name', 'market', 'isindex')

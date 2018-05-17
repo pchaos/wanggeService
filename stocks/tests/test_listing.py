@@ -27,6 +27,21 @@ import json
 
 
 class TestListing(TestCase):
+    def test_getCategory(self):
+        c = Listing.getCategory('stock')
+        self.assertTrue(c == 10, '类型不对：{}'.format(c))
+        c = Listing.getCategory('index')
+        self.assertTrue(c == 11, '类型不对：{}'.format(c))
+        c = Listing.getCategory('etf')
+        self.assertTrue(c == 12, '类型不对：{}'.format(c))
+        c = Listing.getCategory('ZQ')
+        self.assertTrue(c == 13, '类型不对：{}'.format(c))
+        c = Listing.getCategory('NHG')
+        self.assertTrue(c == 14, '类型不对：{}'.format(c))
+        c = Listing.getCategory(10)
+        self.assertTrue(c == 10, '类型不对：{}'.format(c))
+
+
     def test_Stockcode(self):
         a, b = MARKET_CHOICES[0]
         up_date = timezone.now()
@@ -84,3 +99,4 @@ class TestListing(TestCase):
             counts += Listing.objects.all().filter(category=category).count()
         count = Listing.getCodelist('all').count()
         self.assertTrue(counts == count, '明细汇总应该和总体数量一样：{} - {}'.format(counts, count))
+

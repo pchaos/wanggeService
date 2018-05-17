@@ -14,13 +14,23 @@ YES_NO = ((True, "是"),
 
 MARKET_CHOICES = ((0, "深市"), (1, "沪市"))
 
+
 class stockABS(models.Model):
     class Meta:
         abstract = True
 
     @classmethod
     def getCategory(cls, type_='stock'):
-        if type_ in ['stock', 'gp']:
+        """
+        类别
+        支持整数类型、字符串类别
+        :param type_: 可取值： 'stock', 'index', 'etf',
+        :return:
+        """
+        if type(type_) == int:
+            # type_类型为整数
+            category = type_
+        elif type_ in ['stock', 'gp']:
             category = 10
         elif type_ in ['index', 'zs']:
             category = 11
@@ -94,7 +104,7 @@ class Listing(stockABS):
         try:
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
-            delisted = [] # quantaxis中无数据list
+            delisted = []  # quantaxis中无数据list
             for i in df.index:
                 print(i)
                 a = df.loc[i]
@@ -158,10 +168,10 @@ class StockDay(models.Model):
     amount = models.DecimalField(verbose_name='金额', max_digits=9, decimal_places=3, null=True)
     tradedate = models.DateField(verbose_name='日期', db_index=True)
 
-
     class Meta:
         verbose_name = '日数据'
         unique_together = (('code', 'tradedate'))
+
 
 class BK(models.Model):
     """
@@ -219,6 +229,7 @@ class RPS(models.Model):
         verbose_name = 'RPS'
         unique_together = (('code', 'tradedate'))
 
+
 class RPSprepare(stockABS):
     """欧奈尔PRS预计算"""
     code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
@@ -243,7 +254,7 @@ class RPSprepare(stockABS):
         try:
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
-            delisted = [] # quantaxis中无数据list
+            delisted = []  # quantaxis中无数据list
             for v in codelist.values():
                 print(v)
                 # get stockcode
@@ -256,7 +267,7 @@ class RPSprepare(stockABS):
                     df['rps250'] = df.close / df.close.shift(250)
                     del df['close']
                     df = df[120:]
-                    for a,b in df.values:
+                    for a, b in df.values:
                         querysetlist.append(
                             RPSprepare(code=code, rps120=a, rps250=b if b > 0 else None))
 

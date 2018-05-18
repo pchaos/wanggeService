@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone
 from datetime import datetime
 import pandas as pd
+import pytz
+from django.conf import settings
 
 STOCK_CATEGORY = ((10, "股票"),
                   (11, "指数"),
@@ -57,10 +59,6 @@ class Listing(stockABS):
 
     def __str__(self):
         return '{0} {1}'.format(self.code, self.name)
-
-    # class Meta:
-    #     app_label ='我的股票'
-    #     verbose_name = '上市公司'
 
     @classmethod
     def importStockListing(cls):
@@ -220,12 +218,13 @@ class RPSBase(stockABS):
     code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
     rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
     rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
-    tradedate = models.DateTimeField(verbose_name='交易日期', default=timezone.now)
+    tradedate = models.DateField(verbose_name='交易日期')
 
     @classmethod
     def getCodelist(cls, type_='stock'):
         """
         返回stock_category类型列表
+
         :param stock_category: 证券类型
             STOCK_CATEGORY = ((10, "股票"),
                   (11, "指数"),
@@ -241,6 +240,9 @@ class RPSBase(stockABS):
         category = cls.getCategory(type_)
 
         return cls.objects.all().filter(code__category=category)
+
+    def __str__(self):
+        return '{} {} {} {}'.format(self.code, self.rps120, self.rps250, self.tradedate)
 
     class Meta:
         abstract = True
@@ -267,7 +269,7 @@ class RPSprepare(RPSBase):
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
             delisted = []  # quantaxis中无数据list
-            for v in codelist.values():
+            for v in codelist.values()[:150]:
                 print('dealing: {}'.format(v))
                 # get stockcode
                 code = Listing.objects.get(code=v['code'], category=11)
@@ -281,7 +283,8 @@ class RPSprepare(RPSBase):
                     df = df[120:]
                     for d, _, a, b in df.reset_index().values:
                         # 下面两行代码，合并写在一行，会造成tradedate错误
-                        r = RPSprepare(code=code, rps120=a, rps250=b if b > 0 else None, tradedate=d.to_pydatetime())
+                        r = RPSprepare(code=code, rps120=a, rps250=b if b > 0 else None,
+                                       tradedate=d.to_pydatetime())
                         querysetlist.append(r)
                 else:
                     # quantaxis中无数据
@@ -295,6 +298,7 @@ class RPSprepare(RPSBase):
 
 class RPS(RPSBase):
     """欧奈尔PRS"""
+
     # code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
     # rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
     # rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)

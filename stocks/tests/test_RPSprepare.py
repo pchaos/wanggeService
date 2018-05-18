@@ -18,6 +18,7 @@ Change Activity:
 from django.test import TestCase
 from stocks.models import Listing, STOCK_CATEGORY
 from stocks.models import RPSprepare
+import datetime
 
 __author__ = 'pchaos'
 
@@ -28,10 +29,13 @@ class TestRPSprepare(TestCase):
         oldcount = RPSprepare.getCodelist('index').count()
         # 测试时插入指数基础数据
         qs = Listing.importIndexListing()
-        rps = RPSprepare(code=qs[0], rps120=1.1, rps250=1.2)
+        d = datetime.datetime.now()-datetime.timedelta(300)
+        rps = RPSprepare(code=qs[0], rps120=1.1, rps250=1.2, tradedate=d)
         rps.save()
         count = RPSprepare.getCodelist('index').count()
         self.assertTrue(count - oldcount > 0, '指数数量应大于0， {}'.format(count - oldcount))
+        qs = RPSprepare.getCodelist('index')
+        self.assertTrue(qs[0].tradedate == d.date(), '日期保存失败：{} {}'.format(qs[0].tradedate, d.date()))
 
     def test_importIndexListing(self):
         oldcount = RPSprepare.getCodelist('index').count()
@@ -40,3 +44,4 @@ class TestRPSprepare(TestCase):
         RPSprepare.importIndexListing()
         count = RPSprepare.getCodelist('index').count()
         self.assertTrue(count - oldcount > 500, '2018-05 指数数量应大于500， {}'.format(count - oldcount))
+        print(RPSprepare.getCodelist('index')[0])

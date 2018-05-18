@@ -217,6 +217,10 @@ class BKDetail(models.Model):
 
 
 class RPSBase(stockABS):
+    code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
+    rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
+    rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
+    tradedate = models.DateTimeField(verbose_name='交易日期', default=timezone.now)
 
     @classmethod
     def getCodelist(cls, type_='stock'):
@@ -244,10 +248,6 @@ class RPSBase(stockABS):
 
 class RPSprepare(RPSBase):
     """欧奈尔PRS预计算"""
-    code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
-    rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
-    rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
-    tradedate = models.DateTimeField(verbose_name='交易日期', auto_now_add=True)
 
     class Meta:
         # app_label ='rps计算中间量'
@@ -268,7 +268,7 @@ class RPSprepare(RPSBase):
             querysetlist = []
             delisted = []  # quantaxis中无数据list
             for v in codelist.values():
-                print(v)
+                print('dealing: {}'.format(v))
                 # get stockcode
                 code = Listing.objects.get(code=v['code'], category=11)
                 # 本地获取指数日线数据
@@ -279,9 +279,10 @@ class RPSprepare(RPSBase):
                     df['rps250'] = df.close / df.close.shift(250)
                     del df['close']
                     df = df[120:]
-                    for a, b in df.values:
-                        querysetlist.append(
-                            RPSprepare(code=code, rps120=a, rps250=b if b > 0 else None))
+                    for d, _, a, b in df.reset_index().values:
+                        # 下面两行代码，合并写在一行，会造成tradedate错误
+                        r = RPSprepare(code=code, rps120=a, rps250=b if b > 0 else None, tradedate=d.to_pydatetime())
+                        querysetlist.append(r)
                 else:
                     # quantaxis中无数据
                     delisted.append(a)
@@ -294,10 +295,10 @@ class RPSprepare(RPSBase):
 
 class RPS(RPSBase):
     """欧奈尔PRS"""
-    code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
-    rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
-    rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
-    tradedate = models.DateTimeField(verbose_name='交易日期', auto_now_add=True)
+    # code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
+    # rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
+    # rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
+    # tradedate = models.DateTimeField(verbose_name='交易日期', auto_now_add=True)
 
     @classmethod
     def importIndexListing(cls):
@@ -310,7 +311,7 @@ class RPS(RPSBase):
         try:
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
-            delisted = []  # quantaxis中无数据list
+            delisted = []  # quantaxis中无数据时，保存到delisted
             for v in codelist.values():
                 print(v)
                 # get stockcode

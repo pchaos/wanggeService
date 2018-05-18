@@ -4,6 +4,7 @@ from datetime import datetime
 import pandas as pd
 import pytz
 from django.conf import settings
+import QUANTAXIS as qa  # since quantaxis Version 1.0.33    2018 05 18
 
 STOCK_CATEGORY = ((10, "股票"),
                   (11, "指数"),
@@ -96,7 +97,6 @@ class Listing(stockABS):
         插入所有股票指数
         :return:
         """
-        import QUANTAXIS as qa
         df = qa.QAFetch.QATdx.QA_fetch_get_stock_list('index')
         # todo 如果已经插入，则判断是否有更新
         try:
@@ -262,7 +262,6 @@ class RPSprepare(RPSBase):
         插入所有股票指数
         :return:
         """
-        import QUANTAXIS as qa
         codelist = Listing.getCodelist('index')
         # todo 如果已经插入，则判断是否有更新
         try:
@@ -274,7 +273,7 @@ class RPSprepare(RPSBase):
                 # get stockcode
                 code = Listing.objects.get(code=v['code'], category=11)
                 # 本地获取指数日线数据
-                data = qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', timezone.now().strftime("%Y-%m-%d"))
+                data = qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', datetime.now().strftime("%Y-%m-%d"))
                 if len(data) > 120:
                     df = pd.DataFrame(data.close)
                     df['rps120'] = df.close / df.close.shift(120)

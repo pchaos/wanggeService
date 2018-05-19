@@ -26,6 +26,14 @@ from stocks.models import Listing, STOCK_CATEGORY
 
 
 class testQuantaxis(TestCase):
+    """ 测试quantaxis
+        qa.QA_fetch_stock_day_adv
+        qa.QAFetch.QATdx.QA_fetch_get_stock_list('stock')
+        qa.QAFetch.QATdx.QA_fetch_get_index_day(code, '2017-01-01', '2017-09-01')
+        qa.QAFetch.QATdx.QA_fetch_get_stock_list('index')
+        qa.QA_fetch_index_day_adv(a.code, '1990-01-01', str(datetime.date.today()))
+
+    """
     def setUp(self):
         self.code = '000001'
 

@@ -76,11 +76,11 @@ class TestRPSprepare(TestCase):
             d = d + datetime.timedelta(1)
         return rpslist
 
-        def test_importIndexListing(self):
-            oldcount = RPSprepare.getlist('index').count()
-            # 测试时插入指数基础数据
-            qs = Listing.importIndexListing()
-            RPSprepare.importIndexListing()
-            count = RPSprepare.getlist('index').count()
-            self.assertTrue(count - oldcount > 500, '2018-05 指数数量应大于500， {}'.format(count - oldcount))
-            print(RPSprepare.getlist('index')[0])
+    def test_importIndexListing(self):
+        oldcount = RPSprepare.getlist('index').count()
+        # 测试时插入指数基础数据
+        qs = Listing.importIndexListing()
+        RPSprepare.importIndexListing()
+        count = RPSprepare.getlist('index').count()
+        self.assertTrue(count - oldcount > 500, '2018-05 指数数量应大于500， {}'.format(count - oldcount))
+        print(RPSprepare.getlist('index')[0])

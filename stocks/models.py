@@ -347,6 +347,7 @@ class RPS(RPSBase):
         # unique_together = (('code', 'tradedate'))
 
 class stocktradedate(models.Model):
+
     tradedate = models.DateField(verbose_name='交易日期', unique=True)
 
     @classmethod
@@ -364,6 +365,17 @@ class stocktradedate(models.Model):
                 end = datetime.now().date()
             return cls.objects.all().filter(tradedate__gte=start, tradedate__lte=end)
 
+    @classmethod
+    def importList(cls):
+        data = qa.QAUtil.QADate_trade.trade_date_sse
+        if len(data) > cls.getlist().count():
+            querysetlist = []
+            for v in [d.date() for d in pd.to_datetime(data)]:
+                querysetlist.append(stocktradedate(tradedate=v))
+            cls.objects.bulk_create(querysetlist)
+        return cls.getlist()
+
+    @classmethod
     def getlist(cls):
         """
 
@@ -371,6 +383,48 @@ class stocktradedate(models.Model):
         # 返回所有代码
         return cls.objects.all()
 
+    def get_real_date(self, towards=-1):
+        """
+        获取真实的交易日期,其中,第三个参数towards是表示向前/向后推
+        towards=1 日期向后迭代
+        towards=-1 日期向前迭代
+        @ yutiansut
+
+        """
+        if towards == 1:
+            while date not in self.trade_date_sse:
+                date = str(datetime.datetime.strptime(
+                    str(date)[0:10], '%Y-%m-%d') + datetime.timedelta(days=1))[0:10]
+            else:
+                return str(date)[0:10]
+        elif towards == -1:
+            while date not in self.trade_date_sse:
+                date = str(datetime.datetime.strptime(
+                    str(date)[0:10], '%Y-%m-%d') - datetime.timedelta(days=1))[0:10]
+            else:
+                return str(date)[0:10]
+
+    @property
+    def trade_date_sse(self):
+        try:
+            return self.tradedatelist
+        except Exception as e:
+            self.tradedatelist = self.getlist().filter(tradedate__lte=datetime.now().date())
+            return self.tradedatelist
+
+    @trade_date_sse.setter
+    def trade_date_sse(self, value):
+        pass
+
+    def if_trade(self, day):
+        '日期是否交易'
+        if day in self.trade_date_sse:
+            return True
+        else:
+            return False
+
+    def nextTradeday(self, tradeday=None):
+        qa.QA_util_get_next_day()
 
     class Meta:
         # app_label ='rps计算'

@@ -49,8 +49,8 @@ class WangGebase():
     _wangge = None  # 计算后的网格
 
     def __init__(self, wghigh, wglow, fgN=20, actualDecimalPoint = 4):
-        """
-        初始化网格
+        """ 初始化网格
+
         :param wghigh: 网格顶部价格
         :param wglow: 网格底部价格
         :param fgN: 网格拆分份数 默认为20间隔
@@ -129,6 +129,7 @@ class simpleWange(WangGebase):
 class ROEWangge(WangGebase):
     """
     双等等比网格（ratio of equality）
+    价格等比间隔
 
     """
 

@@ -7,4 +7,4 @@ pandas>=0.20.0
 urllib3
 requests
 easyutils
-quantaxis
+quantaxis>=1.0.33

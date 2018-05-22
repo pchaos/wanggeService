@@ -86,9 +86,9 @@ class testQuantaxis(TestCase):
         Listing.importStockListing()
         listings = Listing.objects.all()
         df = pd.DataFrame()
-        codelist = []
-        for a in listings[:100]:
-            codelist.append(a.code)
+        # codelist = []
+        # for a in listings[:100]:
+        #     codelist.append(a.code)
 
         for a in listings[:100]:
             code = a.code

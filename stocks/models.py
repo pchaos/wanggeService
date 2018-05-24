@@ -17,6 +17,24 @@ YES_NO = ((True, "是"),
 
 MARKET_CHOICES = ((0, "深市"), (1, "沪市"))
 
+# 例如： 2017-01-01
+DATE_FORMAT = '%Y-%m-%d'
+
+
+def convertToDate(date, dateformat=DATE_FORMAT):
+    """ 转换为日期类型
+
+    :param date: DATE_FORMAT = '%Y-%m-%d'
+    例如： '2017-01-01'
+
+    :return:  返回日期 date.date()
+    """
+    try:
+        date = datetime.datetime.strptime(date, dateformat)
+        return date.date()
+    except TypeError:
+        return date
+
 
 class stockABS(models.Model):
     class Meta:
@@ -84,7 +102,8 @@ class Listing(stockABS):
                     market = 0
                 category = 10
                 querysetlist.append(
-                    Listing(code=a.name, name=a['name'], timeToMarket=datetime.datetime(d // 10000, d // 100 % 100, d % 100),
+                    Listing(code=a.name, name=a['name'],
+                            timeToMarket=datetime.datetime(d // 10000, d // 100 % 100, d % 100),
                             category=category, market=market))
             cls.objects.bulk_create(querysetlist)
         except Exception as e:
@@ -103,8 +122,9 @@ class Listing(stockABS):
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
             delisted = []  # quantaxis中无数据list
+            print('importing ...')
             for i in df.index:
-                print(i)
+                # print(i)
                 a = df.loc[i]
                 # 本地获取指数日线数据
                 data = qa.QA_fetch_index_day_adv(a.code, '1990-01-01', timezone.now().strftime("%Y-%m-%d"))
@@ -244,6 +264,29 @@ class RPSBase(stockABS):
     def __str__(self):
         return '{} {} {} {}'.format(self.code, self.rps120, self.rps250, self.tradedate)
 
+    @staticmethod
+    def count_timedelta(delta, step, seconds_in_interval):
+        """Helper function for iterate.  Finds the number of intervals in the timedelta."""
+        return int(delta.total_seconds() / (seconds_in_interval * step))
+
+    @staticmethod
+    def daterange(start_date, end_date):
+        """ Iterating through a range of dates
+        例子：
+        start_date = date(2013, 1, 1)
+        end_date = date(2015, 6, 2)
+        for single_date in daterange(start_date, end_date):
+            print(single_date.strftime("%Y-%m-%d"))
+
+        :param start_date: 开始日期
+        :param end_date: 结束日期
+        :return: 从start到end截止的日期序列
+        """
+
+        from datetime import timedelta, date
+        for n in range(int((convertToDate(end_date) - convertToDate(start_date) + 1).days)):
+            yield start_date + timedelta(n)
+
     class Meta:
         abstract = True
 
@@ -268,7 +311,7 @@ class RPSprepare(RPSBase):
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
             delisted = []  # quantaxis中无数据list
-            for v in codelist.values()[:150]:
+            for v in codelist.values():
                 print('dealing: {}'.format(v))
                 # get stockcode
                 code = Listing.objects.get(code=v['code'], category=11)
@@ -304,21 +347,24 @@ class RPS(RPSBase):
     # tradedate = models.DateTimeField(verbose_name='交易日期', auto_now_add=True)
 
     @classmethod
-    def importIndexListing(cls):
+    def importIndexListing(cls, start='2006-1-1', end=None):
         """
         插入所有股票指数
         :return:
         """
-        codelist = super().getlist('index')
+        if end is None:
+            #  获取当天
+            end = datetime.datetime.now().date()
+        qs = RPSprepare.getlist('index')
         # todo 如果已经插入，则判断是否有更新
         try:
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
             delisted = []  # quantaxis中无数据时，保存到delisted
-            for v in codelist.values():
+            for v in qs.values():
                 print(v)
                 # get stockcode
-                code = Listing.objects.get(code=v['code'], category=11)
+                code = Listing.objects.get(code=v.code.code, category=11)
                 # 本地获取指数日线数据
                 # data = qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', timezone.now().strftime("%Y-%m-%d"))
                 data = []
@@ -346,8 +392,8 @@ class RPS(RPSBase):
         verbose_name = '欧奈尔PRS'
         # unique_together = (('code', 'tradedate'))
 
-class stocktradedate(models.Model):
 
+class stocktradedate(models.Model):
     tradedate = models.DateField(verbose_name='交易日期', unique=True)
 
     @classmethod
@@ -360,7 +406,7 @@ class stocktradedate(models.Model):
             return cls.objects.all()
         else:
             if start is None:
-                start = datetime.datetime(1990, 1,1)
+                start = datetime.datetime(1990, 1, 1)
             if end is None:
                 end = datetime.datetime.now().date()
             return cls.objects.all().filter(tradedate__gte=start, tradedate__lte=end)
@@ -379,6 +425,9 @@ class stocktradedate(models.Model):
             cls.objects.bulk_create(querysetlist)
         return cls.getlist()
 
+    def __str__(self):
+        return '{}'.format(self.tradedate.strftime('%Y-%m-%d'))
+
     @classmethod
     def getlist(cls):
         """
@@ -388,7 +437,7 @@ class stocktradedate(models.Model):
         return cls.objects.all()
 
     @classmethod
-    def get_real_date(cls,date, towards=-1):
+    def get_real_date(cls, date, towards=-1):
         """
         获取真实的交易日期,其中,第三个参数towards是表示向前/向后推
         towards=1 日期向后迭代
@@ -396,12 +445,11 @@ class stocktradedate(models.Model):
         @ yutiansut
 
         """
-        while not cls.if_trade(date):
+        while not cls.if_tradeday(date):
             date = str(datetime.datetime.strptime(
                 str(date)[0:10], '%Y-%m-%d') + datetime.timedelta(days=towards))[0:10]
         else:
             return datetime.datetime.strptime(str(date)[0:10], '%Y-%m-%d')
-
 
     @property
     def trade_date_sse(self):
@@ -417,7 +465,7 @@ class stocktradedate(models.Model):
         pass
 
     @classmethod
-    def if_trade(cls, day):
+    def if_tradeday(cls, day):
         '日期是否交易'
         try:
             _sd = stocktradedate()
@@ -428,8 +476,68 @@ class stocktradedate(models.Model):
             return False
 
     @classmethod
-    def nextTradeday(self, tradeday=None, n=1):
-        qa.QA_util_get_next_day()
+    def nextTradeday(cls, tradeday=None, n=1):
+        """ 下一交易日
+
+        :param tradeday:
+        :param n:
+        :return:
+        """
+        return cls.date_gap(tradeday, n, 'gt')
+
+    @classmethod
+    def preTradeday(cls, tradeday=None, n=1):
+        return cls.date_gap(tradeday, n, 'lt')
+
+    @classmethod
+    def date_gap(cls, date, gap, methods):
+        """[summary]
+
+        Arguments:
+            date {[type]} -- [description]
+            gap {[type]} -- [description]
+            methods {[type]} -- [description]
+
+        Returns:
+            [type] -- [description]
+        """
+        try:
+            datesse = cls()
+            dateid = datesse.trade_date_sse.filter(tradedate=date)[0]['id']
+            if methods in ['>', 'gt']:
+                td = datesse.trade_date_sse.filter(id=dateid + gap)
+                return td[0]['tradedate']
+            elif methods in ['>=', 'gte']:
+                td = datesse.trade_date_sse.filter(id=dateid + gap - 1)
+                return td[0]['tradedate']
+            elif methods in ['<', 'lt']:
+                td = datesse.trade_date_sse.filter(id=dateid - gap)
+                return td[0]['tradedate']
+            elif methods in ['<=', 'lte']:
+                td = datesse.trade_date_sse.filter(id=dateid - gap + 1)
+                return td[0]['tradedate']
+            elif methods in ['==', '=', 'eq']:
+                return date
+
+        except:
+            return 'wrong date'
+
+    @classmethod
+    def get_real_datelist(cls, start, end):
+        """
+        取数据的真实区间,返回的时候用 start,end=stocktradedate.get_real_datelist()
+        @yutiansut
+        2017/8/10
+
+        当start end中间没有交易日 返回None, None
+        @yutiansut/ 2017-12-19
+        """
+        datesse = cls()
+        alist = datesse.trade_date_sse.filter(tradedate__gte=convertToDate(start), tradedate__lte=convertToDate(end))
+        if alist.count() == 0:
+            return None, None
+        else:
+            return (alist[0]['tradedate'], alist[len(alist) - 1]['tradedate'])
 
     class Meta:
         # app_label ='rps计算'

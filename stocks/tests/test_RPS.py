@@ -25,18 +25,26 @@ __author__ = 'pchaos'
 
 
 class TestRPS(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(TestRPS, cls).setUpClass()
-        cls.qslist = Listing.importIndexListing()
-        cls.listing = Listing.getlist('index')
+    # @classmethod
+    # def setUpClass(cls):
+    #     super(TestRPS, cls).setUpClass()
+    #     cls.qslist = Listing.importIndexListing()
+    #     cls.listing = Listing.getlist('index')
+    #
+    # @classmethod
+    # def tearDownClass(cls):
+    #     cls.qslist = None
+    #     cls.listing = None
 
     @classmethod
-    def tearDownClass(cls):
-        cls.qslist = None
-        cls.listing = None
+    def setUpTestData(cls):
+        # 随机插入
+        Listing.importIndexListing()
+        rpspreparelist = RPSprepare.importIndexListing()
 
     def test_getCodelist(self):
-        rpspreparelist = TestRPSprepare.insertRandomRPSprepare(None, 10)
-        rpspreparelist
+        RPS.importIndexListing()
+        self.fail()
+
+
 

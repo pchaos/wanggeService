@@ -79,10 +79,10 @@ class TestStocktradedate(TestCase):
 
     def test_get_real_datelist(self):
         qs = stocktradedate.importList()
-        # day1 = datetime.datetime.strptime('2018-5-13', '%Y-%m-%d').date()  # 周日
-        # day2 = datetime.datetime.strptime('2018-5-13', '%Y-%m-%d').date()  # 周日
-        # start, end = stocktradedate.get_real_datelist(day1, day2)
-        # self.assertIsNone(start)
+        day1 = datetime.datetime.strptime('2018-5-13', '%Y-%m-%d').date()  # 周日
+        day2 = datetime.datetime.strptime('2018-5-13', '%Y-%m-%d').date()  # 周日
+        start, end = stocktradedate.get_real_datelist(day1, day2)
+        self.assertIsNone(start)
 
         day1 = datetime.datetime.strptime('2018-5-13', '%Y-%m-%d').date()  # 周日
         day2 = datetime.datetime.strptime('2018-5-15', '%Y-%m-%d').date()  # 周日

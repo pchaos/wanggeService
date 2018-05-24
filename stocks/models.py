@@ -532,12 +532,23 @@ class stocktradedate(models.Model):
         当start end中间没有交易日 返回None, None
         @yutiansut/ 2017-12-19
         """
-        datesse = cls()
-        alist = datesse.trade_date_sse.filter(tradedate__gte=convertToDate(start), tradedate__lte=convertToDate(end))
+        alist = cls.get_real_datelisting(start, end)
         if alist.count() == 0:
             return None, None
         else:
             return (alist[0]['tradedate'], alist[len(alist) - 1]['tradedate'])
+
+    @classmethod
+    def get_real_datelisting(cls, start, end):
+        """ 取数据的真实区间列表
+
+        :param start:
+        :param end:
+        :return: list of datetime.date()
+        """
+
+        datesse = cls()
+        return datesse.trade_date_sse.filter(tradedate__gte=convertToDate(start), tradedate__lte=convertToDate(end))
 
     class Meta:
         # app_label ='rps计算'

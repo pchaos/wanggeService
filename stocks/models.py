@@ -4,6 +4,7 @@ import datetime
 import pandas as pd
 import pytz
 from django.conf import settings
+import numpy as np
 import QUANTAXIS as qa  # since quantaxis Version 1.0.33    2018 05 18
 
 STOCK_CATEGORY = ((10, "股票"),
@@ -341,10 +342,32 @@ class RPSprepare(RPSBase):
 class RPS(RPSBase):
     """欧奈尔PRS"""
 
-    # code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
-    # rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
-    # rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True)
-    # tradedate = models.DateTimeField(verbose_name='交易日期', auto_now_add=True)
+    @staticmethod
+    def caculateRPS(df, nlist=[120, 250]):
+        """ 计算n日rps
+
+        :param df: dataframe
+        :param nlist: n日list
+        :return:
+        """
+        orgincolumns = [c for c in df.columns]
+        assert len(df) > 0, 'df必须不为空'
+        dfd = df
+        for n in nlist:
+            dfd.reset_index(inplace=True)
+            rpsname = 'rps{}'.format(str(n))
+            rpsn = dfd[[rpsname, 'code_id']].sort_values(by=[rpsname])
+            rpsn.reset_index(inplace=True)
+            rpsn['a'] = np.round(100 * (rpsn.index - rpsn.index.min()) / (rpsn.index.max() - rpsn.index.min()), 2)
+            rpsn.set_index('code_id', inplace=True)
+            dfd.set_index('code_id', inplace=True)
+            if (rpsname not in list(dfd.columns)):
+                # 结果集中没有rpsname列名，则增加空列
+                dfd[rpsname] = pd.np.nan
+            dfd.loc[:, (rpsname)] = rpsn['a']
+        dfd.reset_index(inplace=True)
+        # dfd.set_index('tradedate', inplace=True)
+        return dfd[orgincolumns]
 
     @classmethod
     def importIndexListing(cls, start='2006-1-1', end=None):
@@ -361,14 +384,15 @@ class RPS(RPSBase):
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
             delisted = []  # quantaxis中无数据时，保存到delisted
-            for v in qs.values():
+            for v in stocktradedate.get_real_datelisting(start, end).values('tradedate'):
                 print(v)
-                # get stockcode
-                code = Listing.objects.get(code=v.code.code, category=11)
-                # 本地获取指数日线数据
-                # data = qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', timezone.now().strftime("%Y-%m-%d"))
-                data = []
-                if len(data) > 120:
+                # 获取 v['tradedate']对应的指数列表
+                qsday = qs.filter(tradedate=v['tradedate'])
+                df = pd.DataFrame(list(qsday.values()))
+                data = RPS.caculateRPS(df)
+                aaa
+                # code = Listing.objects.get(code=v.code.code, category=11)
+                if len(data) > 0:
                     df = pd.DataFrame(data.close)
                     df['rps120'] = df.close / df.close.shift(120)
                     df['rps250'] = df.close / df.close.shift(250)
@@ -525,7 +549,7 @@ class stocktradedate(models.Model):
     @classmethod
     def get_real_datelist(cls, start, end):
         """
-        取数据的真实区间,返回的时候用 start,end=stocktradedate.get_real_datelist()
+        取数据的真实区间,返回的时候用 start,end=stocktradedate.get_rev2ray v2ctl verifyal_datelist()
         @yutiansut
         2017/8/10
 

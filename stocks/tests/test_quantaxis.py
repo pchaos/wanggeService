@@ -2,7 +2,7 @@
 """
 -------------------------------------------------
 
-@File    : testquantaxis.py
+@File    : test_quantaxis.py
 
 Description :
 

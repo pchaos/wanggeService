@@ -27,31 +27,21 @@ __author__ = 'pchaos'
 
 
 class TestRPS(TestCase):
-    # @classmethod
-    # def setUpClass(cls):
-    #     super(TestRPS, cls).setUpClass()
-    #     cls.qslist = Listing.importIndexListing()
-    #     cls.listing = Listing.getlist('index')
-    #
-    # @classmethod
-    # def tearDownClass(cls):
-    #     cls.qslist = None
-    #     cls.listing = None
 
-    # @classmethod
-    # def setUpTestData(cls):
-    #     # 随机插入
-    #     Listing.importIndexListing()
-    #     rpspreparelist = RPSprepare.importIndexListing()
+    @classmethod
+    def setUpTestData(cls):
+        stocktradedate.importList()
+        Listing.importIndexListing()
+        rpspreparelist = RPSprepare.importIndexListing()
 
     def test_getCodelist(self):
         RPS.importIndexListing()
         self.fail()
 
     def test_caculateRPS(self):
-        stocktradedate.importList()
-        Listing.importIndexListing()
-        rpspreparelist = RPSprepare.importIndexListing()
+
+        # Listing.importIndexListing()
+        # rpspreparelist = RPSprepare.importIndexListing()
         qs = RPSprepare.getlist('index')
         assert qs.count() > 0, "RPSprepare.getlist('index') 返回个数应大于零"
         start, _ = stocktradedate.get_real_datelist('2018-1-1', '2018-2-1')

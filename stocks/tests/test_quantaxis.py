@@ -24,7 +24,24 @@ import numpy as np
 import pandas as pd
 from stocks.models import Listing, STOCK_CATEGORY
 
+"""
+QA.QA_util_log_info('日线数据')
+QA.QA_util_log_info('不复权')  
+data=QA.QAFetch.QATdx.QA_fetch_get_stock_day('00001','2017-01-01','2017-01-31')
 
+QA.QA_util_log_info('前复权')
+data=QA.QAFetch.QATdx.QA_fetch_get_stock_day('00001','2017-01-01','2017-01-31','01')
+
+QA.QA_util_log_info('后复权')
+data=QA.QAFetch.QATdx.QA_fetch_get_stock_day('00001','2017-01-01','2017-01-31','02')
+
+QA.QA_util_log_info('定点前复权')
+data=QA.QAFetch.QATdx.QA_fetch_get_stock_day('00001','2017-01-01','2017-01-31','03')
+
+
+QA.QA_util_log_info('定点后复权')
+data=QA.QAFetch.QATdx.QA_fetch_get_stock_day('00001','2017-01-01','2017-01-31','04')
+"""
 class testQuantaxis(TestCase):
     """ 测试quantaxis
         qa.QA_fetch_stock_day_adv

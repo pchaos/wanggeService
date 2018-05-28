@@ -16,7 +16,8 @@ Change Activity:
 -------------------------------------------------
 """
 from django.test import TestCase
-from stocks.models import Listing, BKDetail, MARKET_CHOICES, YES_NO, STOCK_CATEGORY
+from stocks.models import Listing, MARKET_CHOICES, YES_NO, STOCK_CATEGORY
+from stocks.models.bk import BKDetail
 from stocks.models import StockDay
 from django.utils import timezone
 import datetime

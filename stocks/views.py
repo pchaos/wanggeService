@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from stocks.serializers import UserSerializer, GroupSerializer
 from stocks.models import Listing as SC
 from stocks.serializers import ListingSerializer
-from stocks.models import BKDetail
+from stocks.models import BlockDetail
 from stocks.serializers import BKDetailSerializer
 
 class UserViewSet(viewsets.ModelViewSet):

@@ -2,7 +2,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 # 从别的app中导入文章模型
-from stocks.models import BKDetail
+from stocks.models import BlockDetail
+
 
 class BaseComment(models.Model):
     '基础评论模型'
@@ -14,7 +15,7 @@ class BaseComment(models.Model):
 
 class ArticleComment(BaseComment):
     '文章评论'
-    article = models.ForeignKey(BKDetail, on_delete=models.CASCADE, verbose_name='评论')
+    article = models.ForeignKey(BlockDetail, on_delete=models.CASCADE, verbose_name='评论')
     class Meta:
         ordering = ['-time']
 

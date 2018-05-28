@@ -2,8 +2,6 @@ from django.db import models
 from django.utils import timezone
 import datetime
 import pandas as pd
-import pytz
-from django.conf import settings
 import numpy as np
 import QUANTAXIS as qa  # since quantaxis Version 1.0.33    2018 05 18
 
@@ -192,49 +190,6 @@ class StockDay(models.Model):
         unique_together = (('code', 'tradedate'))
 
 
-class BK(models.Model):
-    """
-    板块
-    最上层的板块为：通达信 同花顺 自定义
-    """
-    code = models.CharField(verbose_name='编码', default='', max_length=18, db_index=True)
-    name = models.CharField(verbose_name='板块名称', max_length=60, blank=True, unique=True)
-    parent = models.ForeignKey('self', verbose_name='上级板块', blank=True, null=True, on_delete=models.CASCADE)
-    value1 = models.CharField(verbose_name='预留1', default='', max_length=50)
-    value2 = models.CharField(verbose_name='预留2', default='', max_length=50)
-    value3 = models.CharField(verbose_name='预留3', default='', max_length=50)
-    remarks = models.CharField(verbose_name='备注', max_length=250, default='')
-    isactived = models.BooleanField("有效", default=True, choices=YES_NO)
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    updated_time = models.DateTimeField(auto_now=True, verbose_name='更新时间')
-
-    def __str__(self):
-        return '{} - {} - {}'.format(self.parent, self.code, self.name)
-    #
-    # class Meta:
-    #     verbose_name = '板块'
-    #     unique_together = (('name', 'parent'))
-
-
-class BKDetail(models.Model):
-    """
-    自选股
-    """
-    code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
-    bkname = models.ForeignKey(BK, on_delete=models.PROTECT)
-    remark = models.CharField(verbose_name='备注', max_length=250, default='')
-    isactived = models.BooleanField("有效", choices=YES_NO)
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    updated_time = models.DateTimeField(auto_now=True, verbose_name='更新时间')
-
-    def __str__(self):
-        return '{0} - {1}'.format(self.code, self.bkname)
-
-    # class Meta:
-    #     app_label ='我的自选股'
-    #     verbose_name = '自选股'
-
-
 class RPSBase(stockABS):
     code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
     rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True)
@@ -284,7 +239,7 @@ class RPSBase(stockABS):
         :return: 从start到end截止的日期序列
         """
 
-        from datetime import timedelta, date
+        from datetime import timedelta
         for n in range(int((convertToDate(end_date) - convertToDate(start_date) + 1).days)):
             yield start_date + timedelta(n)
 
@@ -577,3 +532,6 @@ class stocktradedate(models.Model):
     class Meta:
         # app_label ='rps计算'
         verbose_name = 'A股交易日'
+
+from .bk import Block
+from .bk import BlockDetail

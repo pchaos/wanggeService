@@ -18,7 +18,8 @@ Change Activity:
 __author__ = 'pchaos'
 
 from django import forms
-from stocks.models import BK
+from stocks.models import Block
+
 
 class BKForm(forms.ModelForm):
     class Meta:

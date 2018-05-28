@@ -18,6 +18,7 @@ Change Activity:
 from django.db import models
 
 from stocks.models import Listing, YES_NO
+from stocks.models import qa
 
 __author__ = 'pchaos'
 
@@ -28,8 +29,8 @@ class Block(models.Model):
     最上层的板块为：通达信 同花顺 自定义
     """
     code = models.CharField(verbose_name='编码', default='', max_length=18, db_index=True)
-    name = models.CharField(verbose_name='板块名称', max_length=60, blank=True, unique=True)
-    parent = models.ForeignKey('self', verbose_name='上级板块', blank=True, null=True, on_delete=models.CASCADE)
+    name = models.CharField(verbose_name='板块名称', max_length=60, blank=True)
+    parentblock = models.ForeignKey('self', verbose_name='上级板块', blank=True, null=True, on_delete=models.CASCADE)
     value1 = models.CharField(verbose_name='预留1', default='', max_length=50)
     value2 = models.CharField(verbose_name='预留2', default='', max_length=50)
     value3 = models.CharField(verbose_name='预留3', default='', max_length=50)
@@ -62,29 +63,88 @@ class Block(models.Model):
                 bk.save()
                 i += 1
 
+    @classmethod
+    def importTDXList(cls):
+        """ 导入通达信版块
+        导入通达信版块及版块明细
+
+        :return: 通达信版块第一层
+        """
+        bkname = '通达信'
+        bk = Block.objects.all().filter(name=bkname, parentblock=None)
+        if len(bk) == 1:
+            # 数据库中有通达信版块
+            data = qa.QAFetch.QATdx.QA_fetch_get_stock_block()
+            datatypeset = set(data.type)
+            for v in datatypeset:
+                # 保存版块类型
+                cls(code=v, name=v, parentblock=bk[0]).save()
+
+            querysetlist = []
+            try:
+                for v in datatypeset:
+                    # 保存版块名称
+                    bl = cls.getlist().filter(name=v)
+                    if len(bl) == 1:
+
+                        blockdf = data[data.type == v].blockname
+                        blockset = set(blockdf)
+                        for m in blockset:
+                            block, _ =cls.objects.get_or_create(code=m, name=m, parentblock=bl[0])
+                            bdetail = blockdf.reset_index()[blockdf.reset_index().blockname == m].code
+                            for d in bdetail:
+                                # 版块明细
+                                code = Listing.getlist('stock').get(code=d)
+                                if code.id:
+                                    pass
+                                querysetlist.append(BlockDetail(code=code, blockname=block))
+                        # print(querysetlist)
+                cls.objects.bulk_create(querysetlist)
+
+            except Exception as e :
+                print(e.args)
+        else:
+            pass
+        return cls.getlist(bk[0])
+
+
+    @classmethod
+    def getlist(cls, upperblock=None):
+        if upperblock:
+            return cls.objects.all().filter(parentblock=upperblock)
+        else:
+            return cls.objects.all()
+
     def __str__(self):
-        return '{} - {} - {}'.format(self.parent, self.code, self.name)
-    #
-    # class Meta:
-    #     verbose_name = '板块'
-    #     unique_together = (('name', 'parent'))
+        return '{} - {} - {}'.format(self.parentblock, self.code, self.name)
+
+    class Meta:
+        verbose_name = '板块'
+        unique_together = (('name', 'parentblock'))
+
 
 class BlockDetail(models.Model):
     """
     自选股
     """
     code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
-    bkname = models.ForeignKey(Block, on_delete=models.PROTECT)
+    blockname = models.ForeignKey(Block, on_delete=models.PROTECT)
     remark = models.CharField(verbose_name='备注', max_length=250, default='')
     isactived = models.BooleanField("有效", choices=YES_NO)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_time = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
+    @classmethod
+    def getlist(cls, parentblock=None):
+        if parentblock:
+            return cls.objects.all().filter(blockname=parentblock)
+        else:
+            return cls.objects.all()
+
     def __str__(self):
         return '{0} - {1}'.format(self.code, self.bkname)
 
-    # class Meta:
-    #     app_label ='我的自选股'
-    #     verbose_name = '版块明细'
-
-
+    class Meta:
+        # app_label ='版块明细'
+        verbose_name = '版块明细'
+        unique_together = (('code', 'blockname'))

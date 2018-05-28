@@ -16,7 +16,7 @@ Change Activity:
 -------------------------------------------------
 """
 from django.test import TestCase
-from stocks.models import Block
+from stocks.models import Block, Listing
 
 
 __author__ = 'pchaos'
@@ -41,3 +41,12 @@ class TestBK(TestCase):
         with self.assertRaises(Exception) as context:
             bk = Block.objects.get(name=bkname)
         self.assertTrue('query does not exist.' in str(context.exception), '{}'.format(context.exception))
+
+    def test_importTDXList(self):
+        listing = Listing.importStockListing()
+        tdxblock = Block.importTDXList()
+        print('tdxblock:{} \n{}'.format(tdxblock, tdxblock[0]))
+        self.assertTrue(len(tdxblock) == 4, '通达信子类包含四类')
+        tdxblocks = Block.getlist(tdxblock[0])
+        print('tdxblocks {} : {}'.format(tdxblock[0], tdxblocks))
+        self.assertTrue(len(tdxblocks) > 30, '版块数量应大于30： {}'.format(tdxblocks))

@@ -42,6 +42,8 @@ data=QA.QAFetch.QATdx.QA_fetch_get_stock_day('00001','2017-01-01','2017-01-31','
 QA.QA_util_log_info('定点后复权')
 data=QA.QAFetch.QATdx.QA_fetch_get_stock_day('00001','2017-01-01','2017-01-31','04')
 """
+
+
 class testQuantaxis(TestCase):
     """ 测试quantaxis
         qa.QA_fetch_stock_day_adv
@@ -51,6 +53,7 @@ class testQuantaxis(TestCase):
         qa.QA_fetch_index_day_adv(a.code, '1990-01-01', str(datetime.date.today()))
 
     """
+
     def setUp(self):
         self.code = '000001'
 
@@ -379,5 +382,25 @@ class testQuantaxis(TestCase):
                         category=category, market=market))
         Listing.objects.bulk_create(querysetlist)
         self.assertTrue(Listing.getlist('index').count() > 0, '未插入成功:{}'.format(querysetlist))
+
+    def test_block(self):
+        data = qa.QAFetch.QATdx.QA_fetch_get_stock_block()
+        btype = set(data.type)
+        self.assertTrue(len(btype) < 10, '版块类型不超过10，实际类型数：{}'.format(len(btype)))
+        gtype = data[data.type == 'gn']
+        self.assertTrue(len(gtype) > 100, '版块类型不少于100，实际类型数：{}'.format(len(gtype)))
+
+        for i in set(data[data.type == 'gn'].blockname):
+            # 版块名会重复
+            if len(set(data[data.blockname == i].type)) > 1:
+                print('** {} {}'.format(i, set(data[data.blockname == i].type)))
+
+        """ set(data.source)
+           {'tdx'}
+        """
+        self.assertTrue(set(data.source) == {'tdx'}, '版块来源数大于一个，为 {}'.format(set(data.source)))
+
+
+
 
 

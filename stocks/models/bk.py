@@ -103,13 +103,16 @@ class Block(models.Model):
                                     pass
                                 querysetlist.append(BlockDetail(code=code, blockname=block))
                         print(querysetlist)
+                # bulk_create放在循环里面会报错
                 BlockDetail.objects.bulk_create(querysetlist)
 
             except Exception as e:
                 print('{}\n{} 版块： {} 版块类型： {}'.format(e.args, code, d, bl[0]))
                 raise Exception
         else:
-            pass
+            # 初始化版块
+            cls.initBlock()
+            return cls.importTDXList()
         return cls.getlist(bk[0])
 
     @classmethod

@@ -21,7 +21,7 @@ from django import forms
 from stocks.models import Block
 
 
-class BKForm(forms.ModelForm):
+class BlockForm(forms.ModelForm):
     class Meta:
-        model = BK
+        model = Block
         exclude = ('id')

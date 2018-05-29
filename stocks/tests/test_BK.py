@@ -16,7 +16,8 @@ Change Activity:
 -------------------------------------------------
 """
 from django.test import TestCase
-from stocks.models import Block, Listing
+from stocks.models import Block, BlockDetail, Listing
+from stocks.models import qa
 
 
 __author__ = 'pchaos'
@@ -24,7 +25,13 @@ __author__ = 'pchaos'
 
 class TestBK(TestCase):
     def setUp(self):
+        qa.QA_util_log_info('Listing.importStockListing')
+        listing = Listing.importStockListing()
+        # Listing.importIndexListing()
+        assert Listing.getlist('stock').count() > 2000
+        qa.QA_util_log_info('Block.initBlock')
         Block.initBlock()
+
 
     def test_TDX(self):
         """
@@ -43,10 +50,13 @@ class TestBK(TestCase):
         self.assertTrue('query does not exist.' in str(context.exception), '{}'.format(context.exception))
 
     def test_importTDXList(self):
-        listing = Listing.importStockListing()
+
         tdxblock = Block.importTDXList()
         print('tdxblock:{} \n{}'.format(tdxblock, tdxblock[0]))
         self.assertTrue(len(tdxblock) == 4, '通达信子类包含四类')
         tdxblocks = Block.getlist(tdxblock[0])
         print('tdxblocks {} : {}'.format(tdxblock[0], tdxblocks))
-        self.assertTrue(len(tdxblocks) > 30, '版块数量应大于30： {}'.format(tdxblocks))
+        self.assertTrue(len(tdxblocks) > 10, '版块数量应大于10： {}'.format(tdxblocks))
+        # tdxdetail = BlockDetail.getlist(tdxblocks[0])
+        tdxdetail = BlockDetail.getlist()
+        self.assertTrue(len(tdxdetail) > 0, '版块数量应大于0： {} : {}'.format(tdxblocks[0], tdxdetail))

@@ -74,7 +74,7 @@ def ZXG_list(request, format=None):
     List all snippets, or create a new snippet.
     """
     if request.method == 'GET':
-        values = BKDetail.objects.all()
+        values = BlockDetail.objects.all()
         serializer = BKDetailSerializer(values, many=True)
         return Response(serializer.data)
 
@@ -91,8 +91,8 @@ def ZXG_detail(request, pk, format=None):
     Retrieve, update or delete a snippet instance.
     """
     try:
-        values = BKDetail.objects.get(pk=pk)
-    except BKDetail.DoesNotExist:
+        values = BlockDetail.objects.get(pk=pk)
+    except BlockDetail.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
@@ -160,7 +160,7 @@ def BK_list(request, format=None):
     List all snippets, or create a new snippet.
     """
     if request.method == 'GET':
-        values = BKDetail.objects.all()
+        values = BlockDetail.objects.all()
         serializer = BKDetailSerializer(values, many=True)
         return Response(serializer.data)
 
@@ -177,8 +177,8 @@ def BK_detail(request, pk, format=None):
     Retrieve, update or delete a snippet instance.
     """
     try:
-        values = BKDetail.objects.get(pk=pk)
-    except BKDetail.DoesNotExist:
+        values = BlockDetail.objects.get(pk=pk)
+    except BlockDetail.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':

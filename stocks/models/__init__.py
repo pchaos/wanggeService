@@ -107,6 +107,7 @@ class Listing(stockABS):
             cls.objects.bulk_create(querysetlist)
         except Exception as e:
             print(e.args)
+            return pd.DataFrame()
         return df
 
     @classmethod

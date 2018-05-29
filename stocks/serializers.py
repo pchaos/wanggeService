@@ -38,4 +38,4 @@ class ListingSerializer(serializers.HyperlinkedModelSerializer):
 class BKDetailSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = BlockDetail
-        fields = ('code', 'name', 'market', 'isindex')
+        fields = ('code', 'blockname', 'market', 'isindex')

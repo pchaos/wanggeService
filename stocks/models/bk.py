@@ -74,7 +74,8 @@ class Block(models.Model):
         bk = Block.objects.all().filter(name=bkname, parentblock=None)
         if len(bk) == 1:
             # 数据库中有通达信版块
-            data = qa.QAFetch.QATdx.QA_fetch_get_stock_block()
+            # data = qa.QAFetch.QATdx.QA_fetch_get_stock_block()
+            data = qa.QA_fetch_stock_block_adv().data
             datatypeset = set(data.type)
             for v in datatypeset:
                 # 保存版块类型
@@ -84,13 +85,16 @@ class Block(models.Model):
             try:
                 for v in datatypeset:
                     # 保存版块名称
+                    if v == 'zs':
+                        # todo 指数版块忽略 需要处理
+                        continue
                     bl = cls.getlist().filter(name=v)
                     if len(bl) == 1:
 
                         blockdf = data[data.type == v].blockname
                         blockset = set(blockdf)
                         for m in blockset:
-                            block, _ =cls.objects.get_or_create(code=m, name=m, parentblock=bl[0])
+                            block, _ = cls.objects.get_or_create(code=m, name=m, parentblock=bl[0])
                             bdetail = blockdf.reset_index()[blockdf.reset_index().blockname == m].code
                             for d in bdetail:
                                 # 版块明细
@@ -98,15 +102,15 @@ class Block(models.Model):
                                 if code.id:
                                     pass
                                 querysetlist.append(BlockDetail(code=code, blockname=block))
-                        # print(querysetlist)
-                cls.objects.bulk_create(querysetlist)
+                        print(querysetlist)
+                BlockDetail.objects.bulk_create(querysetlist)
 
-            except Exception as e :
-                print(e.args)
+            except Exception as e:
+                print('{}\n{} 版块： {} 版块类型： {}'.format(e.args, code, d, bl[0]))
+                raise Exception
         else:
             pass
         return cls.getlist(bk[0])
-
 
     @classmethod
     def getlist(cls, upperblock=None):
@@ -130,19 +134,19 @@ class BlockDetail(models.Model):
     code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
     blockname = models.ForeignKey(Block, on_delete=models.PROTECT)
     remark = models.CharField(verbose_name='备注', max_length=250, default='')
-    isactived = models.BooleanField("有效", choices=YES_NO)
+    isactived = models.BooleanField("有效", default=True, choices=YES_NO)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_time = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
     @classmethod
-    def getlist(cls, parentblock=None):
-        if parentblock:
-            return cls.objects.all().filter(blockname=parentblock)
+    def getlist(cls, upperblock=None):
+        if upperblock:
+            return cls.objects.all().filter(blockname=upperblock)
         else:
             return cls.objects.all()
 
     def __str__(self):
-        return '{0} - {1}'.format(self.code, self.bkname)
+        return '{0} - {1}'.format(self.code, self.blockname)
 
     class Meta:
         # app_label ='版块明细'

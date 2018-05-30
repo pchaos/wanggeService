@@ -8,3 +8,5 @@ urllib3
 requests
 easyutils
 quantaxis>=1.0.33
+selenium
+bs4

@@ -24,6 +24,8 @@ from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
 import re
 import pandas as pd
+import numpy as np
+import time
 
 __author__ = 'pchaos'
 
@@ -57,7 +59,7 @@ class TestHSGTCG(TestCase):
         opts.set_headless()
         assert opts.headless  # operating in headless mode
         browser = webdriver.Firefox()
-
+        browser.maximize_window()
         try:
             browser.get(url)
             soup = BeautifulSoup(browser.page_source, 'lxml')
@@ -82,3 +84,47 @@ class TestHSGTCG(TestCase):
 
         :return:
         """
+        def f(astr):
+            try:
+                if type(astr) is str:
+                    y = '亿'
+                    if astr.find(y) >= 0:
+                        return str(np.round(float(astr.replace(y, '')) * 100000, 2))
+                    y = '万'
+                    if astr.find(y) >= 0:
+                        return str(np.round(float(astr.replace(y, '')), 2))
+            except:
+                return '0'
+
+        page = 1
+        url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx?tab={}'.format(page)
+        opts = Options()
+        opts.set_headless()
+        assert opts.headless  # operating in headless mode
+        browser = webdriver.Firefox()
+        browser.maximize_window()
+        try:
+            browser.get(url)
+            # 北向持股
+            browser.find_element_by_css_selector('.border_left_1').click()
+            time.sleep(2)
+            # 市值排序
+            browser.find_element_by_css_selector('#tb_ggtj > thead:nth-child(1) > tr:nth-child(1) > th:nth-child(8)').click()
+            time.sleep(1.5)
+
+            soup = BeautifulSoup(browser.page_source, 'lxml')
+            table = soup.find_all(id='tb_ggtj')[0]
+            df = pd.read_html(str(table), header=1)[0]
+            df.columns = ['date', 'code', 'name', 'a1', 'close', 'zd', 'hvol', 'hamount', 'hpercent', 'oneday', 'fiveday',
+                          'tenday']
+            # 修复code长度，前补零
+            df['code'] = df.code.astype(str)
+            df['code'] = df['code'].apply(lambda x: x.zfill(6))
+            # 修复持股数量
+            df['hvol']=df['hvol'].apply(lambda x: f(x)).astype(float)
+            df['hamount']=df['hamount'].apply(lambda x: f(x)).astype(float)
+
+        finally:
+            if browser:
+                # browser.close()
+                pass

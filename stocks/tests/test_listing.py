@@ -18,9 +18,10 @@ Change Activity:
 
 from django.test import TestCase
 from stocks.models import Listing, MARKET_CHOICES, YES_NO, STOCK_CATEGORY
-from stocks.models import BlockDetail
+from stocks.models import BlockDetail, qa
 from django.utils import timezone
 from datetime import datetime
+import pandas as pd
 
 __author__ = 'pchaos'
 
@@ -102,3 +103,22 @@ class TestListing(TestCase):
         count = Listing.getlist('all').count()
         self.assertTrue(counts == count, '明细汇总应该和总体数量一样：{} - {}'.format(counts, count))
 
+    def test_IndexDuplocate(self):
+        Listing.importIndexListing()
+        indexlist = Listing.getlist('index').filter(isactived=True)
+        df = pd.DataFrame(list(indexlist.values('code', 'name')))
+        dup = df[df.duplicated('name')]
+        for v in dup.name:
+            x = None
+            for d in df[df.name == v].index:
+                if not x:
+                    x = qa.QA_fetch_index_day_adv(df.iloc[d].code, '2018-1-1', '2018-3-1')
+                else:
+                    y = qa.QA_fetch_index_day_adv(df.iloc[d].code, '2018-1-1', '2018-3-1')
+                    if (x.data.close[-1] == y.data.close[-1]):
+                        print('重复的index: {} {}'.format(x.data.index[0][1], df.iloc[d].code))  # 重复的index
+                        Listing.objects.all().filter(code=df.iloc[d].code)
+                        # 更新重复代码isactived=False
+
+                    else:
+                        print('未重复的index: {}'.format(df.iloc[d].code))  # 重复的index

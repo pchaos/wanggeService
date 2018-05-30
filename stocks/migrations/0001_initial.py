@@ -108,7 +108,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='stocktradedate',
+            name='Stocktradedate',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('tradedate', models.DateField(unique=True, verbose_name='交易日期')),

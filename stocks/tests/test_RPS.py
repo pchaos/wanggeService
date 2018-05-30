@@ -17,7 +17,8 @@ Change Activity:
 """
 from django.test import TestCase
 from stocks.models import Listing, STOCK_CATEGORY
-from stocks.models import RPSprepare, RPS, stocktradedate
+from stocks.models import Stocktradedate
+from stocks.models.rps import RPS, RPSprepare
 from stocks.models import convertToDate
 from .test_RPSprepare import TestRPSprepare
 import datetime
@@ -30,7 +31,7 @@ class TestRPS(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        stocktradedate.importList()
+        Stocktradedate.importList()
         Listing.importIndexListing()
         rpspreparelist = RPSprepare.importIndexListing()
 
@@ -44,7 +45,7 @@ class TestRPS(TestCase):
         # rpspreparelist = RPSprepare.importIndexListing()
         qs = RPSprepare.getlist('index')
         assert qs.count() > 0, "RPSprepare.getlist('index') 返回个数应大于零"
-        start, _ = stocktradedate.get_real_datelist('2018-1-1', '2018-2-1')
+        start, _ = Stocktradedate.get_real_datelist('2018-1-1', '2018-2-1')
         # qs = RPSprepare.getlist('index').filter(tradedate=convertToDate('2018-1-4'))
         qs = RPSprepare.getlist('index').filter(tradedate=start)
         df = pd.DataFrame(list(qs.values()))

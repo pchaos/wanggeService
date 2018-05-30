@@ -400,7 +400,3 @@ class testQuantaxis(TestCase):
         """
         self.assertTrue(set(data.source) == {'tdx'}, '版块来源数大于一个，为 {}'.format(set(data.source)))
 
-
-
-
-

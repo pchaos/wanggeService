@@ -2,21 +2,21 @@
 """
 -------------------------------------------------
 
-@File    : test_HSGTCG.py
+@File    : test_HSGTCGHold.py
 
 Description :
 
 @Author :       pchaos
 
-date：          18-5-30
+date：          2018-5-31
 -------------------------------------------------
 Change Activity:
-               18-5-30:
+               18-5-31:
 @Contact : p19992003#gmail.com                   
 -------------------------------------------------
 """
 from django.test import TestCase
-from stocks.models import HSGTCG
+from stocks.models import HSGTCGHold
 
 import selenium
 from selenium import webdriver
@@ -30,59 +30,8 @@ import time
 __author__ = 'pchaos'
 
 
-def str2Float(astr):
-    """ 包含汉字数字的字符串转为float
-
-    :param astr:
-    :return:
-    """
-    try:
-        if type(astr) is str:
-            y = '亿'
-            if astr.find(y) >= 0:
-                return float(astr.replace(y, '')) * 100000
-    except:
-        return 0
-
-
-class TestHSGTCG(TestCase):
-    def test_getlist(self):
-        self.fail()
-
-    def test_scrapt(self):
-        """ 个股北向持股
-
-        :return:
-        """
-        code = '600066'
-        url = 'http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock={}'.format(code)
-
-        opts = Options()
-        opts.set_headless()
-        assert opts.headless  # operating in headless mode
-        browser = webdriver.Firefox()
-        browser.maximize_window()
-        try:
-            browser.get(url)
-            soup = BeautifulSoup(browser.page_source, 'lxml')
-            table = soup.find_all(id='tb_cgtj')[0]
-            df = pd.read_html(str(table), header=1)[0]
-            df.columns = ['date', 'related', 'close', 'zd', 'hvol', 'hamount', 'hpercent', 'oneday', 'fiveday',
-                          'tenday']
-            for i in df.index:
-                v = df.iloc[i]
-                print('{} {} {} {}'.format(v.close, v.hvol, v.hamount, v.hpercent))
-                HSGTCG.objects.get_or_create(code=code, close=v.close, hvol=str2Float(v.hvol),
-                                             hamount=str2Float(v.hamount), hpercent=v.hpercent)
-        finally:
-            if browser:
-                browser.close()
-        hsgtcg = HSGTCG.getlist(code)
-        # hsgtcg = HSGTCG.getlist()
-        print(hsgtcg)
-        self.assertTrue(hsgtcg.count() > 10, '保存的数量： {}'.format(hsgtcg.count()))
-
-    def test_StockStatistics(self):
+class TestHSGTCGHold(TestCase):
+    def test_stockstatistics(self):
         """ 北持股向市值大于八千万
 
         :return:
@@ -103,7 +52,7 @@ class TestHSGTCG(TestCase):
                     if astr.find(y) >= 0:
                         return str(np.round(float(astr.replace(y, '')), 2))
                     else:
-                        return str(np.round(float(astr)/10000, 2))
+                        return str(np.round(float(astr) / 10000, 2))
             except:
                 return '0'
 
@@ -116,7 +65,8 @@ class TestHSGTCG(TestCase):
             results = []
             pages = range(1, 37, 1)
             page = 1
-            url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx?tab={}'.format(page)
+            # url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx?tab={}'.format(page)
+            url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx'
             browser.get(url)
             # 北向持股
             browser.find_element_by_css_selector('.border_left_1').click()
@@ -129,7 +79,7 @@ class TestHSGTCG(TestCase):
                 soup = BeautifulSoup(browser.page_source, 'lxml')
                 table = soup.find_all(id='tb_ggtj')[0]
                 df = pd.read_html(str(table), header=1)[0]
-                df.columns = ['date', 'code', 'name', 'a1', 'close', 'zd', 'hvol', 'hamount', 'hpercent', 'oneday',
+                df.columns = ['tradedate', 'code', 'name', 'a1', 'close', 'zd', 'hvol', 'hamount', 'hpercent', 'oneday',
                               'fiveday',
                               'tenday']
                 # 修复code长度，前补零
@@ -138,6 +88,11 @@ class TestHSGTCG(TestCase):
                 # 修复持股数量
                 df['hvol'] = df['hvol'].apply(lambda x: f(x)).astype(float)
                 df['hamount'] = df['hamount'].apply(lambda x: f(x)).astype(float)
+                # 删除多余的列
+                del df['oneday']
+                del df['fiveday']
+                del df['tenday']
+                del df['a1']
                 results.append(df[df['hamount'] > 8000])
                 if len(df[df['hamount'] < 8000]):
                     # 持股金额小于
@@ -159,3 +114,14 @@ class TestHSGTCG(TestCase):
                 pass
         self.assertTrue(len(results) > 3)
         # todo results 整合
+        dfn = pd.DataFrame()
+        for dfa in results:
+            dfn = pd.concat([dfn, dfa])
+        dfn.reset_index(drop=True, inplace=True)
+        self.assertFalse(dfn[['code', 'tradedate']] is None)
+        # pandas dataframe save to model
+        HSGTCGHold.objects.bulk_create(
+            HSGTCGHold(**vals) for vals in dfn[['code', 'tradedate']].to_dict('records')
+        )
+        self.assertTrue(HSGTCGHold.getlist().count() > 0, '北向持股大于七千万的股票数量大于0')
+        print(HSGTCGHold.getlist())

@@ -19,6 +19,7 @@ __author__ = 'pchaos'
 
 from django.db import models
 
+
 class HSGTCG(models.Model):
     """ 沪深港通持股
     附注:
@@ -62,4 +63,38 @@ class HSGTCG(models.Model):
 
     class Meta:
         verbose_name = '沪深港通持股'
+        unique_together = (('code', 'tradedate'))
+
+class HSGTCGHold(models.Model):
+    """ 持股市值七千万
+
+    """
+    code = models.CharField(verbose_name='代码', max_length=10, db_index=True, null=True)
+    tradedate = models.DateField(verbose_name='日期', null=True)
+
+    @classmethod
+    def getlist(cls, tradedate=None):
+        """
+        返回stock_category类型列表
+
+        :param stock_category: 证券类型
+            STOCK_CATEGORY = ((10, "股票"),
+                  (11, "指数"),
+                  (12, "分级基金"),
+                  (13, "债券"),
+                  (14, "逆回购"),)
+        :return: .objects.all().filter(category=stock_category)
+        """
+        if tradedate:
+            # 返回所有代码
+            from stocks.models import convertToDate
+            return cls.objects.all().filter(tradedate=convertToDate(tradedate))
+
+        return cls.objects.all()
+
+    def __str__(self):
+        return '{} {}'.format(self.code, self.tradedate)
+
+    class Meta:
+        verbose_name = '沪深港通持股列表'
         unique_together = (('code', 'tradedate'))

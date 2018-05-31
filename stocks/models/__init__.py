@@ -194,4 +194,4 @@ from .stocktradedate import Stocktradedate
 from stocks.models.rps import RPS, RPSprepare
 from .bk import Block
 from .bk import BlockDetail
-from .hsgtcg import HSGTCG
+from .hsgtcg import HSGTCG, HSGTCGHold

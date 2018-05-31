@@ -25,7 +25,7 @@ from bs4 import BeautifulSoup
 import re
 import pandas as pd
 import numpy as np
-import time
+import datetime, time
 
 __author__ = 'pchaos'
 
@@ -36,25 +36,6 @@ class TestHSGTCGHold(TestCase):
 
         :return:
         """
-
-        def f(astr):
-            """ 统一以"万"为单位
-
-            :param astr: 带有“亿”、“万”等的字符串
-            :return: 以"万"为单位的浮点数
-            """
-            try:
-                if type(astr) is str:
-                    y = '亿'
-                    if astr.find(y) >= 0:
-                        return str(np.round(float(astr.replace(y, '')) * 100000, 2))
-                    y = '万'
-                    if astr.find(y) >= 0:
-                        return str(np.round(float(astr.replace(y, '')), 2))
-                    else:
-                        return str(np.round(float(astr) / 10000, 2))
-            except:
-                return '0'
 
         opts = Options()
         opts.set_headless()
@@ -86,8 +67,8 @@ class TestHSGTCGHold(TestCase):
                 df['code'] = df.code.astype(str)
                 df['code'] = df['code'].apply(lambda x: x.zfill(6))
                 # 修复持股数量
-                df['hvol'] = df['hvol'].apply(lambda x: f(x)).astype(float)
-                df['hamount'] = df['hamount'].apply(lambda x: f(x)).astype(float)
+                df['hvol'] = df['hvol'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
+                df['hamount'] = df['hamount'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
                 # 删除多余的列
                 del df['oneday']
                 del df['fiveday']
@@ -113,7 +94,7 @@ class TestHSGTCGHold(TestCase):
                 browser.close()
                 pass
         self.assertTrue(len(results) > 3)
-        # todo results 整合
+        #  results 整合
         dfn = pd.DataFrame()
         for dfa in results:
             dfn = pd.concat([dfn, dfa])
@@ -125,3 +106,8 @@ class TestHSGTCGHold(TestCase):
         )
         self.assertTrue(HSGTCGHold.getlist().count() > 0, '北向持股大于七千万的股票数量大于0')
         print(HSGTCGHold.getlist())
+
+    def test_importList(self):
+        HSGTCGHold.importList()
+        hsg = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(1))
+        self.assertTrue(hsg.count() > 10 , '北向持股大于七千万的股票数量大于10, 实际数量：{}'.format(hsg.count()))

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """
 -------------------------------------------------
 
@@ -16,11 +17,65 @@ Change Activity:
 -------------------------------------------------
 """
 __author__ = 'pchaos'
+MINHAMOUNT = 7000  # 最小关注的北向持仓金额
 
 from django.db import models
+import selenium
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+from bs4 import BeautifulSoup
+import re
+import pandas as pd
+import numpy as np
+import time
 
 
-class HSGTCG(models.Model):
+class HSGTCGBase(models.Model):
+    @staticmethod
+    def hz2Num(astr):
+        """ 统一以"万"为单位
+
+        :param astr: 带有“亿”、“万”等的字符串
+        :return: 以"万"为单位的浮点数
+        """
+        try:
+            if type(astr) is str:
+                y = '亿'
+                if astr.find(y) >= 0:
+                    return str(np.round(float(astr.replace(y, '')) * 100000, 2))
+                y = '万'
+                if astr.find(y) >= 0:
+                    return str(np.round(float(astr.replace(y, '')), 2))
+                else:
+                    return str(np.round(float(astr) / 10000, 2))
+        except:
+            return '0'
+
+    @staticmethod
+    def getBrowser():
+
+        opts = Options()
+        opts.set_headless()
+        assert opts.headless  # operating in headless mode
+        browser = webdriver.Firefox()
+        browser.maximize_window()
+        return browser
+
+    @staticmethod
+    def scrap(url, browser):
+        """ 抓取网页内容，子类需要实现该方法
+
+        :param url:
+        :param browser:
+        :return: pandas dataframe
+        """
+        raise Exception('子类需要实现本函数，返回需要数据的dataframe！')
+
+    class Meta:
+        abstract = True
+
+
+class HSGTCG(HSGTCGBase):
     """ 沪深港通持股
     附注:
 
@@ -65,12 +120,78 @@ class HSGTCG(models.Model):
         verbose_name = '沪深港通持股'
         unique_together = (('code', 'tradedate'))
 
-class HSGTCGHold(models.Model):
+
+class HSGTCGHold(HSGTCGBase):
     """ 持股市值七千万
 
     """
     code = models.CharField(verbose_name='代码', max_length=10, db_index=True, null=True)
     tradedate = models.DateField(verbose_name='日期', null=True)
+
+    @classmethod
+    def importList(cls):
+        browser = cls.getBrowser()
+        url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx'
+        df = cls.scrap(url, browser)
+        # pandas dataframe save to model
+        HSGTCGHold.objects.bulk_create(
+            HSGTCGHold(**vals) for vals in df[['code', 'tradedate']].to_dict('records')
+        )
+
+    @staticmethod
+    def scrap(url, browser):
+        try:
+            results = []
+            pages = range(1, 37, 1)
+            browser.get(url)
+            # 北向持股
+            browser.find_element_by_css_selector('.border_left_1').click()
+            time.sleep(2)
+            # 市值排序
+            browser.find_element_by_css_selector(
+                '#tb_ggtj > thead:nth-child(1) > tr:nth-child(1) > th:nth-child(8)').click()
+            time.sleep(1.5)
+            for page in pages:
+                soup = BeautifulSoup(browser.page_source, 'lxml')
+                table = soup.find_all(id='tb_ggtj')[0]
+                df = pd.read_html(str(table), header=1)[0]
+                df.columns = ['tradedate', 'code', 'name', 'a1', 'close', 'zd', 'hvol', 'hamount', 'hpercent', 'oneday',
+                              'fiveday',
+                              'tenday']
+                # 修复code长度，前补零
+                df['code'] = df.code.astype(str)
+                df['code'] = df['code'].apply(lambda x: x.zfill(6))
+                # 修复持股数量
+                df['hvol'] = df['hvol'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
+                df['hamount'] = df['hamount'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
+                # 删除多余的列
+                del df['oneday']
+                del df['fiveday']
+                del df['tenday']
+                del df['a1']
+                results.append(df[df['hamount'] > MINHAMOUNT])
+                if len(df[df['hamount'] < MINHAMOUNT]):
+                    # 持股金额小于
+                    break
+                else:
+                    # 下一页
+                    t = browser.find_element_by_css_selector('#PageContgopage')
+                    t.clear()
+                    t.send_keys(str(page + 1))
+                    browser.find_element_by_css_selector('.btn_link').click()
+
+                    time.sleep(1.5)
+                # print('results\n{}'.format(results))
+
+        finally:
+            if browser:
+                browser.close()
+        #  results 整合
+        dfn = pd.DataFrame()
+        for dfa in results:
+            dfn = pd.concat([dfn, dfa])
+        dfn.reset_index(drop=True, inplace=True)
+        return dfn
 
     @classmethod
     def getlist(cls, tradedate=None):

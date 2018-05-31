@@ -13,5 +13,5 @@ def Fibonacci(n):
     :param n: 斐波那契数
     :return: 斐波那契数列list
     """
-    # return [f for i, f in enumerate(Fibonacci_Yield_tool(n))]
+    # return [hz2Num for i, hz2Num in enumerate(Fibonacci_Yield_tool(n))]
     return list(Fibonacci_Yield_tool(n))

@@ -29,7 +29,7 @@ import pandas as pd
 import numpy as np
 import time, datetime
 from .stocktradedate import Stocktradedate
-
+from stocks.models import convertToDate
 
 class HSGTCGBase(models.Model):
     @staticmethod
@@ -112,10 +112,15 @@ class HSGTCGBase(models.Model):
         """
         if tradedate:
             # 返回所有代码
-            from stocks.models import convertToDate
+            # from stocks.models import convertToDate
             return cls.objects.all().filter(tradedate=convertToDate(tradedate))
 
         return cls.objects.all()
+
+    @classmethod
+    def saveModel2File(cls):
+        filename = '{}.pkl.gz'.format(cls.__name__)
+        cls.getlist()
 
     class Meta:
         abstract = True
@@ -181,7 +186,7 @@ class HSGTCG(HSGTCGBase):
                     try:
                         print('saving {} {}'.format(code[0], v.close))
                         HSGTCG.objects.get_or_create(code=code[0], close=v.close, hvol=v.hvol,
-                                                     hamount=v.hamount, hpercent=v.hpercent, tradedate=v.date)
+                                                     hamount=v.hamount, hpercent=v.hpercent, tradedate=convertToDate(v.date))
                     except Exception as e:
                         # print(code[0], v, type(v.close), type(v.hpercent))
                         print(e.args)
@@ -282,6 +287,7 @@ class HSGTCGHold(HSGTCGBase):
         for dfa in results:
             dfn = pd.concat([dfn, dfa])
         dfn.reset_index(drop=True, inplace=True)
+        # dfn.index = pd.RangeIndex(len(dfn.index))
         return dfn
 
     def __str__(self):

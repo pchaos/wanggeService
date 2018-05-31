@@ -82,6 +82,7 @@ class TestHSGTCG(TestCase):
         print(hsgtcg)
         self.assertTrue(hsgtcg.count() > 10, '保存的数量： {}'.format(hsgtcg.count()))
         self.assertTrue(isinstance(hsgtcg[0].tradedate,datetime.date))
+        self.assertTrue(hsgtcg.filter(tradedate=None).count() == 0)
 
     def test_importList(self):
         HSGTCG.importList()

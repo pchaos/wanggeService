@@ -32,10 +32,10 @@ class TestStrategyType(TestCase):
 
         If you update the database using the django admin or model forms, Django will do the length validation for you. In the shell, you could manually call full_clean before saving, and catch the validation error.
 
-        f = Foo(myAction="more than 1 char")
+        hz2Num = Foo(myAction="more than 1 char")
         try:
-            f.full_clean()
-            f.save()
+            hz2Num.full_clean()
+            hz2Num.save()
         except ValidationError as e:
             # Do something based on the errors contained in e.message_dict.
         :return:

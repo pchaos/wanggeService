@@ -25,7 +25,7 @@ from bs4 import BeautifulSoup
 import re
 import pandas as pd
 import numpy as np
-import time
+import time , datetime
 
 __author__ = 'pchaos'
 
@@ -73,7 +73,7 @@ class TestHSGTCG(TestCase):
                 v = df.iloc[i]
                 print('{} {} {} {}'.format(v.close, v.hvol, v.hamount, v.hpercent))
                 HSGTCG.objects.get_or_create(code=code, close=v.close, hvol=str2Float(v.hvol),
-                                             hamount=str2Float(v.hamount), hpercent=v.hpercent)
+                                             hamount=str2Float(v.hamount), hpercent=v.hpercent, tradedate=v.date)
         finally:
             if browser:
                 browser.close()
@@ -81,5 +81,11 @@ class TestHSGTCG(TestCase):
         # hsgtcg = HSGTCG.getlist()
         print(hsgtcg)
         self.assertTrue(hsgtcg.count() > 10, '保存的数量： {}'.format(hsgtcg.count()))
+        self.assertTrue(isinstance(hsgtcg[0].tradedate,datetime.date))
 
-
+    def test_importList(self):
+        HSGTCG.importList()
+        hsgtcg = HSGTCG.getlist()
+        print(hsgtcg)
+        self.assertTrue(hsgtcg.count() > 10, '保存的数量： {}'.format(hsgtcg.count()))
+        print('数据库中保存的记录数量：{}'.format(hsgtcg.count()))

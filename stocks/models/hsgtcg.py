@@ -27,7 +27,8 @@ from bs4 import BeautifulSoup
 import re
 import pandas as pd
 import numpy as np
-import time
+import time, datetime
+from .stocktradedate import Stocktradedate
 
 
 class HSGTCGBase(models.Model):
@@ -52,6 +53,26 @@ class HSGTCGBase(models.Model):
             return '0'
 
     @staticmethod
+    def str2Float(astr):
+        """ 包含汉字数字的字符串转为float
+
+        :param astr:
+        :return:
+        """
+        try:
+            if type(astr) is str:
+                y = '亿'
+                if astr.find(y) >= 0:
+                    return round(float(astr.replace(y, '')) * 100000, 2)
+                y = '万'
+                if astr.find(y) >= 0:
+                    return round(float(astr.replace(y, '')), 2)
+                else:
+                    return round(float(astr) / 10000, 2)
+        except:
+            return 0
+
+    @staticmethod
     def getBrowser():
 
         opts = Options()
@@ -71,9 +92,33 @@ class HSGTCGBase(models.Model):
         """
         raise Exception('子类需要实现本函数，返回需要数据的dataframe！')
 
+    @staticmethod
+    def getNearestTradedate(date=datetime.datetime.now().date()):
+        """ 获取离date最近的交易日期
+
+        :param date:
+        :return:
+        """
+        return Stocktradedate.get_real_date(date, -1)
+
+    @classmethod
+    def getlist(cls, tradedate=None):
+        """
+        返回列表
+
+        :param tradedate: 交易日期
+
+        :return: .objects.all().filter(category=stock_category)
+        """
+        if tradedate:
+            # 返回所有代码
+            from stocks.models import convertToDate
+            return cls.objects.all().filter(tradedate=convertToDate(tradedate))
+
+        return cls.objects.all()
+
     class Meta:
         abstract = True
-
 
 class HSGTCG(HSGTCGBase):
     """ 沪深港通持股
@@ -99,13 +144,8 @@ class HSGTCG(HSGTCGBase):
         """
         返回stock_category类型列表
 
-        :param stock_category: 证券类型
-            STOCK_CATEGORY = ((10, "股票"),
-                  (11, "指数"),
-                  (12, "分级基金"),
-                  (13, "债券"),
-                  (14, "逆回购"),)
-        :return: .objects.all().filter(category=stock_category)
+        :param code:
+        :return:
         """
         if code:
             # 返回所有代码
@@ -113,8 +153,56 @@ class HSGTCG(HSGTCGBase):
 
         return cls.objects.all()
 
+    @classmethod
+    def importList(cls):
+        i, j = 0, 0
+        while i < 10 and j == 0:
+            # 最多循环十次，若j在退出循环的时候为0，则无数据
+            hsgh = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(i + 1))
+            i += 1
+            j = hsgh.count()
+        if j == 0:
+            HSGTCGHold.importList()
+            hsgh = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(1))
+        browser = cls.getBrowser()
+        try:
+            for code in list(hsgh.values_list('code')):
+                hsghc = hsgh.filter(code=code)
+                if hsghc.count() > 0:
+                    continue
+                url = 'http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock={}'.format(code[0])
+                df = cls.scrap(url, browser)
+                # 修复持股数量
+                df['hvol'] = df['hvol'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
+                df['hamount'] = df['hamount'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
+                df['close'] = df['close'].astype(float)
+                for i in df.index:
+                    v = df.iloc[i]
+                    try:
+                        print('saving {} {}'.format(code[0], v.close))
+                        HSGTCG.objects.get_or_create(code=code[0], close=v.close, hvol=v.hvol,
+                                                     hamount=v.hamount, hpercent=v.hpercent, tradedate=v.date)
+                    except Exception as e:
+                        # print(code[0], v, type(v.close), type(v.hpercent))
+                        print(e.args)
+                        # raise Exception(e.args)
+        finally:
+            if browser:
+                browser.close()
+
+    @staticmethod
+    def scrap(url, browser):
+        browser.get(url)
+        time.sleep(0.1)
+        soup = BeautifulSoup(browser.page_source, 'lxml')
+        table = soup.find_all(id='tb_cgtj')[0]
+        df = pd.read_html(str(table), header=1)[0]
+        df.columns = ['date', 'related', 'close', 'zd', 'hvol', 'hamount', 'hpercent', 'oneday', 'fiveday',
+                      'tenday']
+        return df
+
     def __str__(self):
-        return '{} {} {} {}'.format(self.code, self.close, self.hvol, self.hamount)
+        return '{} {} {} {} {}'.format(self.code, self.close, self.hvol, self.hamount, self.tradedate)
 
     class Meta:
         verbose_name = '沪深港通持股'
@@ -130,6 +218,9 @@ class HSGTCGHold(HSGTCGBase):
 
     @classmethod
     def importList(cls):
+        hsgh = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(1))
+        if hsgh.count() > 0:
+            return hsgh
         browser = cls.getBrowser()
         url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx'
         df = cls.scrap(url, browser)
@@ -137,6 +228,7 @@ class HSGTCGHold(HSGTCGBase):
         HSGTCGHold.objects.bulk_create(
             HSGTCGHold(**vals) for vals in df[['code', 'tradedate']].to_dict('records')
         )
+        # return hsgh.get
 
     @staticmethod
     def scrap(url, browser):
@@ -146,7 +238,7 @@ class HSGTCGHold(HSGTCGBase):
             browser.get(url)
             # 北向持股
             browser.find_element_by_css_selector('.border_left_1').click()
-            time.sleep(2)
+            time.sleep(1.5)
             # 市值排序
             browser.find_element_by_css_selector(
                 '#tb_ggtj > thead:nth-child(1) > tr:nth-child(1) > th:nth-child(8)').click()
@@ -179,8 +271,7 @@ class HSGTCGHold(HSGTCGBase):
                     t.clear()
                     t.send_keys(str(page + 1))
                     browser.find_element_by_css_selector('.btn_link').click()
-
-                    time.sleep(1.5)
+                    time.sleep(1.3)
                 # print('results\n{}'.format(results))
 
         finally:
@@ -192,26 +283,6 @@ class HSGTCGHold(HSGTCGBase):
             dfn = pd.concat([dfn, dfa])
         dfn.reset_index(drop=True, inplace=True)
         return dfn
-
-    @classmethod
-    def getlist(cls, tradedate=None):
-        """
-        返回stock_category类型列表
-
-        :param stock_category: 证券类型
-            STOCK_CATEGORY = ((10, "股票"),
-                  (11, "指数"),
-                  (12, "分级基金"),
-                  (13, "债券"),
-                  (14, "逆回购"),)
-        :return: .objects.all().filter(category=stock_category)
-        """
-        if tradedate:
-            # 返回所有代码
-            from stocks.models import convertToDate
-            return cls.objects.all().filter(tradedate=convertToDate(tradedate))
-
-        return cls.objects.all()
 
     def __str__(self):
         return '{} {}'.format(self.code, self.tradedate)

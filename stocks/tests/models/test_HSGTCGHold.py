@@ -36,7 +36,6 @@ class TestHSGTCGHold(TestCase):
 
         :return:
         """
-
         opts = Options()
         opts.set_headless()
         assert opts.headless  # operating in headless mode
@@ -111,3 +110,4 @@ class TestHSGTCGHold(TestCase):
         HSGTCGHold.importList()
         hsg = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(1))
         self.assertTrue(hsg.count() > 10 , '北向持股大于七千万的股票数量大于10, 实际数量：{}'.format(hsg.count()))
+        self.assertTrue(isinstance(hsg[0].tradedate, datetime.date))

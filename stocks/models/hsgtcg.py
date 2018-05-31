@@ -30,6 +30,8 @@ import numpy as np
 import time, datetime
 from .stocktradedate import Stocktradedate
 from stocks.models import convertToDate
+import os
+
 
 class HSGTCGBase(models.Model):
     @staticmethod
@@ -118,12 +120,18 @@ class HSGTCGBase(models.Model):
         return cls.objects.all()
 
     @classmethod
-    def saveModel2File(cls):
-        filename = '{}.pkl.gz'.format(cls.__name__)
-        cls.getlist()
+    def saveModel2File(cls, filename=None):
+        if not filename:
+            filename = '{}_{}.pkl.gz'.format(cls.__name__, datetime.datetime.now().date())
+        from django.forms import model_to_dict
+        aobjs = [model_to_dict(aobj) for aobj in cls.objects.all()]
+        df = pd.DataFrame(aobjs)
+        df.to_pickle(filename)
+        return filename
 
     class Meta:
         abstract = True
+
 
 class HSGTCG(HSGTCGBase):
     """ 沪深港通持股
@@ -186,7 +194,8 @@ class HSGTCG(HSGTCGBase):
                     try:
                         print('saving {} {}'.format(code[0], v.close))
                         HSGTCG.objects.get_or_create(code=code[0], close=v.close, hvol=v.hvol,
-                                                     hamount=v.hamount, hpercent=v.hpercent, tradedate=convertToDate(v.date))
+                                                     hamount=v.hamount, hpercent=v.hpercent,
+                                                     tradedate=convertToDate(v.date))
                     except Exception as e:
                         # print(code[0], v, type(v.close), type(v.hpercent))
                         print(e.args)

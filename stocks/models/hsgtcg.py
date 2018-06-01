@@ -17,9 +17,10 @@ Change Activity:
 -------------------------------------------------
 """
 __author__ = 'pchaos'
-MINHAMOUNT = 7000  # 最小关注的北向持仓金额
+MINHAMOUNT = 8000  # 最小关注的北向持仓金额
 
 from django.db import models
+from django.db import transaction
 import selenium
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -75,12 +76,19 @@ class HSGTCGBase(models.Model):
             return 0
 
     @staticmethod
-    def getBrowser():
+    def getBrowser(headless=None):
+        """
 
+        :param headless: 是否无窗口模式
+        :return:
+        """
         opts = Options()
-        opts.set_headless()
-        assert opts.headless  # operating in headless mode
-        browser = webdriver.Firefox()
+        if headless:
+            opts.set_headless()
+            # opts.add_argument('-headless')
+        # assert opts.headless  # operating in headless mode
+        # browser = webdriver.Firefox()
+        browser = webdriver.Firefox(firefox_options=opts)
         browser.maximize_window()
         return browser
 
@@ -155,19 +163,19 @@ class HSGTCG(HSGTCGBase):
     @classmethod
     def getlist(cls, code=None):
         """
-        返回stock_category类型列表
+        返回沪深港通持股大于某个金额的列表
 
         :param code:
         :return:
         """
         if code:
-            # 返回所有代码
+            # 返回所有代码为code的列表
             return cls.objects.all().filter(code=code)
 
         return cls.objects.all()
 
     @classmethod
-    def importList(cls):
+    def importList(cls, firefoxHeadless=True):
         i, j = 0, 0
         while i < 10 and j == 0:
             # 最多循环十次，若j在退出循环的时候为0，则无数据
@@ -177,7 +185,7 @@ class HSGTCG(HSGTCGBase):
         if j == 0:
             HSGTCGHold.importList()
             hsgh = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(1))
-        browser = cls.getBrowser()
+        browser = cls.getBrowser(firefoxHeadless)
         try:
             for code in list(hsgh.values_list('code')):
                 hsghc = hsgh.filter(code=code)
@@ -189,17 +197,18 @@ class HSGTCG(HSGTCGBase):
                 df['hvol'] = df['hvol'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
                 df['hamount'] = df['hamount'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
                 df['close'] = df['close'].astype(float)
-                for i in df.index:
-                    v = df.iloc[i]
-                    try:
-                        print('saving {} {}'.format(code[0], v.close))
-                        HSGTCG.objects.get_or_create(code=code[0], close=v.close, hvol=v.hvol,
-                                                     hamount=v.hamount, hpercent=v.hpercent,
-                                                     tradedate=convertToDate(v.date))
-                    except Exception as e:
-                        # print(code[0], v, type(v.close), type(v.hpercent))
-                        print(e.args)
-                        # raise Exception(e.args)
+                with transaction.atomic():
+                    for i in df.index:
+                        v = df.iloc[i]
+                        try:
+                            print('saving ... {} {}'.format(code[0], v.close))
+                            HSGTCG.objects.get_or_create(code=code[0], close=v.close, hvol=v.hvol,
+                                                         hamount=v.hamount, hpercent=v.hpercent,
+                                                         tradedate=convertToDate(v.date))
+                        except Exception as e:
+                            # print(code[0], v, type(v.close), type(v.hpercent))
+                            print(code[0], e.args)
+                            # raise Exception(e.args)
         finally:
             if browser:
                 browser.close()
@@ -231,13 +240,16 @@ class HSGTCGHold(HSGTCGBase):
     tradedate = models.DateField(verbose_name='日期', null=True)
 
     @classmethod
-    def importList(cls):
+    def importList(cls, firefoxHeadless=True):
         hsgh = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(1))
         if hsgh.count() > 0:
             return hsgh
-        browser = cls.getBrowser()
+        browser = cls.getBrowser(firefoxHeadless)
         url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx'
         df = cls.scrap(url, browser)
+        df = df[['code', 'tradedate']]
+        # 去除重复数据
+        df = df[~df.duplicated()]
         # pandas dataframe save to model
         HSGTCGHold.objects.bulk_create(
             HSGTCGHold(**vals) for vals in df[['code', 'tradedate']].to_dict('records')
@@ -275,17 +287,28 @@ class HSGTCGHold(HSGTCGBase):
                 del df['fiveday']
                 del df['tenday']
                 del df['a1']
-                results.append(df[df['hamount'] > MINHAMOUNT])
+                results.append(df[df['hamount'] >= MINHAMOUNT])
                 if len(df[df['hamount'] < MINHAMOUNT]):
                     # 持股金额小于
                     break
                 else:
                     # 下一页
+                    print('page:{}'.format(page + 1))
                     t = browser.find_element_by_css_selector('#PageContgopage')
                     t.clear()
                     t.send_keys(str(page + 1))
-                    browser.find_element_by_css_selector('.btn_link').click()
+                    btnenable = True
+                    while btnenable:
+                        # 防止页面button失效的错误
+                        try:
+                            # 点击按钮“go”
+                            browser.find_element_by_css_selector('.btn_link').click()
+                            btnenable =False
+                        except Exception as e:
+                            print('not ready click. Waiting')
+                            time.sleep(0.1)
                     time.sleep(1.3)
+                    print('page:{}'.format(page + 1))
                 # print('results\n{}'.format(results))
 
         finally:

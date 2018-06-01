@@ -36,16 +36,12 @@ class TestHSGTCGHold(TestCase):
 
         :return:
         """
-        opts = Options()
-        opts.set_headless()
-        assert opts.headless  # operating in headless mode
         browser = webdriver.Firefox()
         browser.maximize_window()
         try:
             results = []
             pages = range(1, 37, 1)
-            page = 1
-            # url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx?tab={}'.format(page)
+            pages = range(1, 250, 1)  # 30日市值排序
             url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx'
             browser.get(url)
             # 北向持股
@@ -73,7 +69,7 @@ class TestHSGTCGHold(TestCase):
                 del df['fiveday']
                 del df['tenday']
                 del df['a1']
-                results.append(df[df['hamount'] > 8000])
+                results.append(df[df['hamount'] >= 8000])
                 if len(df[df['hamount'] < 8000]):
                     # 持股金额小于
                     break
@@ -82,7 +78,15 @@ class TestHSGTCGHold(TestCase):
                     t = browser.find_element_by_css_selector('#PageContgopage')
                     t.clear()
                     t.send_keys(str(page + 1))
-                    browser.find_element_by_css_selector('.btn_link').click()
+                    btnenable = True
+                    while btnenable:
+                        try:
+                            btn=browser.find_element_by_css_selector('.btn_link')
+                            btn.click()
+                            btnenable =False
+                        except Exception as e:
+                            print('not ready click. Waiting')
+                            time.sleep(0.1)
 
                     time.sleep(1.5)
                 # print(df)
@@ -91,7 +95,6 @@ class TestHSGTCGHold(TestCase):
         finally:
             if browser:
                 browser.close()
-                pass
         self.assertTrue(len(results) > 3)
         #  results 整合
         dfn = pd.DataFrame()
@@ -99,9 +102,12 @@ class TestHSGTCGHold(TestCase):
             dfn = pd.concat([dfn, dfa])
         dfn.reset_index(drop=True, inplace=True)
         self.assertFalse(dfn[['code', 'tradedate']] is None)
+        df = dfn[['code', 'tradedate']]
+        # 去除重复数据
+        df = df[~df.duplicated()]
         # pandas dataframe save to model
         HSGTCGHold.objects.bulk_create(
-            HSGTCGHold(**vals) for vals in dfn[['code', 'tradedate']].to_dict('records')
+            HSGTCGHold(**vals) for vals in df[['code', 'tradedate']].to_dict('records')
         )
         self.assertTrue(HSGTCGHold.getlist().count() > 0, '北向持股大于七千万的股票数量大于0')
         print(HSGTCGHold.getlist())

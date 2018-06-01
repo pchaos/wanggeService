@@ -60,7 +60,7 @@ class TestHSGTCG(TestCase):
         opts = Options()
         opts.set_headless()
         assert opts.headless  # operating in headless mode
-        browser = webdriver.Firefox()
+        browser = webdriver.Firefox(options=opts)
         browser.maximize_window()
         try:
             browser.get(url)
@@ -85,6 +85,10 @@ class TestHSGTCG(TestCase):
         self.assertTrue(hsgtcg.filter(tradedate=None).count() == 0)
 
     def test_importList(self):
+        """
+        测试保存沪深港通持股
+        :return:
+        """
         HSGTCG.importList()
         hsgtcg = HSGTCG.getlist()
         print(hsgtcg)

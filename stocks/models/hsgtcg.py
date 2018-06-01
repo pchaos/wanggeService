@@ -77,10 +77,10 @@ class HSGTCGBase(models.Model):
 
     @staticmethod
     def getBrowser(headless=None):
-        """
+        """ 获取webdriver浏览器
 
         :param headless: 是否无窗口模式
-        :return:
+        :return: browser
         """
         opts = Options()
         if headless:
@@ -109,7 +109,14 @@ class HSGTCGBase(models.Model):
         :param date:
         :return:
         """
-        return Stocktradedate.get_real_date(date, -1)
+        date = convertToDate(date)
+        tradedate = Stocktradedate.get_real_date(date, -1)
+
+        if date == tradedate:
+            if date == datetime.datetime.now().date():
+                # 当天并且是交易日
+                tradedate = Stocktradedate.preTradeday(tradedate)
+        return tradedate
 
     @classmethod
     def getlist(cls, tradedate=None):
@@ -201,7 +208,7 @@ class HSGTCG(HSGTCGBase):
                     for i in df.index:
                         v = df.iloc[i]
                         try:
-                            print('saving ... {} {}'.format(code[0], v.close))
+                            print('{} saving ... {} {} {}'.format(cls.verbose_name, code[0], v.close), v.date)
                             HSGTCG.objects.get_or_create(code=code[0], close=v.close, hvol=v.hvol,
                                                          hamount=v.hamount, hpercent=v.hpercent,
                                                          tradedate=convertToDate(v.date))
@@ -215,6 +222,12 @@ class HSGTCG(HSGTCGBase):
 
     @staticmethod
     def scrap(url, browser):
+        """ 抓取网页table
+
+        :param url: 网址
+        :param browser: 浏览器
+        :return:
+        """
         browser.get(url)
         time.sleep(0.1)
         soup = BeautifulSoup(browser.page_source, 'lxml')

@@ -17,6 +17,8 @@ Change Activity:
 """
 from django.test import TestCase
 from stocks.models import HSGTCG
+from stocks.models import convertToDate
+from stocks.models import Stocktradedate
 
 import selenium
 from selenium import webdriver
@@ -46,6 +48,9 @@ def str2Float(astr):
 
 
 class TestHSGTCG(TestCase):
+    def setUp(self):
+        Stocktradedate.importList()
+
     def test_getlist(self):
         self.fail()
 
@@ -55,12 +60,12 @@ class TestHSGTCG(TestCase):
         :return:
         """
         code = '600066'
+        code = '000425'
+        code = '000792'
+        code = '002493'
         url = 'http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock={}'.format(code)
 
-        opts = Options()
-        opts.set_headless()
-        assert opts.headless  # operating in headless mode
-        browser = webdriver.Firefox(options=opts)
+        browser = webdriver.Firefox()
         browser.maximize_window()
         try:
             browser.get(url)
@@ -73,7 +78,7 @@ class TestHSGTCG(TestCase):
                 v = df.iloc[i]
                 print('{} {} {} {}'.format(v.close, v.hvol, v.hamount, v.hpercent))
                 HSGTCG.objects.get_or_create(code=code, close=v.close, hvol=str2Float(v.hvol),
-                                             hamount=str2Float(v.hamount), hpercent=v.hpercent, tradedate=v.date)
+                                             hamount=str2Float(v.hamount), hpercent=v.hpercent, tradedate=convertToDate(v.date))
         finally:
             if browser:
                 browser.close()
@@ -89,8 +94,21 @@ class TestHSGTCG(TestCase):
         测试保存沪深港通持股
         :return:
         """
-        HSGTCG.importList()
+        # HSGTCG.importList()
+        HSGTCG.importList(firefoxHeadless=False)
         hsgtcg = HSGTCG.getlist()
         print(hsgtcg)
         self.assertTrue(hsgtcg.count() > 10, '保存的数量： {}'.format(hsgtcg.count()))
+        print('数据库中保存的记录数量：{}'.format(hsgtcg.count()))
+
+    def test_importListdup(self):
+        """
+        测试保存沪深港通持股
+        :return:
+        """
+        # HSGTCG.importList()
+        HSGTCG.importList(firefoxHeadless=False)
+        hsgtcg = HSGTCG.getlist()
+        print(hsgtcg)
+        self.assertTrue(hsgtcg.count() > 1000, '保存的数量： {}'.format(hsgtcg.count()))
         print('数据库中保存的记录数量：{}'.format(hsgtcg.count()))

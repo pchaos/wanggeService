@@ -17,6 +17,7 @@ Change Activity:
 """
 from django.test import TestCase
 from stocks.models import HSGTCGHold
+from stocks.models import Stocktradedate
 
 import selenium
 from selenium import webdriver

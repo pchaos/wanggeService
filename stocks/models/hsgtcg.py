@@ -105,12 +105,13 @@ class HSGTCGBase(models.Model):
     @staticmethod
     def getNearestTradedate(date=datetime.datetime.now().date()):
         """ 获取离date最近的交易日期
+            只能获取到前一交易日的数据
 
         :param date:
         :return:
         """
         date = convertToDate(date)
-        tradedate = Stocktradedate.get_real_date(date, -1)
+        tradedate = Stocktradedate.get_real_date(date, -1).date()
 
         if date == tradedate:
             if date == datetime.datetime.now().date():
@@ -183,35 +184,41 @@ class HSGTCG(HSGTCGBase):
 
     @classmethod
     def importList(cls, firefoxHeadless=True):
-        i, j = 0, 0
-        while i < 10 and j == 0:
-            # 最多循环十次，若j在退出循环的时候为0，则无数据
-            hsgh = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(i + 1))
-            i += 1
-            j = hsgh.count()
-        if j == 0:
+        """ 根据最近交易日的持仓交恶，获取相应的个股北向数据
+
+        :param firefoxHeadless: 是否显示浏览器界面：
+            True  不显示界面
+            False 显示界面
+
+        :return:
+        """
+        hsgh = HSGTCGHold.getlist(tradedate=cls.getNearestTradedate())
+        if hsgh.count() == 0:
             HSGTCGHold.importList()
-            hsgh = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(1))
+            hsgh = HSGTCGHold.getlist(tradedate=cls.getNearestTradedate())
         browser = cls.getBrowser(firefoxHeadless)
         try:
             for code in list(hsgh.values_list('code')):
-                hsghc = hsgh.filter(code=code)
-                if hsghc.count() > 0:
-                    continue
+                dfd = pd.DataFrame(list(HSGTCGHold.getlist().filter(code=code[0]).values('tradedate')))
                 url = 'http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock={}'.format(code[0])
                 df = cls.scrap(url, browser)
                 # 修复持股数量
-                df['hvol'] = df['hvol'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
-                df['hamount'] = df['hamount'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
+                df['hvol'] = df['hvol'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
+                df['hamount'] = df['hamount'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
                 df['close'] = df['close'].astype(float)
+                df['date'] = df['date'].apply(lambda x: convertToDate(x)).astype(datetime.date)
                 with transaction.atomic():
                     for i in df.index:
                         v = df.iloc[i]
+                        if len(dfd[dfd['tradedate'] == v.date]) > 0:
+                            # 保存过的日期，pass
+                            continue
+                        # 没有保存过的日期
                         try:
-                            print('{} saving ... {} {} {}'.format(cls.verbose_name, code[0], v.close), v.date)
+                            print('{} saving ... {} {} {}'.format(cls.__name__, code[0], v.date, v.close))
                             HSGTCG.objects.get_or_create(code=code[0], close=v.close, hvol=v.hvol,
                                                          hamount=v.hamount, hpercent=v.hpercent,
-                                                         tradedate=convertToDate(v.date))
+                                                         tradedate=v.date)
                         except Exception as e:
                             # print(code[0], v, type(v.close), type(v.hpercent))
                             print(code[0], e.args)
@@ -253,8 +260,8 @@ class HSGTCGHold(HSGTCGBase):
     tradedate = models.DateField(verbose_name='日期', null=True)
 
     @classmethod
-    def importList(cls, firefoxHeadless=True):
-        hsgh = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(1))
+    def importList(cls, firefoxHeadless=False):
+        hsgh = HSGTCGHold.getlist(tradedate=cls.getNearestTradedate())
         if hsgh.count() > 0:
             return hsgh
         browser = cls.getBrowser(firefoxHeadless)
@@ -316,7 +323,7 @@ class HSGTCGHold(HSGTCGBase):
                         try:
                             # 点击按钮“go”
                             browser.find_element_by_css_selector('.btn_link').click()
-                            btnenable =False
+                            btnenable = False
                         except Exception as e:
                             print('not ready click. Waiting')
                             time.sleep(0.1)

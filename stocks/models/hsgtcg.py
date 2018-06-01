@@ -198,6 +198,7 @@ class HSGTCG(HSGTCGBase):
         :param firefoxHeadless: 是否显示浏览器界面：
             True  不显示界面
             False 显示界面
+            默认不显示浏览器界面
 
         :return:
         """
@@ -262,7 +263,7 @@ class HSGTCG(HSGTCGBase):
 
 
 class HSGTCGHold(HSGTCGBase):
-    """ 持股市值七千万
+    """ 持股市值八千万
 
     """
     code = models.CharField(verbose_name='代码', max_length=10, db_index=True, null=True)
@@ -270,6 +271,15 @@ class HSGTCGHold(HSGTCGBase):
 
     @classmethod
     def importList(cls, firefoxHeadless=False):
+        """ 导入市值大于指定值的代码列表
+
+        :param firefoxHeadless: 是否显示浏览器界面：
+            True  不显示界面
+            False 显示界面
+            默认不显示浏览器界面
+
+        :return:
+        """
         hsgh = HSGTCGHold.getlist(tradedate=cls.getNearestTradedate())
         if hsgh.count() > 0:
             return hsgh

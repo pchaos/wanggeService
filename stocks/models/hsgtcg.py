@@ -145,6 +145,15 @@ class HSGTCGBase(models.Model):
         df.to_pickle(filename)
         return filename
 
+    @classmethod
+    def loadModelFromFile(cls, filename=None):
+        if filename:
+            df = pd.read_pickle(filename)
+        entries = df.to_dict('records')
+        with transaction.atomic():
+            for v in entries:
+                cls.objects.get_or_create(**v)
+
     class Meta:
         abstract = True
 

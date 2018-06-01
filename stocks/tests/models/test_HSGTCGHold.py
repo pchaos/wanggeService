@@ -118,3 +118,16 @@ class TestHSGTCGHold(TestCase):
         hsg = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(1))
         self.assertTrue(hsg.count() > 10 , '北向持股大于七千万的股票数量大于10, 实际数量：{}'.format(hsg.count()))
         self.assertTrue(isinstance(hsg[0].tradedate, datetime.date))
+
+    def test_loadModelfromFile(self):
+        filename = 'HSGTCGHold_2018-06-01.pkl.gz'
+        df =pd.read_pickle(filename)
+        entries = df.to_dict('records')
+        for v in entries:
+            # print(v)
+            HSGTCGHold.objects.get_or_create(**v)
+        # 测试重复插入
+        for v in entries:
+            HSGTCGHold.objects.get_or_create(**v)
+        print(HSGTCGHold.getlist().count())
+        self.assertTrue(HSGTCGHold.getlist().count() > 100, '实际插入：{}'.format(HSGTCGHold.getlist().count()))

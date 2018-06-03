@@ -156,7 +156,7 @@ class HSGTCGBase(models.Model):
 
 
     @classmethod
-    def saveModel2File(cls, filename=None):
+    def saveModel2File(cls, filename=None, dropPk=True):
         if not filename:
             filename = '{}_{}.pkl.gz'.format(cls.__name__, datetime.datetime.now().date())
         from django.forms import model_to_dict
@@ -171,10 +171,12 @@ class HSGTCGBase(models.Model):
         if filename:
             df = pd.read_pickle(filename)
             cls.dropDataframePK(df, dropPk)
-        entries = df.to_dict('records')
-        with transaction.atomic():
-            for v in entries:
-                cls.objects.get_or_create(**v)
+            entries = df.to_dict('records')
+            with transaction.atomic():
+                for v in entries:
+                    cls.objects.get_or_create(**v)
+        else:
+            print('文件名为空，请传正确的文件名！')
 
     @classmethod
     def dropDataframePK(cls, df, dropPk):

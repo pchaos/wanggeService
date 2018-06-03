@@ -126,7 +126,7 @@ class HSGTCGBase(models.Model):
 
         :param tradedate: 交易日期
 
-        :return: .objects.all().filter(category=stock_category)
+        :return: objects.all().filter(tradedate=convertToDate(tradedate))
         """
         if tradedate:
             # 返回所有代码
@@ -134,6 +134,26 @@ class HSGTCGBase(models.Model):
             return cls.objects.all().filter(tradedate=convertToDate(tradedate))
 
         return cls.objects.all()
+
+    @classmethod
+    def getRecentlist(cls, days=1):
+        """ 返回最近days天列表
+
+        :param days: 之前几个交易
+
+        :return: .objects.all().filter(tradedate__gte=tdate)
+        """
+        if days == 0:
+            return cls.objects.all()
+        else:
+            tdate = cls.getNearestTradedate()
+            if days > 1:
+                realdatelist = Stocktradedate.get_real_datelisting(tdate - datetime.timedelta(days*2 + 10), tdate)
+                tdate = pd.DataFrame(list(realdatelist.order_by('id').values_list('tradedate'))).iloc[-days][0]
+            # 返回所有代码
+            return cls.objects.all().filter(tradedate__gte=tdate)
+
+
 
     @classmethod
     def saveModel2File(cls, filename=None):
@@ -208,9 +228,9 @@ class HSGTCG(HSGTCGBase):
             hsgh = HSGTCGHold.getlist(tradedate=cls.getNearestTradedate())
         browser = cls.getBrowser(firefoxHeadless)
         try:
-            for code in list(hsgh.values_list('code')):
-                dfd = pd.DataFrame(list(HSGTCGHold.getlist().filter(code=code[0]).values('tradedate')))
-                url = 'http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock={}'.format(code[0])
+            for code in [code[0] for code in list(hsgh.values_list('code'))]:
+                dfd = pd.DataFrame(list(HSGTCG.getlist().filter(code=code).values('tradedate')))
+                url = 'http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock={}'.format(code)
                 df = cls.scrap(url, browser)
                 # 修复持股数量
                 df['hvol'] = df['hvol'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
@@ -225,8 +245,8 @@ class HSGTCG(HSGTCGBase):
                             continue
                         # 没有保存过的日期
                         try:
-                            print('{} saving ... {} {} {}'.format(cls.__name__, code[0], v.date, v.close))
-                            HSGTCG.objects.get_or_create(code=code[0], close=v.close, hvol=v.hvol,
+                            print('{} saving ... {} {} {}'.format(cls.__name__, code, v.date, v.close))
+                            HSGTCG.objects.get_or_create(code=code, close=v.close, hvol=v.hvol,
                                                          hamount=v.hamount, hpercent=v.hpercent,
                                                          tradedate=v.date)
                         except Exception as e:
@@ -271,14 +291,16 @@ class HSGTCGHold(HSGTCGBase):
 
     @classmethod
     def importList(cls, firefoxHeadless=False):
-        """ 导入市值大于指定值的代码列表
+        """ 导入市值大于指定值的列表
+
+        网址： http://data.eastmoney.com/hsgtcg/StockStatistics.aspx
 
         :param firefoxHeadless: 是否显示浏览器界面：
             True  不显示界面
             False 显示界面
             默认不显示浏览器界面
 
-        :return:
+        :return: 最近交易日期的列表
         """
         hsgh = HSGTCGHold.getlist(tradedate=cls.getNearestTradedate())
         if hsgh.count() > 0:
@@ -293,7 +315,7 @@ class HSGTCGHold(HSGTCGBase):
         HSGTCGHold.objects.bulk_create(
             HSGTCGHold(**vals) for vals in df[['code', 'tradedate']].to_dict('records')
         )
-        # return hsgh.get
+        return cls.getlist(tradedate=cls.getNearestTradedate())
 
     @staticmethod
     def scrap(url, browser):
@@ -332,7 +354,7 @@ class HSGTCGHold(HSGTCGBase):
                     break
                 else:
                     # 下一页
-                    print('page:{}'.format(page + 1))
+                    print(' after page:{}'.format(page))
                     t = browser.find_element_by_css_selector('#PageContgopage')
                     t.clear()
                     t.send_keys(str(page + 1))

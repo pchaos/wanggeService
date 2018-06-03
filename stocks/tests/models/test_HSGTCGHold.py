@@ -33,7 +33,7 @@ __author__ = 'pchaos'
 
 class TestHSGTCGHold(TestCase):
     def test_stockstatistics(self):
-        """ 北持股向市值大于八千万
+        """ 北向持股向市值大于八千万
 
         :return:
         """
@@ -82,9 +82,9 @@ class TestHSGTCGHold(TestCase):
                     btnenable = True
                     while btnenable:
                         try:
-                            btn=browser.find_element_by_css_selector('.btn_link')
+                            btn = browser.find_element_by_css_selector('.btn_link')
                             btn.click()
-                            btnenable =False
+                            btnenable = False
                         except Exception as e:
                             print('not ready click. Waiting')
                             time.sleep(0.1)
@@ -116,12 +116,12 @@ class TestHSGTCGHold(TestCase):
     def test_importList(self):
         HSGTCGHold.importList()
         hsg = HSGTCGHold.getlist(tradedate=datetime.datetime.now().date() - datetime.timedelta(1))
-        self.assertTrue(hsg.count() > 10 , '北向持股大于七千万的股票数量大于10, 实际数量：{}'.format(hsg.count()))
+        self.assertTrue(hsg.count() > 10, '北向持股大于七千万的股票数量大于10, 实际数量：{}'.format(hsg.count()))
         self.assertTrue(isinstance(hsg[0].tradedate, datetime.date))
 
     def test_loadModelfromFile(self):
         filename = 'HSGTCGHold_2018-06-01.pkl.gz'
-        df =pd.read_pickle(filename)
+        df = pd.read_pickle(filename)
         entries = df.to_dict('records')
         for v in entries:
             # print(v)
@@ -131,3 +131,14 @@ class TestHSGTCGHold(TestCase):
             HSGTCGHold.objects.get_or_create(**v)
         print(HSGTCGHold.getlist().count())
         self.assertTrue(HSGTCGHold.getlist().count() > 100, '实际插入：{}'.format(HSGTCGHold.getlist().count()))
+
+    def test_getRecentlist(self):
+        Stocktradedate.importList()
+        n = set(list(HSGTCGHold.getRecentlist().values_list('tradedate')))
+        self.assertTrue(len(n) <= 1, '交易日:{}'.format(n))
+        days = 3
+        n = set(list(HSGTCGHold.getRecentlist().values_list('tradedate')))
+        self.assertTrue(len(n) <= days, '交易日:{}'.format(n))
+        days = 10
+        n = set(list(HSGTCGHold.getRecentlist().values_list('tradedate')))
+        self.assertTrue(len(n) <= days, '交易日:{}'.format(n))

@@ -162,17 +162,34 @@ class HSGTCGBase(models.Model):
         from django.forms import model_to_dict
         aobjs = [model_to_dict(aobj) for aobj in cls.objects.all()]
         df = pd.DataFrame(aobjs)
+        cls.dropDataframePK(df, dropPk)
         df.to_pickle(filename)
         return filename
 
     @classmethod
-    def loadModelFromFile(cls, filename=None):
+    def loadModelFromFile(cls, filename=None, dropPk=True):
         if filename:
             df = pd.read_pickle(filename)
+            cls.dropDataframePK(df, dropPk)
         entries = df.to_dict('records')
         with transaction.atomic():
             for v in entries:
                 cls.objects.get_or_create(**v)
+
+    @classmethod
+    def dropDataframePK(cls, df, dropPk):
+        """ 删除无明确意义的主键字段.
+        如果是有业务逻辑意义的主键不能删除
+
+        :param df:
+        :param dropPk:
+        :return:
+        """
+        if dropPk:
+            pkname = 'id'
+            if pkname in list(df.columns):
+                #  主键在保存的dataFrame中
+                df.drop(pkname, axis=1, inplace=True)
 
     class Meta:
         abstract = True

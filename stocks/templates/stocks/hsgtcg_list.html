@@ -1,0 +1,38 @@
+{#{% extends "base_generic.html" %}#}
+
+{% block content %}
+    <h1>北向持股列表</h1>
+
+    {% if hsgtcg_list %}
+    <ul>
+
+      {% for v in hsgtcg_list %}
+      <li>
+        <a href="{{ v.pk }}">{{ v.tradedate }}</a> {{v.code}} {{v.name}}
+      </li>
+      {% endfor %}
+
+    </ul>
+
+    {% else %}
+      <p>未找到北向持股列表.</p>
+    {% endif %}       
+{% endblock %}
+
+{% block pagination %}
+  {% if is_paginated %}
+      <div class="pagination">
+          <span class="page-links">
+              {% if page_obj.has_previous %}
+                  <a href="{{ request.path }}?page={{ page_obj.previous_page_number }}">previous</a>
+              {% endif %}
+              <span class="page-current">
+                  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+              </span>
+              {% if page_obj.has_next %}
+                  <a href="{{ request.path }}?page={{ page_obj.next_page_number }}">next</a>
+              {% endif %}
+          </span>
+      </div>
+  {% endif %}
+{% endblock %}

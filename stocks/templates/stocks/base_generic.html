@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Question List</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'polls/style.css' %}" />
+</head>
+
+<li><a href="{% url 'hsgtcg_list' %}">Home</a></li>
+<li><a href="{% url 'hsgtcg_list' %}">All books</a></li>
+
+{% block content %}{% endblock %}

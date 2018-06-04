@@ -2,6 +2,7 @@ from django.contrib import admin
 from stocks.models import Listing
 from stocks.models import BlockDetail, Block
 from stocks.models import RPS, RPSprepare
+from stocks.models import HSGTCGHold, HSGTCGHold
 
 # Register your models here.
 admin.site.register(Listing)

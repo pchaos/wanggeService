@@ -195,3 +195,7 @@ def BK_detail(request, pk, format=None):
     elif request.method == 'DELETE':
         values.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+# from .hsgtcgholdview import HSGTCG
+from .hsgtcgholdview import HSGTCGHoldView
+from .hsgtcg_list import HSGTCGListView

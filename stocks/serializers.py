@@ -17,6 +17,7 @@ from django.contrib.auth.models import User, Group
 from rest_framework import serializers
 from stocks.models import Listing
 from stocks.models import BlockDetail
+from stocks.models import HSGTCGHold
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -39,3 +40,8 @@ class BKDetailSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = BlockDetail
         fields = ('code', 'blockname', 'market', 'isindex')
+
+class HSGTCGHoldSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = HSGTCGHold
+        fields = ('code', 'tradedate')

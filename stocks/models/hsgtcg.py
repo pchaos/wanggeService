@@ -25,7 +25,7 @@ import selenium
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
-import re
+# import re
 import pandas as pd
 import numpy as np
 import time, datetime
@@ -148,12 +148,10 @@ class HSGTCGBase(models.Model):
         else:
             tdate = cls.getNearestTradedate()
             if days > 1:
-                realdatelist = Stocktradedate.get_real_datelisting(tdate - datetime.timedelta(days*2 + 10), tdate)
+                realdatelist = Stocktradedate.get_real_datelisting(tdate - datetime.timedelta(days * 2 + 10), tdate)
                 tdate = pd.DataFrame(list(realdatelist.order_by('id').values_list('tradedate'))).iloc[-days][0]
             # 返回所有代码
             return cls.objects.all().filter(tradedate__gte=tdate)
-
-
 
     @classmethod
     def saveModel2File(cls, filename=None, dropPk=True):
@@ -256,11 +254,13 @@ class HSGTCG(HSGTCGBase):
                 df['hamount'] = df['hamount'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
                 df['close'] = df['close'].astype(float)
                 df['date'] = df['date'].apply(lambda x: convertToDate(x)).astype(datetime.date)
+                df = df[df['date'].apply(lambda x: Stocktradedate.if_tradeday(x))]  # 删除不是交易日的数据。这是东方财富网页版的bug
+                df.index = pd.RangeIndex(len(df.index))
                 with transaction.atomic():
                     for i in df.index:
                         v = df.iloc[i]
                         if len(dfd[dfd['tradedate'] == v.date]) > 0:
-                            # 保存过的日期，pass
+                            # 保存过的日期，或者不是交易日 pass
                             continue
                         # 没有保存过的日期
                         try:
@@ -328,6 +328,7 @@ class HSGTCGHold(HSGTCGBase):
         url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx'
         df = cls.scrap(url, browser)
         df = df[['code', 'tradedate']]
+        df = df[df['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]
         # 去除重复数据
         df = df[~df.duplicated()]
         # pandas dataframe save to model

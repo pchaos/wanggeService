@@ -112,3 +112,10 @@ class TestHSGTCG(TestCase):
         print(hsgtcg)
         self.assertTrue(hsgtcg.count() > 1000, '保存的数量： {}'.format(hsgtcg.count()))
         print('数据库中保存的记录数量：{}'.format(hsgtcg.count()))
+
+    def test_deleteNotTradedate(self):
+        # 删除不是交易日的数据
+        for d in set(list(HSGTCG.objects.all().values_list('tradedate'))):
+            if not Stocktradedate.if_tradeday(d[0]):
+                HSGTCG.objects.all().filter(tradedate=d[0]).delete()
+                print(d[0])

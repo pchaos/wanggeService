@@ -141,3 +141,10 @@ class TestHSGTCGHold(TestCase):
         days = 10
         n = set(list(HSGTCGHold.getRecentlist().values_list('tradedate')))
         self.assertTrue(len(n) <= days, '交易日:{}'.format(n))
+
+    def test_deleteNotTradedate(self):
+        # 删除不是交易日的数据
+        for d in set(list(HSGTCGHold.objects.all().values_list('tradedate'))):
+            if not Stocktradedate.if_tradeday(d[0]):
+                HSGTCGHold.getlist(d[0]).delete()
+

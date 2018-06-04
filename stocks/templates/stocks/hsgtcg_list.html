@@ -1,14 +1,18 @@
 {#{% extends "base_generic.html" %}#}
 
 {% block content %}
-    <h1>北向持股列表</h1>
+    {% if title %}
+        <h1>{{title }}</h1>
+    {% else %}
+        <h1>北向持股列表</h1>
+    {% endif %}
 
     {% if hsgtcg_list %}
     <ul>
 
       {% for v in hsgtcg_list %}
       <li>
-        <a href="{{ v.pk }}">{{ v.tradedate }}</a> {{v.code}} {{v.name}}
+        <a href="{{ v.pk }}">{{ v.tradedate }}</a> {{v.code}}
       </li>
       {% endfor %}
 

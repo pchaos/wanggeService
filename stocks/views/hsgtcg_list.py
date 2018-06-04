@@ -18,6 +18,7 @@ Change Activity:
 __author__ = 'pchaos'
 
 from django.views import generic
+import datetime
 from stocks.models import HSGTCG
 from stocks.models import Listing
 
@@ -27,9 +28,5 @@ class HSGTCGListView(generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        try:
-            context['name'] = 'This is just some data'
-            # context['name'] = 'a' # Listing.objects.get(code=context['code'])
-        except Exception as e:
-            context['name'] = ''
+        context['title'] = "北向持股列表 {}".format(str(datetime.datetime.now())[:19])
         return context

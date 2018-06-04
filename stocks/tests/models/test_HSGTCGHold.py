@@ -23,7 +23,6 @@ import selenium
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
-import re
 import pandas as pd
 import numpy as np
 import datetime, time

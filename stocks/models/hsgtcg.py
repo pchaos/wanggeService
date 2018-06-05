@@ -205,6 +205,19 @@ class HSGTCG(HSGTCGBase):
 
     3、持股占A股百分比或者持股占发行股份百分比是按交易所相关上市公司的上市及交易的股总数而计算，有可能沒有包括公司实时动态变化，因此可能不是最新的。该数值只作为参考之用，使用该百分比时敬请注意。
 
+    东方财富北向查询
+    http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock=600519
+
+    深股通查询
+    http://sc.hkexnews.hk/TuniS/www.hkexnews.hk/sdw/search/mutualmarket_c.aspx?t=sz
+    繁体版
+    http://www.hkexnews.hk/sdw/search/mutualmarket_c.aspx?t=sz
+
+    沪股通
+    http://sc.hkexnews.hk/TuniS/www.hkexnews.hk/sdw/search/mutualmarket_c.aspx?t=sh
+    繁体版
+    http://www.hkexnews.hk/sdw/search/mutualmarket_c.aspx?t=sh
+
     """
 
     code = models.CharField(verbose_name='代码', max_length=10, db_index=True, null=True)
@@ -229,13 +242,16 @@ class HSGTCG(HSGTCGBase):
         return cls.objects.all()
 
     @classmethod
-    def importList(cls, firefoxHeadless=True):
+    def importList(cls, firefoxHeadless=True, checkNearesttradeday=True):
         """ 根据最近交易日的持仓交恶，获取相应的个股北向数据
 
         :param firefoxHeadless: 是否显示浏览器界面：
             True  不显示界面
             False 显示界面
             默认不显示浏览器界面
+
+        :param checkNearesttradeday: 是否检查最近交易日
+            当checkNearesttradeday=True ，最近交易日有数据，则不检查此代码对应的网页
 
         :return:
         """
@@ -247,6 +263,12 @@ class HSGTCG(HSGTCGBase):
         try:
             for code in [code[0] for code in list(hsgh.values_list('code'))]:
                 dfd = pd.DataFrame(list(HSGTCG.getlist().filter(code=code).values('tradedate')))
+                if checkNearesttradeday:
+                    if len(dfd) > 0:
+                        print('新加入北向持股大于{}万,请留意：{}'.format(MINHAMOUNT, code))
+                        if len(dfd[dfd['tradedate'] == cls.getNearestTradedate()]) > 0:
+                            print('已保存最近交易日数据，跳过:{}'.format(code))
+                            continue
                 url = 'http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock={}'.format(code)
                 df = cls.scrap(url, browser)
                 # 修复持股数量
@@ -259,9 +281,11 @@ class HSGTCG(HSGTCGBase):
                 with transaction.atomic():
                     for i in df.index:
                         v = df.iloc[i]
-                        if len(dfd[dfd['tradedate'] == v.date]) > 0:
-                            # 保存过的日期，或者不是交易日 pass
-                            continue
+                        if len(dfd) > 0:
+                            # 以前保存过，才需要判断保存过的交易日
+                            if len(dfd[dfd['tradedate'] == v.date]) > 0:
+                                # 保存过的日期，或者不是交易日 pass
+                                continue
                         # 没有保存过的日期
                         try:
                             print('{} saving ... {} {} {}'.format(cls.__name__, code, v.date, v.close))
@@ -363,7 +387,7 @@ class HSGTCGHold(HSGTCGBase):
                 # 修复持股数量
                 df['hvol'] = df['hvol'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
                 df['hamount'] = df['hamount'].apply(lambda x: HSGTCGHold.hz2Num(x)).astype(float)
-                # 删除多余的列
+                # 删除多余的列reset_inde
                 del df['oneday']
                 del df['fiveday']
                 del df['tenday']
@@ -399,8 +423,8 @@ class HSGTCGHold(HSGTCGBase):
         dfn = pd.DataFrame()
         for dfa in results:
             dfn = pd.concat([dfn, dfa])
-        dfn.reset_index(drop=True, inplace=True)
-        # dfn.index = pd.RangeIndex(len(dfn.index))
+        # dfn.reset_index(drop=True, inplace=True)
+        dfn.index = pd.RangeIndex(len(dfn.index))
         return dfn
 
     def __str__(self):

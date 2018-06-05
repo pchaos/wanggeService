@@ -25,16 +25,16 @@ import selenium
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
-# import re
 import pandas as pd
 import numpy as np
 import time, datetime
-from .stocktradedate import Stocktradedate
+from stocks.models import Stocktradedate
 from stocks.models import convertToDate
+from stocks.models import StockBase
 import os
 
 
-class HSGTCGBase(models.Model):
+class HSGTCGBase(StockBase):
     @staticmethod
     def hz2Num(astr):
         """ 统一以"万"为单位
@@ -153,43 +153,6 @@ class HSGTCGBase(models.Model):
             # 返回所有代码
             return cls.objects.all().filter(tradedate__gte=tdate)
 
-    @classmethod
-    def saveModel2File(cls, filename=None, dropPk=True):
-        if not filename:
-            filename = '{}_{}.pkl.gz'.format(cls.__name__, datetime.datetime.now().date())
-        from django.forms import model_to_dict
-        aobjs = [model_to_dict(aobj) for aobj in cls.objects.all()]
-        df = pd.DataFrame(aobjs)
-        cls.dropDataframePK(df, dropPk)
-        df.to_pickle(filename)
-        return filename
-
-    @classmethod
-    def loadModelFromFile(cls, filename=None, dropPk=True):
-        if filename:
-            df = pd.read_pickle(filename)
-            cls.dropDataframePK(df, dropPk)
-            entries = df.to_dict('records')
-            with transaction.atomic():
-                for v in entries:
-                    cls.objects.get_or_create(**v)
-        else:
-            print('文件名为空，请传正确的文件名！')
-
-    @classmethod
-    def dropDataframePK(cls, df, dropPk):
-        """ 删除无明确意义的主键字段.
-        如果是有业务逻辑意义的主键不能删除
-
-        :param df:
-        :param dropPk:
-        :return:
-        """
-        if dropPk:
-            pkname = 'id'
-            if pkname in list(df.columns):
-                #  主键在保存的dataFrame中
-                df.drop(pkname, axis=1, inplace=True)
 
     class Meta:
         abstract = True

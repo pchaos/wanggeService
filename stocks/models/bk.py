@@ -16,14 +16,15 @@ Change Activity:
 -------------------------------------------------
 """
 from django.db import models
-
+from django.db import transaction
 from stocks.models import Listing, YES_NO
 from stocks.models import qa
+from stocks.models import StockBase
 
 __author__ = 'pchaos'
 
 
-class Block(models.Model):
+class Block(StockBase):
     """
     板块
     最上层的板块为：通达信 同花顺 自定义
@@ -77,36 +78,33 @@ class Block(models.Model):
             # data = qa.QAFetch.QATdx.QA_fetch_get_stock_block()
             data = qa.QA_fetch_stock_block_adv().data
             datatypeset = set(data.type)
-            for v in datatypeset:
-                # 保存版块类型
-                cls(code=v, name=v, parentblock=bk[0]).save()
+            with transaction.atomic():
+                for v in datatypeset:
+                    # 保存版块类型
+                    cls(code=v, name=v, parentblock=bk[0]).save()
 
             querysetlist = []
             try:
                 for v in datatypeset:
                     # 保存版块名称
-                    # if v == 'zs':
-                    #     # todo 指数版块忽略 需要处理
-                    #     continue
                     bl = cls.getlist().filter(name=v)
                     if len(bl) == 1:
-
+                        # 第一级版块
                         blockdf = data[data.type == v].blockname
                         blockset = set(blockdf)
-                        for m in blockset:
-                            block, _ = cls.objects.get_or_create(code=m, name=m, parentblock=bl[0])
-                            bdetail = blockdf.reset_index()[blockdf.reset_index().blockname == m].code
-                            for d in bdetail:
-                                # 版块明细
-                                # try:
+                        with transaction.atomic():
+                            for m in blockset:
+                                block, _ = cls.objects.get_or_create(code=m, name=m, parentblock=bl[0])
+                                bdetail = blockdf.reset_index()[blockdf.reset_index().blockname == m].code
+                                for d in bdetail:
+                                    # 版块明细
                                     code = Listing.getlist('stock').filter(code=d)
                                     if len(code) == 0:
                                         # 不属于股票，则跳过
                                         continue
                                     querysetlist.append(BlockDetail(code=code[0], blockname=block))
-                                # except Exception as e:
 
-                        print(querysetlist)
+                        print('版块明细 {}：\n{}'.format(len(querysetlist), querysetlist))
                 # bulk_create放在循环里面会报错
                 BlockDetail.objects.bulk_create(querysetlist)
 
@@ -134,7 +132,7 @@ class Block(models.Model):
         unique_together = (('name', 'parentblock'))
 
 
-class BlockDetail(models.Model):
+class BlockDetail(StockBase):
     """
     自选股
     """

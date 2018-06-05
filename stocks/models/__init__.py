@@ -3,6 +3,7 @@ from django.utils import timezone
 import datetime
 import pandas as pd
 import QUANTAXIS as qa  # since quantaxis Version 1.0.33    2018 05 18
+from .base import StockBase
 
 STOCK_CATEGORY = ((10, "股票"),
                   (11, "指数"),
@@ -34,7 +35,7 @@ def convertToDate(date, dateformat=DATE_FORMAT):
         return date
 
 
-class stockABS(models.Model):
+class stockABS(StockBase):
     class Meta:
         abstract = True
 
@@ -176,7 +177,7 @@ class Listing(stockABS):
         unique_together = (('code', 'market', 'category'))
 
 
-class StockDay(models.Model):
+class StockDay(StockBase):
     code = models.ForeignKey(Listing, verbose_name='代码', on_delete=models.PROTECT)
     open = models.DecimalField(verbose_name='开盘价', max_digits=9, decimal_places=3, null=True)
     close = models.DecimalField(verbose_name='收盘价', max_digits=9, decimal_places=3, null=True)

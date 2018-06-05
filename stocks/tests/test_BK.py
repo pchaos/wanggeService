@@ -27,7 +27,7 @@ class TestBK(TestCase):
     def setUp(self):
         qa.QA_util_log_info('Listing.importStockListing')
         listing = Listing.importStockListing()
-        # Listing.importIndexListing()
+        Listing.importIndexListing()
         assert Listing.getlist('stock').count() > 2000
         qa.QA_util_log_info('Block.initBlock')
         Block.initBlock()

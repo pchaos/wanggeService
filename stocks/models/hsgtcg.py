@@ -265,10 +265,11 @@ class HSGTCG(HSGTCGBase):
                 dfd = pd.DataFrame(list(HSGTCG.getlist().filter(code=code).values('tradedate')))
                 if checkNearesttradeday:
                     if len(dfd) > 0:
-                        print('新加入北向持股大于{}万,请留意：{}'.format(MINHAMOUNT, code))
                         if len(dfd[dfd['tradedate'] == cls.getNearestTradedate()]) > 0:
                             print('已保存最近交易日数据，跳过:{}'.format(code))
                             continue
+                    else:
+                        print('新加入北向持股大于{}万,请留意：{}'.format(MINHAMOUNT, code))
                 url = 'http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock={}'.format(code)
                 df = cls.scrap(url, browser)
                 # 修复持股数量

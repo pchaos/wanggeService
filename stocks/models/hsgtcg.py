@@ -282,11 +282,10 @@ class HSGTCG(HSGTCGBase):
                 with transaction.atomic():
                     for i in df.index:
                         v = df.iloc[i]
-                        if len(dfd) > 0:
+                        if len(dfd) > 0 and len(dfd[dfd['tradedate'] == v.date]) > 0:
                             # 以前保存过，才需要判断保存过的交易日
-                            if len(dfd[dfd['tradedate'] == v.date]) > 0:
-                                # 保存过的日期，或者不是交易日 pass
-                                continue
+                            # 保存过的日期，或者不是交易日 pass
+                            continue
                         # 没有保存过的日期
                         try:
                             print('{} saving ... {} {} {}'.format(cls.__name__, code, v.date, v.close))

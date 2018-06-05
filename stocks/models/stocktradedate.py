@@ -156,7 +156,7 @@ class Stocktradedate(models.Model):
             return 'wrong date'
 
     @classmethod
-    def get_real_datelist(cls, start, end):
+    def get_real_date_start_end(cls, start, end):
         """
         取数据的真实区间,返回的时候用 start,end=Stocktradedate.get_rev2ray v2ctl verifyal_datelist()
         @yutiansut
@@ -169,6 +169,7 @@ class Stocktradedate(models.Model):
         if alist.count() == 0:
             return None, None
         else:
+            # (start_tradedate, end_tradedate)
             return (alist[0]['tradedate'], alist[len(alist) - 1]['tradedate'])
 
     @classmethod

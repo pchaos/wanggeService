@@ -81,12 +81,12 @@ class TestStocktradedate(TestCase):
         qs = Stocktradedate.importList()
         day1 = datetime.datetime.strptime('2018-5-13', '%Y-%m-%d').date()  # 周日
         day2 = datetime.datetime.strptime('2018-5-13', '%Y-%m-%d').date()  # 周日
-        start, end = Stocktradedate.get_real_datelist(day1, day2)
+        start, end = Stocktradedate.get_real_date_start_end(day1, day2)
         self.assertIsNone(start)
 
         day1 = datetime.datetime.strptime('2018-5-13', '%Y-%m-%d').date()  # 周日
         day2 = datetime.datetime.strptime('2018-5-15', '%Y-%m-%d').date()  # 周日
-        start, end = Stocktradedate.get_real_datelist(day1, day2)
+        start, end = Stocktradedate.get_real_date_start_end(day1, day2)
         self.assertIsInstance(start, datetime.date, '返回值为datetime.date类型， 实际返回{}'.format(type(start)))
         day3 = datetime.datetime.strptime('2018-5-14', '%Y-%m-%d').date()  # 周一
         self.assertTrue(start == day3, '周日应该返回下一工作日:{}, 实际返回:{}'.format(day3, start))

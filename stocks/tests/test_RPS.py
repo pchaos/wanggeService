@@ -45,7 +45,7 @@ class TestRPS(TestCase):
         # rpspreparelist = RPSprepare.importIndexListing()
         qs = RPSprepare.getlist('index')
         assert qs.count() > 0, "RPSprepare.getlist('index') 返回个数应大于零"
-        start, _ = Stocktradedate.get_real_datelist('2018-1-1', '2018-2-1')
+        start, _ = Stocktradedate.get_real_date_start_end('2018-1-1', '2018-2-1')
         # qs = RPSprepare.getlist('index').filter(tradedate=convertToDate('2018-1-4'))
         qs = RPSprepare.getlist('index').filter(tradedate=start)
         df = pd.DataFrame(list(qs.values()))

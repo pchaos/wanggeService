@@ -76,10 +76,11 @@ class HSGTCGBase(StockBase):
             return 0
 
     @staticmethod
-    def getBrowser(headless=None):
+    def getBrowser(headless=None, pageloadtimeout=40):
         """ 获取webdriver浏览器
 
         :param headless: 是否无窗口模式
+        :param pageloadtimeout: 加载页面超时（秒）
         :return: browser
         """
         opts = Options()
@@ -89,6 +90,7 @@ class HSGTCGBase(StockBase):
         # assert opts.headless  # operating in headless mode
         # browser = webdriver.Firefox()
         browser = webdriver.Firefox(firefox_options=opts)
+        browser.set_page_load_timeout(pageloadtimeout)
         browser.maximize_window()
         return browser
 
@@ -152,7 +154,6 @@ class HSGTCGBase(StockBase):
                 tdate = pd.DataFrame(list(realdatelist.order_by('id').values_list('tradedate'))).iloc[-days][0]
             # 返回所有代码
             return cls.objects.all().filter(tradedate__gte=tdate)
-
 
     class Meta:
         abstract = True
@@ -233,28 +234,20 @@ class HSGTCG(HSGTCGBase):
                             continue
                     else:
                         print('新加入北向持股大于{}万,请留意：{}'.format(MINHAMOUNT, code))
-                url = 'http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock={}'.format(code)
-                df = cls.scrap(url, browser)
-                # 修复持股数量
-                df['hvol'] = df['hvol'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
-                df['hamount'] = df['hamount'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
-                df['close'] = df['close'].astype(float)
-                df['date'] = df['date'].apply(lambda x: convertToDate(x)).astype(datetime.date)
-                df = df[df['date'].apply(lambda x: Stocktradedate.if_tradeday(x))]  # 删除不是交易日的数据。这是东方财富网页版的bug
-                df.index = pd.RangeIndex(len(df.index))
+                df = cls.getStockHdStatistics(code, browser)
                 with transaction.atomic():
                     for i in df.index:
                         v = df.iloc[i]
-                        if len(dfd) > 0 and len(dfd[dfd['tradedate'] == v.date]) > 0:
+                        if len(dfd) > 0 and len(dfd[dfd['tradedate'] == v.tradedate]) > 0:
                             # 以前保存过，才需要判断保存过的交易日
                             # 保存过的日期，或者不是交易日 pass
                             continue
                         # 没有保存过的日期
                         try:
-                            print('{} saving ... {} {} {}'.format(cls.__name__, code, v.date, v.close))
+                            print('{} saving ... {} {} {}'.format(cls.__name__, code, v.tradedate, v.close))
                             HSGTCG.objects.get_or_create(code=code, close=v.close, hvol=v.hvol,
                                                          hamount=v.hamount, hpercent=v.hpercent,
-                                                         tradedate=v.date)
+                                                         tradedate=v.tradedate)
                         except Exception as e:
                             # print(code[0], v, type(v.close), type(v.hpercent))
                             print(code[0], e.args)
@@ -263,21 +256,46 @@ class HSGTCG(HSGTCGBase):
             if browser:
                 browser.close()
 
+    @classmethod
+    def getStockHdStatistics(cls, code, browser):
+        """ 抓取持股统计
+
+        :param code: 股票代码
+        :param browser: webdriver浏览器
+        :return:
+        """
+        url = 'http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock={}'.format(code)
+        df = cls.scrap(url, browser)
+        if len(df) > 0:
+            # 修复持股数量
+            df['hvol'] = df['hvol'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
+            df['hamount'] = df['hamount'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
+            df['close'] = df['close'].astype(float)
+            df['tradedate'] = df['tradedate'].apply(lambda x: convertToDate(x)).astype(datetime.date)
+            df = df[df['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]  # 删除不是交易日的数据。这是东方财富网页版的bug
+            df.index = pd.RangeIndex(len(df.index))
+        return df
+
     @staticmethod
     def scrap(url, browser):
         """ 抓取网页table
 
         :param url: 网址
         :param browser: 浏览器
-        :return:
+        :return: dataframe
         """
-        browser.get(url)
-        time.sleep(0.1)
-        soup = BeautifulSoup(browser.page_source, 'lxml')
-        table = soup.find_all(id='tb_cgtj')[0]
-        df = pd.read_html(str(table), header=1)[0]
-        df.columns = ['date', 'related', 'close', 'zd', 'hvol', 'hamount', 'hpercent', 'oneday', 'fiveday',
-                      'tenday']
+        try:
+            browser.get(url)
+            time.sleep(0.03)
+            soup = BeautifulSoup(browser.page_source, 'lxml')
+            table = soup.find_all(id='tb_cgtj')[0]
+            df = pd.read_html(str(table), header=1)[0]
+            df.columns = ['tradedate', 'related', 'close', 'zd', 'hvol', 'hamount', 'hpercent', 'oneday', 'fiveday',
+                          'tenday']
+        except Exception as e:
+            print(e.args)
+            return pd.DataFrame()
+
         return df
 
     def __str__(self):
@@ -290,6 +308,8 @@ class HSGTCG(HSGTCGBase):
 
 class HSGTCGHold(HSGTCGBase):
     """ 持股市值八千万
+
+  http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=HDDATE,SHAREHOLDPRICE&sr=3&p=1&ps=50&js=var%20pUekGWLu={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))(HDDATE=^2018-06-06^)&rt=50945353
 
     """
     code = models.CharField(verbose_name='代码', max_length=10, db_index=True, null=True)
@@ -318,11 +338,80 @@ class HSGTCGHold(HSGTCGBase):
         df = df[df['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]
         # 去除重复数据
         df = df[~df.duplicated()]
+        cls.savedf(df[['code', 'tradedate']])
         # pandas dataframe save to model
-        HSGTCGHold.objects.bulk_create(
-            HSGTCGHold(**vals) for vals in df[['code', 'tradedate']].to_dict('records')
-        )
+        # HSGTCGHold.objects.bulk_create(
+        #     HSGTCGHold(**vals) for vals in df[['code', 'tradedate']].to_dict('records')
+        # )
         return cls.getlist(tradedate=cls.getNearestTradedate())
+
+    @classmethod
+    def importjsonList(cls, enddate=None):
+        """ 导入市值大于指定值的列表
+
+        网址： http://data.eastmoney.com/hsgtcg/StockStatistics.aspx
+        直接下载json文件转换，效率比importList高
+
+        :param firefoxHeadless: 是否显示浏览器界面：
+            True  不显示界面
+            False 显示界面
+            默认不显示浏览器界面
+
+        :return: 最近交易日期的列表
+        """
+        hsgh = HSGTCGHold.getlist(tradedate=cls.getNearestTradedate())
+        if hsgh.count() > 0:
+            return hsgh
+        pagesize = 150  # 每页数据量
+        page = 1
+        sr = 3
+
+        if enddate:
+            end = convertToDate(enddate)
+        else:
+            end = HSGTCGHold.getNearestTradedate()
+        start = end - datetime.timedelta(10)
+        for page in range(1, 15):
+            if page > 1:
+                sr = -1
+            url = 'http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/\
+                    get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=HDDATE,SHAREHOLDPRICE&sr={sr}&\
+                    p=1&ps={pagesize}&js=var%20CiydgPzJ={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))\
+                    (HDDATE%3E=^{start}^%20and%20HDDATE%3C=^{end}^)&rt=50945623' \
+                .replace('{start}', str(start)).replace('{end}', str(end)) \
+                .replace('{sr}', str(sr)) \
+                .replace('{pagesize}', str(pagesize)) \
+                .replace('{page}', str(page))
+            df = cls.scrapjson(url)
+            dfn = df[df['hamount'] >= MINHAMOUNT]
+            dfn = dfn[dfn['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]
+            # 去除重复数据
+            dfn = dfn[~dfn.duplicated()]
+            cls.savedf(df[['code', 'tradedate']])
+            if len(df[df['hamount'] < MINHAMOUNT]):
+                # 持股金额小于
+                break
+        return cls.getlist(tradedate=cls.getNearestTradedate())
+
+    @staticmethod
+    def scrapjson(url):
+        import requests, json
+
+        # 'http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=HDDATE,SHAREHOLDPRICE&sr=3&p=1&ps=50&js=var%20pUekGWLu={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))(HDDATE=^2018-06-06^)&rt=50945353'
+        # url ='http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=HDDATE,SHAREHOLDPRICE&sr=3&p=1&ps=500&js=var%20CiydgPzJ={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))(HDDATE%3E=^2018-05-26^%20and%20HDDATE%3C=^2018-06-06^)&rt=50945623'
+
+        response = requests.get(url, timeout=40)
+
+        response = response.content.decode()
+        data = response
+        # data = data[len('var CiydgPzJ='):len(response) - 2]
+        data = data[len('var CiydgPzJ='):]
+        data_list = json.loads(data.replace('pages', '"pages"').replace('data', ' "data"'))
+        df = pd.DataFrame(data_list['data'])
+        df['code'] = df.SCODE.astype(str)
+        df['hamount'] = df.SHAREHOLDPRICE.apply(lambda x: round(x, 2)).astype(float)
+        df['tradedate'] = df['HDDATE'].apply(lambda x: convertToDate(str(x)[:10])).astype(datetime.date)
+        return df[['code', 'tradedate', 'hamount']]
 
     @staticmethod
     def scrap(url, browser):
@@ -374,7 +463,7 @@ class HSGTCGHold(HSGTCGBase):
                             btnenable = False
                         except Exception as e:
                             print('not ready click. Waiting')
-                            time.sleep(0.1)
+                            time.sleep(0.15)
                     time.sleep(1.3)
                     print('page:{}'.format(page + 1))
                 # print('results\n{}'.format(results))

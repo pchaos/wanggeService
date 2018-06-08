@@ -164,7 +164,9 @@ class RPS(RPSBase):
 
 
 class RPSprepare(RPSBase):
-    """欧奈尔PRS预计算"""
+    """欧奈尔PRS预计算
+
+    """
 
     class Meta:
         # app_label ='rps计算中间量'
@@ -172,9 +174,32 @@ class RPSprepare(RPSBase):
         unique_together = (('code', 'tradedate'))
 
     @classmethod
-    def importIndexListing(cls):
-        """
-        插入所有股票指数
+    def importIndexListing(cls, start='2014-1-1'):
+        """ 插入所有股票指数
+            qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', datetime.datetime.now().strftime("%Y-%m-%d"))
+
+    已知重复的指数代码：
+    000300 399300
+    000901 399901
+    000903 399903
+    000922 399922
+    000925 399925
+    000928 399928
+    000931 399931
+    000934 399934
+    000935 399935
+    000939 399939
+    000944 399944
+    000950 399950
+    000951 399951
+    000957 399957
+    000958 399958
+    000961 399961
+    000963 399963
+    000969 399969
+    000977 399977
+    000979 399979
+
         :return:
         """
         codelist = Listing.getlist('index')

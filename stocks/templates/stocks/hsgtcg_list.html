@@ -1,46 +1,69 @@
 {% extends "stocks/base_generic.html" %}
 
-{%  block title %}
+{% block title %}
     <div class="container">
-    {% if title %}
-        <h1>{{title }}</h1>
-    {% else %}
-        <h1>北向持股列表</h1>
-    {% endif %}
+            <h1>{{ title|default:"北向持股列表" }}</h1>
     </div>
+{% endblock %}
+
+{% block pageheader %}
+    {% if hsgtcg_list %}
+        <div class="row">
+            <div class="col-2"><a href="/">主页</a></div>
+            <div class="col-2"><a href="#">3天</a></div>
+            <div class="col-2">当前页记录数：{{ hsgtcg_list|length }}</div>
+        </div>
+{% endif %}
 {% endblock %}
 
 {% block content %}
     {% if hsgtcg_list %}
-    <ul>
-
-      {% for v in hsgtcg_list %}
-      <li>
-        <a href="{{ v.pk }}">{{ v.tradedate }}</a> {{v.code}}
-      </li>
-      {% endfor %}
-
-    </ul>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>日期</th>
+                <th>代码</th>
+                <th>备注</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for v in hsgtcg_list %}
+                <tr>
+                    <td><a href="{{ v.pk }}">{{ v.tradedate }}</a></td>
+                    <td> {{ v.code }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
 
     {% else %}
-      <p>未找到北向持股列表.</p>
-    {% endif %}       
+        <p>未找到北向持股列表.</p>
+    {% endif %}
+
+    {#  翻页  #}
+    {% block pagination %}
+        {% if is_paginated %}
+            <div class="pagination">
+                <ul class="paper">
+                  {% if page_obj.has_previous %}
+                       <li class="previous">
+                        <a href="{{ request.path }}?page={{ page_obj.previous_page_number }}">previous</a>
+                      </li>
+                  {% endif %}
+                  <span class="page-current">
+                      <li>
+                      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                      </li>
+                  </span>
+                  {% if page_obj.has_next %}
+                      <li class="next">
+                      <a href="{{ request.path }}?page={{ page_obj.next_page_number }}">next</a>
+                      </li>
+                  {% endif %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endblock %}
+
 {% endblock %}
 
-{% block pagination %}
-  {% if is_paginated %}
-      <div class="pagination">
-          <span class="page-links">
-              {% if page_obj.has_previous %}
-                  <a href="{{ request.path }}?page={{ page_obj.previous_page_number }}">previous</a>
-              {% endif %}
-              <span class="page-current">
-                  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-              </span>
-              {% if page_obj.has_next %}
-                  <a href="{{ request.path }}?page={{ page_obj.next_page_number }}">next</a>
-              {% endif %}
-          </span>
-      </div>
-  {% endif %}
-{% endblock %}

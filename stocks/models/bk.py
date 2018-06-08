@@ -125,7 +125,7 @@ class Block(StockBase):
             return cls.objects.all()
 
     def __str__(self):
-        return '{} - {} - {}'.format(self.parentblock, self.code, self.name)
+        return '{}_{}:{}'.format(self.parentblock.name, self.code, self.name)
 
     class Meta:
         verbose_name = '板块'
@@ -149,6 +149,10 @@ class BlockDetail(StockBase):
             return cls.objects.all().filter(blockname=upperblock)
         else:
             return cls.objects.all()
+
+    @classmethod
+    def importfromdf2List(cls, df, block=None):
+        aaa
 
     def __str__(self):
         return '{0} - {1}'.format(self.code, self.blockname)

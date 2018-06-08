@@ -1,12 +1,16 @@
-{#{% extends "base_generic.html" %}#}
+{% extends "stocks/base_generic.html" %}
 
-{% block content %}
+{%  block title %}
+    <div class="container">
     {% if title %}
         <h1>{{title }}</h1>
     {% else %}
         <h1>北向持股列表</h1>
     {% endif %}
+    </div>
+{% endblock %}
 
+{% block content %}
     {% if hsgtcg_list %}
     <ul>
 

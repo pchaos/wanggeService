@@ -172,6 +172,10 @@ class HSGTCG(HSGTCGBase):
     东方财富北向查询
     http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock=600519
 
+    json
+    http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&filter=(SCODE='002081')&st={sortType}&sr={sortRule}&p={page}&ps={pageSize}&js=var {jsname}={pages:(tp),data:(x)}{param}
+    http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&filter=(SCODE=%27002081%27)&st=HDDATE&sr=-1&p=1&ps=50&js=var%20JxagYxRi={pages:(tp),data:(x)}&rt=50951262
+
     深股通查询
     http://sc.hkexnews.hk/TuniS/www.hkexnews.hk/sdw/search/mutualmarket_c.aspx?t=sz
     繁体版
@@ -309,7 +313,7 @@ class HSGTCG(HSGTCGBase):
 class HSGTCGHold(HSGTCGBase):
     """ 持股市值八千万
 
-  http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=HDDATE,SHAREHOLDPRICE&sr=3&p=1&ps=50&js=var%20pUekGWLu={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))(HDDATE=^2018-06-06^)&rt=50945353
+  http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=SHAREHOLDPRICE&sr=-1&p=5&ps=150&js=var%20CiydgPzJ={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))(HDDATE%3E=^2018-05-29^%20and%20HDDATE%3C=^2018-06-08^)&rt=50950960
 
     """
     code = models.CharField(verbose_name='代码', max_length=10, db_index=True, null=True)
@@ -346,7 +350,7 @@ class HSGTCGHold(HSGTCGBase):
         return cls.getlist(tradedate=cls.getNearestTradedate())
 
     @classmethod
-    def importjsonList(cls, enddate=None):
+    def importjsonList(cls, enddate=None, days=5):
         """ 导入市值大于指定值的列表
 
         网址： http://data.eastmoney.com/hsgtcg/StockStatistics.aspx
@@ -357,42 +361,34 @@ class HSGTCGHold(HSGTCGBase):
             False 显示界面
             默认不显示浏览器界面
 
-        :return: 最近交易日期的列表
+        :return: 最近交易日期的列表jsonname
         """
-        hsgh = HSGTCGHold.getlist(tradedate=cls.getNearestTradedate())
-        if hsgh.count() > 0:
-            return hsgh
-        pagesize = 150  # 每页数据量
-        page = 1
-        sr = -1  # -1 按照市值降序排序； 1 按照市值升序排序
-
         if enddate:
             end = convertToDate(enddate)
         else:
-            end = HSGTCGHold.getNearestTradedate()
-        start = end - datetime.timedelta(10)
-        jsonname = cls.getRandomStr('letter')
+            end = cls.getNearestTradedate()
+            hsgh = cls.getlist(tradedate=end)
+            if hsgh.count() > 0:
+                return hsgh
+        pagesize = 300  # 每页数据量
+        page = 1
+        sortRule = -1  # sortRule-1 按照市值降序排序； 1 按照市值升序排序
+
+        start = end - datetime.timedelta(days)
+        jsname = cls.getRandomStr('letter')
         for page in range(1, 100):
             if page > 1:
                 sr = -1
-            # st=SHAREHOLDPRICE 按照持股市值排序
+            # st=SHAREHOLDPRICE 按照持股市值排序; st sortType
             url = 'http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/' \
-                'get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=SHAREHOLDPRICE&sr={sr}' \
-                '&p={page}&ps={pagesize}&js=var%20{jsonname}={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))' \
+                'get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=SHAREHOLDPRICE&sr={sortRule}' \
+                '&p={page}&ps={pagesize}&js=var%20{jsname}={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))' \
                 '(HDDATE%3E=^{start}^%20and%20HDDATE%3C=^{end}^)&rt=50950960' \
                 .replace('{start}', str(start)).replace('{end}', str(end)) \
-                .replace('{sr}', str(sr)) \
+                .replace('{sortRule}', str(sortRule)) \
                 .replace('{pagesize}', str(pagesize)) \
                 .replace('{page}', str(page)) \
-                .replace('{jsonname}', str(jsonname))
-            url2 = 'http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/\
-                    get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=SHAREHOLDPRICE&sr={sr}\
-                    &p={page}&ps={pagesize}&js=var%20CiydgPzJ={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))\
-                    (HDDATE%3E=^{start}^%20and%20HDDATE%3C=^{end}^)&rt=50945623' \
-                .replace('{start}', str(start)).replace('{end}', str(end)) \
-                .replace('{sr}', str(sr)) \
-                .replace('{pagesize}', str(pagesize)) \
-                .replace('{page}', str(page))
+                .replace('{jsname}', str(jsname))
             df = cls.scrapjson(url)
             dfn = df[df['hamount'] >= MINHAMOUNT]
             if len(dfn) > 0:
@@ -428,6 +424,7 @@ class HSGTCGHold(HSGTCGBase):
                     break
             except Exception as e:
                 print('requests.get(url, timeout=40)\n{}'.format(e.args))
+                time.sleep(1)
         return df[['code', 'tradedate', 'hamount']]
 
     @staticmethod

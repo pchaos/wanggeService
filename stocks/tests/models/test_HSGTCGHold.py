@@ -18,6 +18,7 @@ Change Activity:
 from django.test import TestCase
 from stocks.models import HSGTCGHold
 from stocks.models import Stocktradedate
+from stocks.models import convertToDate
 
 import selenium
 from selenium import webdriver
@@ -196,6 +197,26 @@ class TestHSGTCGHold(TestCase):
             if not (data1 >= 8000 and data2 < 8000):
                 print('不是新增持股金额大于八千万：{} 持股金额：{} {}'.format(code, data1, data2))
 
+        tdate = HSGTCGHold.getNearestTradedate()
+        while tdate > convertToDate('2018-5-2'):
+            tdate1 = HSGTCGHold.getNearestTradedate(tdate - datetime.timedelta(1))
+            hsg = HSGTCGHold.getlist(tdate)
+            hsg1 = HSGTCGHold.getlist(tdate1)
+            list2 = []
+            for c in hsg.exclude(code__in=hsg1.values_list('code')):
+                list2.append(c.code)
+            # 验证是否前一天市值小于八千万
+            for code in list2:
+                df = pd.DataFrame(
+                    list(HSGTCG.getlist(code).filter(tradedate__gte=tdate1).values().order_by('-tradedate')))
+                if len(df)> 1 and HSGTCG.getlist().filter(tradedate=tdate1).count() > 0:
+                # if len(df)> 1 :
+                    data1 = float(df.iloc[-2].hamount)
+                    data2 = float(df.iloc[-1].hamount)
+                    if not (data1 >= 8000 and data2 < 8000):
+                        print('{} 不是新增持股金额大于八千万：{} 持股金额：{} {}'.format(tdate, code, data1, data2))
+            tdate = HSGTCGHold.getNearestTradedate(tdate - datetime.timedelta(1))
+
     def test_directscrap(self):
         # http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=SHAREHOLDPRICE&sr=-1&p=2&ps=50&js=var%20AtvxLaxn={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))(HDDATE%3E=^2018-05-28^%20and%20HDDATE%3C=^2018-06-07^)&rt=50948590
         import  requests, json
@@ -222,3 +243,16 @@ class TestHSGTCGHold(TestCase):
         data = data[len('var CiydgPzJ='):]
         data_list = json.loads(data.replace('pages', '"pages"').replace('data',' "data"'))
         df = pd.DataFrame(data_list['data'])
+
+    def test_everydayCount(self):
+        for d in [d[0] for d in set(list(HSGTCGHold.getlist().values_list('tradedate')))]:
+            dcount = HSGTCGHold.getlist(d).count()
+            print(dcount)
+
+        from stocks.models import HSGTCG
+        tdate = HSGTCGHold.getNearestTradedate()
+        while tdate > convertToDate('2018-5-1'):
+            dcount = HSGTCGHold.getlist(tdate).count()
+            dcount1 = HSGTCG.getlist().filter(tradedate=tdate).count()
+            print(tdate, dcount, dcount1)
+            tdate = HSGTCGHold.getNearestTradedate(tdate - datetime.timedelta(1))

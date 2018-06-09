@@ -22,10 +22,12 @@ from django.db import transaction
 import pandas as pd
 import datetime
 
+
 class StockBase(models.Model):
     """ StockBase为所有model的基类，提供共用的类函数
 
     """
+
     @classmethod
     def saveModel2File(cls, filename=None, dropPk=True):
         if not filename:
@@ -52,7 +54,30 @@ class StockBase(models.Model):
         entries = df.to_dict('records')
         with transaction.atomic():
             for v in entries:
-                cls.objects.get_or_create(**v)
+                _, created = cls.objects.get_or_create(**v)
+                # if  created:
+                #     print('exists:{}'.format(v))
+
+    @staticmethod
+    def getRandomStr(types='letter', length=8):
+        """ 随机产生length长度的字符串
+
+        :param types: 随机字符串的类型
+        types in ['letter', 'ascii'] 返回包含字母的字符串
+        types in ['digit', 'num']: 返回包含数字的字符串
+        其他：返回混合字母和数字的字符串
+
+        :param length: 返回字符串的长度
+        :return: 长度为length，类型为types的字符串
+        """
+        import random
+        import string
+        if types in ['letter', 'ascii']:
+            return ''.join(random.sample(string.ascii_letters, length))
+        if types in ['digit', 'num']:
+            return ''.join(random.sample(string.digits, length))
+        else:
+            return ''.join(random.sample(string.ascii_letters + string.digits, length))
 
     @staticmethod
     def dropDataframePK(df, dropPk):

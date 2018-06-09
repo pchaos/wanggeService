@@ -202,13 +202,13 @@ class TestHSGTCGHold(TestCase):
         pagesize = 100
         page = 1
         sr=3
-        start = HSGTCGHold.getNearestTradedate() -datetime.timedelta(30)
+        start = HSGTCGHold.getNearestTradedate() -datetime.timedelta(20)
         end = start + datetime.timedelta(10)
         if page > 1:
             sr = -1
         url ='http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/\
-        get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=HDDATE,SHAREHOLDPRICE&sr={sr}&\
-        p={page}&ps={pagesize}&js=var%20CiydgPzJ={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))\
+        get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=HDDATE,SHAREHOLDPRICE&sr={sr}\
+        &p={page}&ps={pagesize}&js=var%20CiydgPzJ={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))\
         (HDDATE%3E=^{start}^%20and%20HDDATE%3C=^{end}^)&rt=50945623'\
             .replace('{start}', str(start)).replace('{end}', str(end))\
             .replace('{pagesize}', str(pagesize))\

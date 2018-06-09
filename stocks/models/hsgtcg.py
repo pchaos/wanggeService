@@ -364,19 +364,30 @@ class HSGTCGHold(HSGTCGBase):
             return hsgh
         pagesize = 150  # 每页数据量
         page = 1
-        sr = 3
+        sr = -1  # -1 按照市值降序排序； 1 按照市值升序排序
 
         if enddate:
             end = convertToDate(enddate)
         else:
             end = HSGTCGHold.getNearestTradedate()
         start = end - datetime.timedelta(10)
-        for page in range(1, 15):
+        jsonname = cls.getRandomStr('letter')
+        for page in range(1, 100):
             if page > 1:
                 sr = -1
-            url = 'http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/\
-                    get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=HDDATE,SHAREHOLDPRICE&sr={sr}&\
-                    p=1&ps={pagesize}&js=var%20CiydgPzJ={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))\
+            # st=SHAREHOLDPRICE 按照持股市值排序
+            url = 'http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/' \
+                'get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=SHAREHOLDPRICE&sr={sr}' \
+                '&p={page}&ps={pagesize}&js=var%20{jsonname}={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))' \
+                '(HDDATE%3E=^{start}^%20and%20HDDATE%3C=^{end}^)&rt=50950960' \
+                .replace('{start}', str(start)).replace('{end}', str(end)) \
+                .replace('{sr}', str(sr)) \
+                .replace('{pagesize}', str(pagesize)) \
+                .replace('{page}', str(page)) \
+                .replace('{jsonname}', str(jsonname))
+            url2 = 'http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/\
+                    get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=SHAREHOLDPRICE&sr={sr}\
+                    &p={page}&ps={pagesize}&js=var%20CiydgPzJ={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))\
                     (HDDATE%3E=^{start}^%20and%20HDDATE%3C=^{end}^)&rt=50945623' \
                 .replace('{start}', str(start)).replace('{end}', str(end)) \
                 .replace('{sr}', str(sr)) \
@@ -384,10 +395,12 @@ class HSGTCGHold(HSGTCGBase):
                 .replace('{page}', str(page))
             df = cls.scrapjson(url)
             dfn = df[df['hamount'] >= MINHAMOUNT]
-            dfn = dfn[dfn['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]
-            # 去除重复数据
-            dfn = dfn[~dfn.duplicated()]
-            cls.savedf(df[['code', 'tradedate']])
+            if len(dfn) > 0:
+                dfn = dfn[dfn['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]
+                # 去除重复数据
+                dfn = dfn[~dfn.duplicated()]
+                cls.savedf(dfn[['code', 'tradedate']])
+            print(page)
             if len(df[df['hamount'] < MINHAMOUNT]):
                 # 持股金额小于
                 break
@@ -397,20 +410,24 @@ class HSGTCGHold(HSGTCGBase):
     def scrapjson(url):
         import requests, json
 
-        # 'http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=HDDATE,SHAREHOLDPRICE&sr=3&p=1&ps=50&js=var%20pUekGWLu={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))(HDDATE=^2018-06-06^)&rt=50945353'
-        # url ='http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=HDDATE,SHAREHOLDPRICE&sr=3&p=1&ps=500&js=var%20CiydgPzJ={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))(HDDATE%3E=^2018-05-26^%20and%20HDDATE%3C=^2018-06-06^)&rt=50945623'
+        # 异常处理 最多三次抓取
+        for _ in range(3):
+            try:
+                response = requests.get(url, timeout=40)
 
-        response = requests.get(url, timeout=40)
-
-        response = response.content.decode()
-        data = response
-        # data = data[len('var CiydgPzJ='):len(response) - 2]
-        data = data[len('var CiydgPzJ='):]
-        data_list = json.loads(data.replace('pages', '"pages"').replace('data', ' "data"'))
-        df = pd.DataFrame(data_list['data'])
-        df['code'] = df.SCODE.astype(str)
-        df['hamount'] = df.SHAREHOLDPRICE.apply(lambda x: round(x, 2)).astype(float)
-        df['tradedate'] = df['HDDATE'].apply(lambda x: convertToDate(str(x)[:10])).astype(datetime.date)
+                response = response.content.decode()
+                data = response
+                # data = data[len('var CiydgPzJ='):len(response) - 2]
+                data = data[len('var CiydgPzJ='):]
+                data_list = json.loads(data.replace('pages', '"pages"').replace('data', ' "data"'))
+                df = pd.DataFrame(data_list['data'])
+                df['code'] = df.SCODE.astype(str)
+                df['hamount'] = df.SHAREHOLDPRICE.apply(lambda x: round(x/10000, 2)).astype(float)
+                df['tradedate'] = df['HDDATE'].apply(lambda x: convertToDate(str(x)[:10])).astype(datetime.date)
+                if len(df) > 0:
+                    break
+            except Exception as e:
+                print('requests.get(url, timeout=40)\n{}'.format(e.args))
         return df[['code', 'tradedate', 'hamount']]
 
     @staticmethod

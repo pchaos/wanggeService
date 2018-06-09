@@ -320,10 +320,27 @@ class HSGTCGHold(HSGTCGBase):
     tradedate = models.DateField(verbose_name='日期', null=True)
 
     @classmethod
-    def importList(cls, firefoxHeadless=False):
+    def importList(cls, enddate=None, days=5, firefoxHeadless=True):
+        """ 默认调用json模式
+        当days为None时，调用importWebdriverList，使用webdriver方式
+
+        :param enddate:
+        :param days:
+        :param firefoxHeadless:
+        :return:
+        """
+        if days:
+            return cls.importjsonList(enddate, days)
+        else:
+            return cls.importWebdriverList(firefoxHeadless)
+
+    @classmethod
+    def importWebdriverList(cls, firefoxHeadless=False):
         """ 导入市值大于指定值的列表
 
         网址： http://data.eastmoney.com/hsgtcg/StockStatistics.aspx
+
+        不建议用此方法，经常丢失数据
 
         :param firefoxHeadless: 是否显示浏览器界面：
             True  不显示界面
@@ -478,7 +495,7 @@ class HSGTCGHold(HSGTCGBase):
                         except Exception as e:
                             print('not ready click. Waiting')
                             time.sleep(0.15)
-                    time.sleep(1.3)
+                    time.sleep(1.5)
                     print('page:{}'.format(page + 1))
                 # print('results\n{}'.format(results))
 

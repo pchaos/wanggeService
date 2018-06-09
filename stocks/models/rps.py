@@ -233,3 +233,43 @@ class RPSprepare(RPSBase):
         except Exception as e:
             print(e.args)
         return cls.getlist('index')
+
+    @classmethod
+    def importStockListing(cls, start='2014-1-1'):
+        """ 插入所有股票指
+            qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', datetime.datetime.now().strftime("%Y-%m-%d"))
+
+        :return:
+        """
+        codelist = Listing.getlist('index')
+        # todo 如果已经插入，则判断是否有更新
+        try:
+            # 批量创建对象，减少SQL查询次数
+            querysetlist = []
+            delisted = []  # quantaxis中无数据list
+            for v in codelist.values():
+                print('dealing: {}'.format(v))
+                # get stockcode
+                code = Listing.objects.get(code=v['code'], category=11)
+                # 本地获取指数日线数据
+                data = qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', datetime.datetime.now().strftime("%Y-%m-%d"))
+                if len(data) > 120:
+                    df = pd.DataFrame(data.close)
+                    df['rps120'] = df.close / df.close.shift(120)
+                    df['rps250'] = df.close / df.close.shift(250)
+                    del df['close']
+                    df = df[120:]
+                    for d, _, a, b in df.reset_index().values:
+                        # 下面两行代码，合并写在一行，会造成tradedate错误
+                        r = RPSprepare(code=code, rps120=a, rps250=b if b > 0 else None,
+                                       tradedate=d.to_pydatetime())
+                        querysetlist.append(r)
+                else:
+                    # quantaxis中无数据
+                    delisted.append(a)
+            print('delisted count {} :\n {}'.format(len(delisted), delisted))
+            RPSprepare.objects.bulk_create(querysetlist)
+        except Exception as e:
+            print(e.args)
+        return cls.getlist('index')
+

@@ -69,6 +69,9 @@ class StockBase(models.Model):
 
         :param length: 返回字符串的长度
         :return: 长度为length，类型为types的字符串
+
+        todo string.punctuation
+
         """
         import random
         import string

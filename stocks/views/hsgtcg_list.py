@@ -25,6 +25,20 @@ from stocks.models import Listing
 class HSGTCGListView(generic.ListView):
     model = HSGTCG
     paginate_by = 100  # if pagination is desired
+    code=''
+
+    def get(self, request, *args, **kwargs):
+        self.code = request.GET.get('code', '' )
+
+        return super(HSGTCGListView, self).get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        queryset = []
+        queryset = HSGTCG.getlist()
+        self.code = self.request.GET.get('code', '')
+        if self.code:
+            queryset = HSGTCG.getlist(self.code)
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

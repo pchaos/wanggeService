@@ -177,6 +177,7 @@ class TestHSGTCGHold(TestCase):
 
 
     def test_newcomingin(self):
+        Stocktradedate.importList()
         from stocks.models import HSGTCG
         #  2018 - 06 - 04 新增北向持股金额大于八千万
         list1 = ['603658' , '600460', '002812', '002557', '600188', '000690', '600329']
@@ -245,6 +246,7 @@ class TestHSGTCGHold(TestCase):
         df = pd.DataFrame(data_list['data'])
 
     def test_everydayCount(self):
+        Stocktradedate.importList()
         for d in [d[0] for d in set(list(HSGTCGHold.getlist().values_list('tradedate')))]:
             dcount = HSGTCGHold.getlist(d).count()
             print(dcount)

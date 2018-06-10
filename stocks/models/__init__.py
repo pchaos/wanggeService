@@ -89,7 +89,7 @@ class Listing(stockABS):
         oq = oneil()
         n1 = 0
         df = oq.listingDate(n1)
-        # todo 如果已经插入，则判断是否有更新
+        # todo 如果已经插入，则判断是否有更新 调用savedf方法可以实现判断有更新
         try:
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
@@ -192,7 +192,7 @@ class StockDay(StockBase):
         unique_together = (('code', 'tradedate'))
 
 from .stocktradedate import Stocktradedate
-from stocks.models.rps import RPS, RPSprepare
+from .rps import RPS, RPSprepare
 from .bk import Block
 from .bk import BlockDetail
 from .hsgtcg import HSGTCG, HSGTCGHold

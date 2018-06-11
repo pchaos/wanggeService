@@ -211,7 +211,7 @@ class HSGTCG(HSGTCGBase):
 
     @classmethod
     def importList(cls, firefoxHeadless=True, checkNearesttradeday=True):
-        """ 根据最近交易日的持仓交恶，获取相应的个股北向数据
+        """ 根据最近交易日的持仓交易，获取相应的个股北向数据
 
         :param firefoxHeadless: 是否显示浏览器界面：
             True  不显示界面

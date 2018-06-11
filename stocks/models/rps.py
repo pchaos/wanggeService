@@ -241,7 +241,7 @@ class RPSprepare(RPSBase):
 
         :return:
         """
-        codelist = Listing.getlist('index')
+        codelist = Listing.getlist('stock')
         # todo 如果已经插入，则判断是否有更新
         try:
             # 批量创建对象，减少SQL查询次数

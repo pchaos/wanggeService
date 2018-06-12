@@ -16,6 +16,7 @@ Change Activity:
 -------------------------------------------------
 """
 from django.db import models
+from django.db import transaction
 import datetime
 
 import QUANTAXIS as qa
@@ -208,26 +209,27 @@ class RPSprepare(RPSBase):
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
             delisted = []  # quantaxis中无数据list
-            for v in codelist.values():
-                print('dealing: {}'.format(v))
-                # get stockcode
-                code = Listing.objects.get(code=v['code'], category=11)
-                # 本地获取指数日线数据
-                data = qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', datetime.datetime.now().strftime("%Y-%m-%d"))
-                if len(data) > 120:
-                    df = pd.DataFrame(data.close)
-                    df['rps120'] = df.close / df.close.shift(120)
-                    df['rps250'] = df.close / df.close.shift(250)
-                    del df['close']
-                    df = df[120:]
-                    for d, _, a, b in df.reset_index().values:
-                        # 下面两行代码，合并写在一行，会造成tradedate错误
-                        r = RPSprepare(code=code, rps120=a, rps250=b if b > 0 else None,
-                                       tradedate=d.to_pydatetime())
-                        querysetlist.append(r)
-                else:
-                    # quantaxis中无数据
-                    delisted.append(a)
+            with transaction.atomic():
+                for v in codelist.values():
+                    print('dealing: {}'.format(v))
+                    # get stockcode
+                    code = Listing.objects.get(code=v['code'], category=11)
+                    # 本地获取指数日线数据
+                    data = qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', datetime.datetime.now().strftime("%Y-%m-%d"))
+                    if len(data) > 120:
+                        df = pd.DataFrame(data.close)
+                        df['rps120'] = df.close / df.close.shift(120)
+                        df['rps250'] = df.close / df.close.shift(250)
+                        del df['close']
+                        df = df[120:]
+                        for d, _, a, b in df.reset_index().values:
+                            # 下面两行代码，合并写在一行，会造成tradedate错误
+                            r = RPSprepare(code=code, rps120=a, rps250=b if b > 0 else None,
+                                           tradedate=d.to_pydatetime())
+                            querysetlist.append(r)
+                    else:
+                        # quantaxis中无数据
+                        delisted.append(a)
             print('delisted count {} :\n {}'.format(len(delisted), delisted))
             RPSprepare.objects.bulk_create(querysetlist)
         except Exception as e:
@@ -247,29 +249,43 @@ class RPSprepare(RPSBase):
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
             delisted = []  # quantaxis中无数据list
-            for v in codelist.values():
-                print('dealing: {}'.format(v))
-                # get stockcode
-                code = Listing.objects.get(code=v['code'], category=11)
-                # 本地获取指数日线数据
-                data = qa.QA_fetch_index_day_adv(v['code'], '1990-01-01', datetime.datetime.now().strftime("%Y-%m-%d"))
-                if len(data) > 120:
-                    df = pd.DataFrame(data.close)
-                    df['rps120'] = df.close / df.close.shift(120)
-                    df['rps250'] = df.close / df.close.shift(250)
-                    del df['close']
-                    df = df[120:]
-                    for d, _, a, b in df.reset_index().values:
-                        # 下面两行代码，合并写在一行，会造成tradedate错误
-                        r = RPSprepare(code=code, rps120=a, rps250=b if b > 0 else None,
-                                       tradedate=d.to_pydatetime())
-                        querysetlist.append(r)
-                else:
-                    # quantaxis中无数据
-                    delisted.append(a)
+            tdate = cls.getNearestTradedate()
+            realStart120 = cls.getNearestTradedate(start, -120)
+            realStart = cls.getNearestTradedate(start, -250)
+            with transaction.atomic():
+                # for v in codelist.values()[11:100]:
+                for v in codelist.values():
+                    print('Dealing {} {} {}'.format(format(v['id'], '05d'), v['code'], v['name']))
+                    try:
+                        # get stockcode
+                        code = Listing.objects.get(code=v['code'], category=10)
+                        # 本地获取指数日线数据
+                        data = qa.QA_fetch_stock_day_adv(v['code'], realStart, datetime.datetime.now().strftime("%Y-%m-%d")).to_qfq()
+                        if len(data) > 120:
+                            df = pd.DataFrame(data.close)
+                            df['rps120'] = round(df.close / df.close.shift(120), 3)
+                            df['rps250'] = round(df.close / df.close.shift(250), 3)
+                            del df['close']
+                            if code.timeToMarket > realStart120:
+                                # 上市日期较早
+                                cutDay = 120
+                            else:
+                                cutDay = 250
+                            df = df[cutDay:]
+                            df.reset_index(inplace=True)
+                            df.columns = ['tradedate', 'code', 'rps120', 'rps250']
+                            del df['code']
+                            df['tradedate'] = df['tradedate'].astype(datetime.date)
+                            df['code_id'] = code.id
+                            cls.savedf(df)
+
+                    except Exception as e:
+                        delisted.append(v['code'])
+                        print(len(delisted), e.args)
+
             print('delisted count {} :\n {}'.format(len(delisted), delisted))
-            RPSprepare.objects.bulk_create(querysetlist)
+            # RPSprepare.objects.bulk_create(querysetlist)
         except Exception as e:
             print(e.args)
-        return cls.getlist('index')
+        return cls.getlist('stock')
 

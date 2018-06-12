@@ -21,7 +21,6 @@ MINHAMOUNT = 8000  # 最小关注的北向持仓金额
 
 from django.db import models
 from django.db import transaction
-import selenium
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
@@ -31,7 +30,6 @@ import time, datetime
 from stocks.models import Stocktradedate
 from stocks.models import convertToDate
 from stocks.models import StockBase
-import os
 
 
 class HSGTCGBase(StockBase):
@@ -103,23 +101,6 @@ class HSGTCGBase(StockBase):
         :return: pandas dataframe
         """
         raise Exception('子类需要实现本函数，返回需要数据的dataframe！')
-
-    @staticmethod
-    def getNearestTradedate(date=datetime.datetime.now().date()):
-        """ 获取离date最近的交易日期
-            只能获取到前一交易日的数据
-
-        :param date:
-        :return:
-        """
-        date = convertToDate(date)
-        tradedate = Stocktradedate.get_real_date(date, -1).date()
-
-        if date == tradedate:
-            if date == datetime.datetime.now().date():
-                # 当天并且是交易日
-                tradedate = Stocktradedate.preTradeday(tradedate)
-        return tradedate
 
     @classmethod
     def getlist(cls, tradedate=None):
@@ -229,7 +210,9 @@ class HSGTCG(HSGTCGBase):
             hsgh = HSGTCGHold.getlist(tradedate=cls.getNearestTradedate())
         browser = cls.getBrowser(firefoxHeadless)
         try:
+            bcount = 0 # 访问网页计数 当访问50次，关掉浏览器，重新打开
             for code in [code[0] for code in list(hsgh.values_list('code'))]:
+
                 dfd = pd.DataFrame(list(HSGTCG.getlist().filter(code=code).values('tradedate')))
                 if checkNearesttradeday:
                     if len(dfd) > 0:
@@ -256,6 +239,11 @@ class HSGTCG(HSGTCGBase):
                             # print(code[0], v, type(v.close), type(v.hpercent))
                             print(code[0], e.args)
                             # raise Exception(e.args)
+                bcount += 1
+                if bcount % 50 == 0:
+                    if browser:
+                        browser.close()
+                        browser = cls.getBrowser(firefoxHeadless)
         finally:
             if browser:
                 browser.close()
@@ -413,7 +401,7 @@ class HSGTCGHold(HSGTCGBase):
                 # 去除重复数据
                 dfn = dfn[~dfn.duplicated()]
                 cls.savedf(dfn[['code', 'tradedate']])
-            print(page)
+            print('page: {}'.format(page))
             if len(df[df['hamount'] < MINHAMOUNT]):
                 # 持股金额小于
                 break

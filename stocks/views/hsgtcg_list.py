@@ -37,8 +37,8 @@ class HSGTCGListView(generic.ListView):
         queryset = HSGTCG.getlist()
         self.code = self.request.GET.get('code', '')
         if self.code:
-            queryset = HSGTCG.getlist(self.code).order_by('-tradedate')
-        return queryset
+            queryset = HSGTCG.getlist(self.code)
+        return queryset.order_by('-tradedate')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

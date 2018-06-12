@@ -3,7 +3,7 @@ from django.utils import timezone
 import datetime
 import pandas as pd
 import QUANTAXIS as qa  # since quantaxis Version 1.0.33    2018 05 18
-from .base import StockBase
+
 
 STOCK_CATEGORY = ((10, "股票"),
                   (11, "指数"),
@@ -19,21 +19,8 @@ MARKET_CHOICES = ((0, "深市"), (1, "沪市"))
 # 例如： 2017-01-01
 DATE_FORMAT = '%Y-%m-%d'
 
-
-def convertToDate(date, dateformat=DATE_FORMAT):
-    """ 转换为日期类型
-
-    :param date: DATE_FORMAT = '%Y-%m-%d'
-    例如： '2017-01-01'
-
-    :return:  返回日期 date.date()
-    """
-    try:
-        date = datetime.datetime.strptime(date, dateformat)
-        return date.date()
-    except TypeError:
-        return date
-
+from .base import StockBase, convertToDate
+from .stocktradedate import Stocktradedate
 
 class stockABS(StockBase):
     class Meta:
@@ -191,7 +178,8 @@ class StockDay(StockBase):
         verbose_name = '日数据'
         unique_together = (('code', 'tradedate'))
 
-from .stocktradedate import Stocktradedate
+
+
 from .rps import RPS, RPSprepare
 from .bk import Block
 from .bk import BlockDetail

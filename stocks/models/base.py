@@ -15,13 +15,28 @@ Change Activity:
 @Contact : p19992003#gmail.com                   
 -------------------------------------------------
 """
+
 __author__ = 'pchaos'
 
 from django.db import models
 from django.db import transaction
 import pandas as pd
 import datetime
+from stocks.models import DATE_FORMAT
 
+def convertToDate(date, dateformat=DATE_FORMAT):
+    """ 转换为日期类型
+
+    :param date: DATE_FORMAT = '%Y-%m-%d'
+    例如： '2017-01-01'
+
+    :return:  返回日期 date.date()
+    """
+    try:
+        date = datetime.datetime.strptime(date, dateformat)
+        return date.date()
+    except TypeError:
+        return date
 
 class StockBase(models.Model):
     """ StockBase为所有model的基类，提供共用的类函数
@@ -50,13 +65,19 @@ class StockBase(models.Model):
             print('文件名为空，请传正确的文件名！')
 
     @classmethod
-    def savedf(cls, df):
+    def savedf(cls, df, debug=False):
         entries = df.to_dict('records')
         with transaction.atomic():
-            for v in entries:
-                _, created = cls.objects.get_or_create(**v)
-                # if  created:
-                #     print('exists:{}'.format(v))
+            if debug:
+                for v in entries:
+                    _, created = cls.objects.get_or_create(**v)
+                    if  created:
+                        print('create:{}'.format(v))
+                    else:
+                        print('exists:{}'.format(v))
+            else:
+                for v in entries:
+                    _, created = cls.objects.get_or_create(**v)
 
     @staticmethod
     def getRandomStr(types='letter', length=8):
@@ -119,3 +140,30 @@ class StockBase(models.Model):
 
     class Meta:
         abstract = True
+
+    @staticmethod
+    def getNearestTradedate(date=datetime.datetime.now().date(), days=0):
+        """ 获取离date最近的交易日期
+            只能获取到前一交易日的数据
+
+        :param date:
+        :return:
+        """
+        from stocks.models import Stocktradedate
+        date = convertToDate(date)
+        tradedate = Stocktradedate.get_real_date(date, -1).date()
+
+        if date == tradedate:
+            if date == datetime.datetime.now().date():
+                # 当天并且是交易日
+                tradedate = Stocktradedate.preTradeday(tradedate)
+        if days == 0 :
+            return tradedate
+        elif days < 0:
+            for day in range(abs(days)):
+                tradedate = Stocktradedate.preTradeday(tradedate)
+        else:
+            for day in range(days):
+                tradedate = Stocktradedate.nextTradeday(tradedate)
+
+        return tradedate

@@ -53,5 +53,6 @@ class TestRPS(TestCase):
         data=RPS.caculateRPS(df)
         self.assertTrue(len(data)/len(data[data['rps120']==data['rps250']]) > 2, 'rps120等于rps250的几率很小'.format(len(data), len(data[data['rps120']==data['rps250']])) )
 
-
+    def test_importStockList(self):
+        qs = RPSprepare.getlist('stock')
 

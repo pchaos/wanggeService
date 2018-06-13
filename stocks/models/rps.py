@@ -257,7 +257,7 @@ class RPSprepare(RPSBase):
             realStart = cls.getNearestTradedate(start, -250)
             # with transaction.atomic():
             # for v in codelist.values()[11:100]:
-            for v in codelist.values()[20:100]:
+            for v in codelist.values():
                 print('Dealing {} {} {}'.format(format(v['id'], '05d'), v['code'], v['name']))
                 try:
                     # get stockcode

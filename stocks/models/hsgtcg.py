@@ -30,7 +30,10 @@ import time, datetime
 from stocks.models import Stocktradedate
 from stocks.models import convertToDate
 from stocks.models import StockBase
+from stocks.tools.proxy import get_proxy, delete_proxy
 
+# 全局代理变量
+myProxy =''
 
 class HSGTCGBase(StockBase):
     @staticmethod
@@ -74,7 +77,7 @@ class HSGTCGBase(StockBase):
             return 0
 
     @staticmethod
-    def getBrowser(headless=None, pageloadtimeout=40):
+    def getBrowser(headless=None, proxies=True, pageloadtimeout=15):
         """ 获取webdriver浏览器
 
         :param headless: 是否无窗口模式
@@ -85,11 +88,27 @@ class HSGTCGBase(StockBase):
         if headless:
             opts.set_headless()
             # opts.add_argument('-headless')
-        # assert opts.headless  # operating in headless mode
+
         # browser = webdriver.Firefox()
-        browser = webdriver.Firefox(firefox_options=opts)
+
+        if proxies:
+            from selenium.webdriver.common.proxy import Proxy, ProxyType
+            global myProxy
+            myProxy= get_proxy().decode('utf-8')
+            desired_capability = webdriver.DesiredCapabilities.FIREFOX
+            desired_capability['proxy'] = {
+                "proxyType": "manual",
+                "httpProxy": myProxy,
+                "ftpProxy": myProxy,
+                "sslProxy": myProxy
+            }
+            browser = webdriver.Firefox(firefox_options=opts, capabilities=desired_capability)
+        else:
+            browser = webdriver.Firefox(firefox_options=opts)
+        # assert opts.headless  # operating in headless mode
         browser.set_page_load_timeout(pageloadtimeout)
-        browser.maximize_window()
+        if not headless:
+            browser.maximize_window()
         return browser
 
     @staticmethod
@@ -210,7 +229,7 @@ class HSGTCG(HSGTCGBase):
             hsgh = HSGTCGHold.getlist(tradedate=cls.getNearestTradedate())
         browser = cls.getBrowser(firefoxHeadless)
         try:
-            bcount = 0 # 访问网页计数 当访问50次，关掉浏览器，重新打开
+            bcount = 0  # 访问网页计数 当访问50次，关掉浏览器，重新打开
             for code in [code[0] for code in list(hsgh.values_list('code'))]:
 
                 dfd = pd.DataFrame(list(HSGTCG.getlist().filter(code=code).values('tradedate')))
@@ -249,7 +268,7 @@ class HSGTCG(HSGTCGBase):
                 browser.close()
 
     @classmethod
-    def getStockHdStatistics(cls, code, browser):
+    def getStockHdStatistics(cls, code, browser, retryCount=3):
         """ 抓取持股统计
 
         :param code: 股票代码
@@ -257,19 +276,24 @@ class HSGTCG(HSGTCGBase):
         :return:
         """
         url = 'http://data.eastmoney.com/hsgtcg/StockHdStatistics.aspx?stock={}'.format(code)
-        df = cls.scrap(url, browser)
-        if len(df) > 0:
-            # 修复持股数量
-            df['hvol'] = df['hvol'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
-            df['hamount'] = df['hamount'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
-            df['close'] = df['close'].astype(float)
-            df['tradedate'] = df['tradedate'].apply(lambda x: convertToDate(x)).astype(datetime.date)
-            df = df[df['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]  # 删除不是交易日的数据。这是东方财富网页版的bug
-            df.index = pd.RangeIndex(len(df.index))
+        for i in range(retryCount):
+            df = cls.scrap(url, browser)
+            if len(df) > 0:
+                # 修复持股数量
+                df['hvol'] = df['hvol'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
+                df['hamount'] = df['hamount'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
+                df['close'] = df['close'].astype(float)
+                df['tradedate'] = df['tradedate'].apply(lambda x: convertToDate(x)).astype(datetime.date)
+                df = df[df['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]  # 删除不是交易日的数据。这是东方财富网页版的bug
+                df.index = pd.RangeIndex(len(df.index))
+            else:
+                browser.close()
+                browser = cls.getBrowser()
+
         return df
 
     @staticmethod
-    def scrap(url, browser):
+    def scrap(url, browser,retryCount=3):
         """ 抓取网页table
 
         :param url: 网址
@@ -277,8 +301,18 @@ class HSGTCG(HSGTCGBase):
         :return: dataframe
         """
         try:
-            browser.get(url)
-            time.sleep(0.03)
+            while retryCount > 0:
+                try:
+                    browser.get(url)
+                    if 'table' in browser.page_source:
+                        break
+                except Exception as e:
+                    print(retryCount, e.args)
+                    retryCount -= 1
+                    if retryCount == 1:
+                        delete_proxy(myProxy)
+
+            # time.sleep(0.03)
             soup = BeautifulSoup(browser.page_source, 'lxml')
             table = soup.find_all(id='tb_cgtj')[0]
             df = pd.read_html(str(table), header=1)[0]
@@ -386,9 +420,9 @@ class HSGTCGHold(HSGTCGBase):
                 sr = -1
             # st=SHAREHOLDPRICE 按照持股市值排序; st sortType
             url = 'http://dcfm.eastmoney.com//em_mutisvcexpandinterface/api/js/' \
-                'get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=SHAREHOLDPRICE&sr={sortRule}' \
-                '&p={page}&ps={pagesize}&js=var%20{jsname}={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))' \
-                '(HDDATE%3E=^{start}^%20and%20HDDATE%3C=^{end}^)&rt=50950960' \
+                  'get?type=HSGTHDSTA&token=70f12f2f4f091e459a279469fe49eca5&st=SHAREHOLDPRICE&sr={sortRule}' \
+                  '&p={page}&ps={pagesize}&js=var%20{jsname}={pages:(tp),data:(x)}&filter=(MARKET%20in%20(%27001%27,%27003%27))' \
+                  '(HDDATE%3E=^{start}^%20and%20HDDATE%3C=^{end}^)&rt=50950960' \
                 .replace('{start}', str(start)).replace('{end}', str(end)) \
                 .replace('{sortRule}', str(sortRule)) \
                 .replace('{pagesize}', str(pagesize)) \
@@ -423,7 +457,7 @@ class HSGTCGHold(HSGTCGBase):
                 data_list = json.loads(data.replace('pages', '"pages"').replace('data', ' "data"'))
                 df = pd.DataFrame(data_list['data'])
                 df['code'] = df.SCODE.astype(str)
-                df['hamount'] = df.SHAREHOLDPRICE.apply(lambda x: round(x/10000, 2)).astype(float)
+                df['hamount'] = df.SHAREHOLDPRICE.apply(lambda x: round(x / 10000, 2)).astype(float)
                 df['tradedate'] = df['HDDATE'].apply(lambda x: convertToDate(str(x)[:10])).astype(datetime.date)
                 if len(df) > 0:
                     break

@@ -79,6 +79,13 @@ class StockBase(models.Model):
                 for v in entries:
                     _, created = cls.objects.get_or_create(**v)
 
+    @classmethod
+    def savedfByUpdate(cls, df):
+        entries = df.to_dict('records')
+        with transaction.atomic():
+                for v in entries:
+                    _, created = cls.objects.update_or_create(**v)
+
     @staticmethod
     def getRandomStr(types='letter', length=8):
         """ 随机产生length长度的字符串
@@ -144,7 +151,7 @@ class StockBase(models.Model):
     @staticmethod
     def getNearestTradedate(date=datetime.datetime.now().date(), days=0):
         """ 获取离date最近的交易日期
-            只能获取到前一交易日的数据
+            只能获取到前一交易日的数据qa.QA_fetch_index_day_adv
 
         :param date:
         :return:

@@ -32,7 +32,7 @@ def getHtml(url, proxy):
         try:
             html = requests.get(url, proxies={"http": "http://{}".format(proxy)}, timeout=25)
             # 使用代理访问
-            if len(html.content) > 3000:
+            if html.status_code:
                 return html
             else:
                 retry_count -= 1
@@ -57,7 +57,6 @@ class Proxy(StockBase):
 
     @classmethod
     def importList(cls):
-        # url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx'
         url = 'https://api.ipify.org/'
         count = cls.objects.all().count()
         while count < MINPROXCOUNTS:
@@ -71,7 +70,7 @@ class Proxy(StockBase):
             html = getHtml(url, proxy)
             if html:
                 if html.status_code and len(html.content) == 14:
-                    print('saving {}'.format(html.content.encode('utf-8')))
+                    print('saving {}'.format(html.content.decode('utf-8')))
                     cls.saveProxy(proxy)
             else:
                 print('deleting')

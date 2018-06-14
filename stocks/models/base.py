@@ -126,9 +126,9 @@ class StockBase(models.Model):
                 df.drop(pkname, axis=1, inplace=True)
 
     @staticmethod
-    def dfNotInAnotherdf(df1, df2):
-        df = pd.merge(df1, df2, how='outer', indicator=True)
-        rows_in_df1_not_in_df2 = df[df['_merge'] == 'left_only'][df1.columns]
+    def dfNotInAnotherdf(dfOne, dfTwo):
+        df = pd.merge(dfOne, dfTwo, how='outer', indicator=True)
+        rows_in_df1_not_in_df2 = df[df['_merge'] == 'left_only'][dfOne.columns]
 
         return rows_in_df1_not_in_df2
 

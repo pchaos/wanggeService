@@ -32,8 +32,8 @@ class TestRPS(TestCase):
     @classmethod
     def setUpTestData(cls):
         Stocktradedate.importList()
-        Listing.importIndexListing()
-        rpspreparelist = RPSprepare.importIndexListing()
+        # Listing.importIndexListing()
+        # rpspreparelist = RPSprepare.importIndexListing()
 
     def test_getCodelist(self):
         RPS.importIndexListing()
@@ -54,5 +54,13 @@ class TestRPS(TestCase):
         self.assertTrue(len(data)/len(data[data['rps120']==data['rps250']]) > 2, 'rps120等于rps250的几率很小'.format(len(data), len(data[data['rps120']==data['rps250']])) )
 
     def test_importStockList(self):
-        qs = RPSprepare.getlist('stock')
+        Listing.importStockListing()
+        filename = ''
+        RPSprepare.loadModelFromFile()
+        RPSprepare.importStockListing(RPSprepare.getNearestTradedate('2016-6-1'))
+        qscounts = RPSprepare.getlist('stock').filter(tradedate='2018-01-04').count()
+        self.assertTrue(qscounts > 2000, '当天股票数量大于2000, 实际：{}'.format(qscounts))
+        RPS.importStockListing()
+        qscounts = RPS.getlist('stock').filter(tradedate='2018-01-04').count()
+        self.assertTrue(qscounts > 2000, '当天股票数量大于2000, 实际：{}'.format(qscounts))
 

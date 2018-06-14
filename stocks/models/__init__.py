@@ -184,3 +184,4 @@ from .rps import RPS, RPSprepare
 from .bk import Block
 from .bk import BlockDetail
 from .hsgtcg import HSGTCG, HSGTCGHold
+from .proxylist import Proxy

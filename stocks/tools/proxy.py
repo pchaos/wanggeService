@@ -39,10 +39,11 @@ def getHtml():
 """
 PROXYSERVER = 'http://123.207.35.36'
 # PROXYSERVER = 'http://127.0.0.1'
+# PROXYSERVER = 'socks5:192.168.103.1'
 
 def get_proxy(ip=PROXYSERVER, port=5010):
     return requests.get("{}:{}/get/".format(ip, port)).content
 
 def delete_proxy(proxy, ip=PROXYSERVER, port=5010):
-    requests.get("http://127.0.0.1:5010/delete/?proxy={}".format(proxy))
+    requests.get("{}:{}/delete/?proxy={}".format(ip, port, proxy))
 

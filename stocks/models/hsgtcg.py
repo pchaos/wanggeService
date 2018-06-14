@@ -30,7 +30,8 @@ import time, datetime
 from stocks.models import Stocktradedate
 from stocks.models import convertToDate
 from stocks.models import StockBase
-from stocks.tools.proxy import get_proxy, delete_proxy
+# from stocks.tools.proxy import get_proxy, delete_proxy
+from stocks.models.proxylist import Proxy as mProxy
 
 # 全局代理变量
 myProxy =''
@@ -77,7 +78,7 @@ class HSGTCGBase(StockBase):
             return 0
 
     @staticmethod
-    def getBrowser(headless=None, proxies=True, pageloadtimeout=15):
+    def getBrowser(headless=None, proxies=False, pageloadtimeout=25):
         """ 获取webdriver浏览器
 
         :param headless: 是否无窗口模式
@@ -94,7 +95,7 @@ class HSGTCGBase(StockBase):
         if proxies:
             from selenium.webdriver.common.proxy import Proxy, ProxyType
             global myProxy
-            myProxy= get_proxy().decode('utf-8')
+            myProxy = mProxy.getNextProxy()
             desired_capability = webdriver.DesiredCapabilities.FIREFOX
             desired_capability['proxy'] = {
                 "proxyType": "manual",
@@ -286,14 +287,14 @@ class HSGTCG(HSGTCGBase):
                 df['tradedate'] = df['tradedate'].apply(lambda x: convertToDate(x)).astype(datetime.date)
                 df = df[df['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]  # 删除不是交易日的数据。这是东方财富网页版的bug
                 df.index = pd.RangeIndex(len(df.index))
+                break
             else:
-                browser.close()
-                browser = cls.getBrowser()
+               pass
 
         return df
 
     @staticmethod
-    def scrap(url, browser,retryCount=3):
+    def scrap(url, browser,retryCount=2):
         """ 抓取网页table
 
         :param url: 网址
@@ -310,9 +311,9 @@ class HSGTCG(HSGTCGBase):
                     print(retryCount, e.args)
                     retryCount -= 1
                     if retryCount == 1:
-                        delete_proxy(myProxy)
+                        mProxy.deleteProxy(myProxy)
 
-            # time.sleep(0.03)
+            time.sleep(0.1)
             soup = BeautifulSoup(browser.page_source, 'lxml')
             table = soup.find_all(id='tb_cgtj')[0]
             df = pd.read_html(str(table), header=1)[0]

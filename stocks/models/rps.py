@@ -82,7 +82,6 @@ class RPSBase(stockABS):
         for n in range(int((convertToDate(end_date) - convertToDate(start_date) + 1).days)):
             yield start_date + timedelta(n)
 
-
     @classmethod
     def updateSaved(cls, qssaved):
         with transaction.atomic():
@@ -95,8 +94,6 @@ class RPSBase(stockABS):
                     rps.rps120 = v['rps120']
                     rps.rps250 = v['rps250']
                     rps.save()
-
-
 
     class Meta:
         abstract = True
@@ -157,8 +154,6 @@ class RPS(RPSBase):
                 qsday = qs.filter(tradedate=v['tradedate'])
                 df = pd.DataFrame(list(qsday.values()))
                 data = RPS.caculateRPS(df)
-                aaa
-                # code = Listing.objects.get(code=v.code.code, category=11)
                 if len(data) > 0:
                     df = pd.DataFrame(data.close)
                     df['rps120'] = df.close / df.close.shift(120)
@@ -217,8 +212,7 @@ class RPS(RPSBase):
                     df, dfsaved = cls.dfNotInModel(df, v['tradedate'])
                     if len(df) > 0:
                         del df['index']
-                        # print(df)
-                        cls.savedf(df)
+                        cls.savedf(df, isBuckCreate=True)
                         print('saved:{}'.format(len(df)))
                     if len(dfsaved) > 0:
                         # 日期在原来保存区间的数据
@@ -401,7 +395,6 @@ class RPSprepare(RPSBase):
             print(e.args)
         return cls.getlist('stock')
 
-
     @classmethod
     def dfNotInModel(cls, df, code_id, start):
         """ 查询df不再数据库中的数据
@@ -412,15 +405,18 @@ class RPSprepare(RPSBase):
         :return: dataframe
         """
         # 保存过的不再保存
-        qs = cls.getlist('stock').filter(tradedate__gte=start, code_id=code_id)
-        if qs.count() > 0:
-            q = qs.values('tradedate', 'rps120', 'rps250', 'code_id')
-            df2 = pd.DataFrame.from_records(q)
-            df2['rps120'] = df2['rps120'].apply(lambda x: float(x)).astype(float)
-            df2['rps250'] = df2['rps250'].apply(lambda x: float(x)).astype(float)
-            df = cls.dfNotInAnotherdf(df, df2)
-            # print(df)
+        if len(df) > 0:
+            qs = cls.getlist('stock').filter(tradedate__gte=start, code_id=code_id)
+            if qs.count() > 0:
+                q = qs.values('tradedate', 'rps120', 'rps250', 'code_id')
+                df2 = pd.DataFrame.from_records(q)
+                df2['rps120'] = df2['rps120'].apply(lambda x: float(x)).astype(float)
+                df2['rps250'] = df2['rps250'].apply(lambda x: float(x)).astype(float)
+                df = cls.dfNotInAnotherdf(df, df2)
+                # print(df)
 
-            return df[~(df['tradedate'] <= df2['tradedate'].max()) & (df['tradedate'] >= df2['tradedate'].min())], \
-                   df[(df['tradedate'] <= df2['tradedate'].max()) & (df['tradedate'] >= df2['tradedate'].min())]
-        return df, pd.DataFrame()
+                return df[~(df['tradedate'] <= df2['tradedate'].max()) & (df['tradedate'] >= df2['tradedate'].min())], \
+                       df[(df['tradedate'] <= df2['tradedate'].max()) & (df['tradedate'] >= df2['tradedate'].min())]
+            return df, pd.DataFrame()
+        else:
+            return pd.DataFrame(), pd.DataFrame()

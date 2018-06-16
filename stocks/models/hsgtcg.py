@@ -27,6 +27,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 import time, datetime
+import random
 from stocks.models import Stocktradedate
 from stocks.models import convertToDate
 from stocks.models import StockBase
@@ -305,17 +306,31 @@ class HSGTCG(HSGTCGBase):
             while retryCount > 0:
                 try:
                     browser.get(url)
-                    if 'table' in browser.page_source:
+                    # time.sleep(0.5)
+                    if 'thead' in browser.page_source:
                         break
                 except Exception as e:
                     print(retryCount, e.args)
                     retryCount -= 1
                     if retryCount == 1:
                         mProxy.deleteProxy(myProxy)
-
-            time.sleep(0.15)
-            soup = BeautifulSoup(browser.page_source, 'lxml')
-            table = soup.find_all(id='tb_cgtj')[0]
+            for x in ['lxml', 'xml', 'html5lib']:
+                # 可能会出现lxml版本大于4.1.1时，获取不到table
+                try:
+                    time.sleep(random.random()/4)
+                    soup = BeautifulSoup(browser.page_source, x)
+                    table = soup.find_all(id='tb_cgtj')[0]
+                    if table:
+                        break
+                except:
+                    time.sleep(0.1)
+                    print('using BeautifulSoup {}'.format(x))
+            # soup = BeautifulSoup(browser.page_source, 'lxml')
+            # if 'tb_cgtj-scroll-table' in browser.page_source:
+            #     # 2018 06 16 东方财富改变了表格名称
+            #     table = soup.find_all(id='tb_cgtj-scroll-table')[0]
+            # else:
+            #     table = soup.find_all(id='tb_cgtj')[0]
             df = pd.read_html(str(table), header=1)[0]
             df.columns = ['tradedate', 'related', 'close', 'zd', 'hvol', 'hamount', 'hpercent', 'oneday', 'fiveday',
                           'tenday']

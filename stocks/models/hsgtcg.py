@@ -35,7 +35,8 @@ from stocks.models import StockBase
 from stocks.models.proxylist import Proxy as mProxy
 
 # 全局代理变量
-myProxy =''
+myProxy = ''
+
 
 class HSGTCGBase(StockBase):
     @staticmethod
@@ -290,12 +291,12 @@ class HSGTCG(HSGTCGBase):
                 df.index = pd.RangeIndex(len(df.index))
                 break
             else:
-               pass
+                pass
 
         return df
 
     @staticmethod
-    def scrap(url, browser,retryCount=2):
+    def scrap(url, browser, retryCount=2):
         """ 抓取网页table
 
         :param url: 网址
@@ -306,7 +307,7 @@ class HSGTCG(HSGTCGBase):
             while retryCount > 0:
                 try:
                     browser.get(url)
-                    # time.sleep(0.5)
+                    time.sleep(random.random() / 4)
                     if 'thead' in browser.page_source:
                         break
                 except Exception as e:
@@ -317,7 +318,6 @@ class HSGTCG(HSGTCGBase):
             for x in ['lxml', 'xml', 'html5lib']:
                 # 可能会出现lxml版本大于4.1.1时，获取不到table
                 try:
-                    time.sleep(random.random()/4)
                     soup = BeautifulSoup(browser.page_source, x)
                     table = soup.find_all(id='tb_cgtj')[0]
                     if table:
@@ -325,12 +325,6 @@ class HSGTCG(HSGTCGBase):
                 except:
                     time.sleep(0.1)
                     print('using BeautifulSoup {}'.format(x))
-            # soup = BeautifulSoup(browser.page_source, 'lxml')
-            # if 'tb_cgtj-scroll-table' in browser.page_source:
-            #     # 2018 06 16 东方财富改变了表格名称
-            #     table = soup.find_all(id='tb_cgtj-scroll-table')[0]
-            # else:
-            #     table = soup.find_all(id='tb_cgtj')[0]
             df = pd.read_html(str(table), header=1)[0]
             df.columns = ['tradedate', 'related', 'close', 'zd', 'hvol', 'hamount', 'hpercent', 'oneday', 'fiveday',
                           'tenday']

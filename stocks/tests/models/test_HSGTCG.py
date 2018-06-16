@@ -27,7 +27,8 @@ from bs4 import BeautifulSoup
 import re
 import pandas as pd
 import numpy as np
-import time , datetime
+import time, datetime
+import random
 
 __author__ = 'pchaos'
 
@@ -69,8 +70,19 @@ class TestHSGTCG(TestCase):
         browser.maximize_window()
         try:
             browser.get(url)
-            soup = BeautifulSoup(browser.page_source, 'lxml')
-            table = soup.find_all(id='tb_cgtj')[0]
+            for x in ['lxml', 'xml', 'html5lib']:
+                # 可能会出现lxml版本大于4.1.1时，获取不到table
+                try:
+                    time.sleep(random.random() / 4)
+                    soup = BeautifulSoup(browser.page_source, x)
+                    table = soup.find_all(id='tb_cgtj')[0]
+                    if table:
+                        break
+                except:
+                    time.sleep(0.1)
+                    print('using BeautifulSoup {}'.format(x))
+            # soup = BeautifulSoup(browser.page_source, 'lxml')
+            # table = soup.find_all(id='tb_cgtj')[0]
             df = pd.read_html(str(table), header=1)[0]
             df.columns = ['date', 'related', 'close', 'zd', 'hvol', 'hamount', 'hpercent', 'oneday', 'fiveday',
                           'tenday']
@@ -78,7 +90,8 @@ class TestHSGTCG(TestCase):
                 v = df.iloc[i]
                 print('{} {} {} {}'.format(v.close, v.hvol, v.hamount, v.hpercent))
                 HSGTCG.objects.get_or_create(code=code, close=v.close, hvol=str2Float(v.hvol),
-                                             hamount=str2Float(v.hamount), hpercent=v.hpercent, tradedate=convertToDate(v.date))
+                                             hamount=str2Float(v.hamount), hpercent=v.hpercent,
+                                             tradedate=convertToDate(v.date))
         finally:
             if browser:
                 browser.close()
@@ -86,7 +99,7 @@ class TestHSGTCG(TestCase):
         # hsgtcg = HSGTCG.getlist()
         print(hsgtcg)
         self.assertTrue(hsgtcg.count() > 10, '保存的数量： {}'.format(hsgtcg.count()))
-        self.assertTrue(isinstance(hsgtcg[0].tradedate,datetime.date))
+        self.assertTrue(isinstance(hsgtcg[0].tradedate, datetime.date))
         self.assertTrue(hsgtcg.filter(tradedate=None).count() == 0)
 
     def test_importList(self):

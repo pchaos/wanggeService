@@ -1,5 +1,3 @@
-from django.shortcuts import render
-
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
 from rest_framework import status
@@ -199,3 +197,7 @@ def BK_detail(request, pk, format=None):
 # from .hsgtcgholdview import HSGTCG
 from .hsgtcgholdview import HSGTCGHoldView
 from .hsgtcg_list import HSGTCGListView
+from .proxy_list import ProxyListView
+from .proxyview import ProxyDetailView
+from .proxyview import get_proxy_name
+from .proxyview import ProxyUpdate

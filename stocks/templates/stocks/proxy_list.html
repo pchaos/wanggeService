@@ -1,0 +1,108 @@
+{% extends "stocks/base_generic.html" %}
+
+{% block title %}
+    <div class="container">
+            <h1>{{ title|default:"北向持股列表" }}</h1>
+    </div>
+{% endblock %}
+
+{% block pageheader %}
+    {% if proxy_list %}
+        <form action="{% url 'stocks:proxy_list'  %}">
+        <div class="row">
+            <div class="col-2"><a href="/" class="btn btn-info" role="button">主页</a></div>
+
+            {% url 'proxy_list_code' as listcode %}
+            {{ listcode }}
+            <div class="col-xs-2">
+                <div class="form-group">
+                    <input type="text" for="ex1" maxlength="6" class="form-control" id="code" name="code" placeholder="请输入股票代码">
+                </div>
+            </div>
+            {% if listcode %}
+                <div class="col-4"><a href="{{ listcode }}" class="btn btn-info" role="button">近5日</a></div>
+            {% endif  %}
+            <div class="radio-inline">最近
+                <div class="form-check-inline">
+                    <label class="form-check-label">
+                        <input type="radio" id="1" class="form-check-input" name="days" value="5">5天
+                    </label>
+                </div>
+                <div class="form-check-inline">
+                    <label class="form-check-label">
+                        <input type="radio" id="2" class="form-check-input" name="days" value="10">10天
+                    </label>
+                </div>
+                <div class="form-check-inline">
+                    <label class="form-check-label">
+                        <input type="radio" id="3" class="form-check-input" name="days" value="30" checked>30天
+                    </label>
+                </div>
+                <div class="form-check-inline">
+                    <label class="form-check-label">
+                        <input type="radio" id="3" class="form-check-input" name="days" value="100">100天
+                    </label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <span class="glyphicon glyphicon-search"></span>
+                查询提交</button>
+            <div class="col-4">当前页记录数：{{ proxy_list|length }}</div>
+
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if proxy_list %}
+        <table class="table">
+            <thead>
+            <tr>
+                <th>代理地址</th>
+                <th>检查时间</th>
+                <th>备注</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for v in proxy_list %}
+                <tr>
+{#                    <td><a href="{{ v.get_absolute_url }}  ?pk={{v.pk}}">{{ v.ip }}:{{ v.port }}</a></td>#}
+                    <td><a href="{% url 'stocks:proxy_update' v.pk %} ">{{ v.ip }}:{{ v.port }}</a></td>
+                    <td> {{ v.created_time }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <p>未找到北向持股列表.</p>
+    {% endif %}
+
+    {#  翻页  #}
+    {% block pagination %}
+        {% if is_paginated %}
+            <div class="pagination">
+                <ul class="paper">
+                  {% if page_obj.has_previous %}
+                       <li class="previous">
+                        <a href="{{ request.path }}?page={{ page_obj.previous_page_number }}">previous</a>
+                      </li>
+                  {% endif %}
+                  <span class="page-current">
+                      <li>
+                      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                      </li>
+                  </span>
+                  {% if page_obj.has_next %}
+                      <li class="next">
+                      <a href="{{ request.path }}?page={{ page_obj.next_page_number }}">next</a>
+                      </li>
+                  {% endif %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endblock %}
+
+{% endblock %}
+

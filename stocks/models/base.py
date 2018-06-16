@@ -65,7 +65,17 @@ class StockBase(models.Model):
             print('文件名为空，请传正确的文件名！')
 
     @classmethod
-    def savedf(cls, df, debug=False):
+    def savedf(cls, df, debug=False, isBuckCreate=False):
+        """ 保存dataframe到数据库
+
+        :param df: dataframe
+
+        :param debug: 是否打印debug信息
+
+        :param isBuckCreate: 是否使用buck_create方式
+
+        :return: 无
+        """
         entries = df.to_dict('records')
         with transaction.atomic():
             if debug:
@@ -75,6 +85,11 @@ class StockBase(models.Model):
                         print('create:{}'.format(v))
                     else:
                         print('exists:{}'.format(v))
+            elif isBuckCreate:
+                querysetlist = []
+                for v in entries:
+                    querysetlist.append(cls(**v))
+                cls.objects.bulk_create(querysetlist)
             else:
                 for v in entries:
                     _, created = cls.objects.get_or_create(**v)

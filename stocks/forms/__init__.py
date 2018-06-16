@@ -17,11 +17,4 @@ Change Activity:
 """
 __author__ = 'pchaos'
 
-from django import forms
-from stocks.models import Block
-
-
-class BlockForm(forms.ModelForm):
-    class Meta:
-        model = Block
-        exclude = ('id')
+from .proxyModelForm import ProxylistModelForm

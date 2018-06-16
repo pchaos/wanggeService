@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form action="{% url 'stocks:proxy_form' %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="提交" />
+</form>
+
+{% for field in form %}
+    <div class="fieldWrapper">
+        {{ field.errors }}
+        {{ field.label_tag }} {{ field }}
+    </div>
+{% endfor %}
+
+</body>
+</html>

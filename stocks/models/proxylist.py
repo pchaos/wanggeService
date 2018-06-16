@@ -20,6 +20,7 @@ __author__ = 'pchaos'
 MINPROXCOUNTS = 100  # 最少保存proxy数量
 
 from django.db import models
+from django.urls import reverse
 from stocks.models import StockBase
 from stocks.tools.proxy import get_proxy, delete_proxy
 import requests
@@ -99,3 +100,10 @@ class Proxy(StockBase):
         qs = cls.objects.filter(ip=ip, port=port).first()
         if qs:
             qs.delete()
+
+    @classmethod
+    def getlist(cls):
+        return cls.objects.all()
+
+    def get_absolute_url(self):
+        return reverse('proxy_form', args=[str(self.id)])

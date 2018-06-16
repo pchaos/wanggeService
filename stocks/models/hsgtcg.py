@@ -313,7 +313,7 @@ class HSGTCG(HSGTCGBase):
                     if retryCount == 1:
                         mProxy.deleteProxy(myProxy)
 
-            time.sleep(0.1)
+            time.sleep(0.15)
             soup = BeautifulSoup(browser.page_source, 'lxml')
             table = soup.find_all(id='tb_cgtj')[0]
             df = pd.read_html(str(table), header=1)[0]

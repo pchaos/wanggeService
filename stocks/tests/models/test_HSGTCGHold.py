@@ -177,6 +177,10 @@ class TestHSGTCGHold(TestCase):
 
 
     def test_newcomingin(self):
+        """ 新加入市值八千万的个股
+
+        :return:
+        """
         Stocktradedate.importList()
         from stocks.models import HSGTCG
         #  2018 - 06 - 04 新增北向持股金额大于八千万
@@ -249,12 +253,25 @@ class TestHSGTCGHold(TestCase):
         Stocktradedate.importList()
         for d in [d[0] for d in set(list(HSGTCGHold.getlist().values_list('tradedate')))]:
             dcount = HSGTCGHold.getlist(d).count()
-            print(dcount)
+            print(d, dcount)
 
         from stocks.models import HSGTCG
         tdate = HSGTCGHold.getNearestTradedate()
         while tdate > convertToDate('2018-5-1'):
             dcount = HSGTCGHold.getlist(tdate).count()
-            dcount1 = HSGTCG.getlist().filter(tradedate=tdate).count()
-            print(tdate, dcount, dcount1)
+            dcount1 = HSGTCG.getlist().filter(tradedate=tdate, hamount__gte=8000).count()
+            print(tdate, dcount, dcount1, dcount - dcount1)
+            tdate = HSGTCGHold.getNearestTradedate(tdate - datetime.timedelta(1))
+
+        from stocks.models import HSGTCG
+        tdate = HSGTCGHold.getNearestTradedate()
+        while tdate > convertToDate('2018-5-1'):
+            df1 = pd.DataFrame(list(HSGTCGHold.getlist(tdate).values('code')))
+            dcount = len(df1)
+            df2 = pd.DataFrame(list(HSGTCG.getlist().filter(tradedate=tdate, hamount__gte=8000).values('code')))
+            dcount1 = len(df2)
+            print(tdate, dcount, dcount1, dcount - dcount1)
+            if dcount - dcount1 != 0 and tdate > convertToDate('2018-6-1'):
+                print('数据不一致：', end='')
+                print(list(HSGTCGHold.dfNotInAnotherdf(df1, df2)['code']))
             tdate = HSGTCGHold.getNearestTradedate(tdate - datetime.timedelta(1))

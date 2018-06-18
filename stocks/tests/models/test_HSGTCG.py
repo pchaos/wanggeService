@@ -132,3 +132,17 @@ class TestHSGTCG(TestCase):
             if not Stocktradedate.if_tradeday(d[0]):
                 HSGTCG.objects.all().filter(tradedate=d[0]).delete()
                 print(d[0])
+
+    def test_newcomingin(self):
+        """ 最近n个交易日，新进市值大于8000万的个股
+
+        :return:
+        """
+        n = 5
+        tdate = HSGTCG.getNearestTradedate()
+        tdate1 = HSGTCG.getNearestTradedate(tdate, -n)
+        tdate2 = HSGTCG.getNearestTradedate(tdate1, -n - 1)
+        yesterdayhsg = HSGTCG.getlist().filter(tradedate=tdate2, hamount__gte=8000, )
+        hsg = HSGTCG.getlist().filter(tradedate__range=(tdate1, tdate), hamount__gte=8000)
+        newcomming = hsg.exclude(code__in=yesterdayhsg.values_list('code')).values('code')
+        print(newcomming)

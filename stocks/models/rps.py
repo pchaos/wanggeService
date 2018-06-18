@@ -185,10 +185,11 @@ class RPS(RPSBase):
 
         :return:
         """
+        stocktype = 'stock'
         if end is None:
             #  获取当天
             end = datetime.datetime.now().date()
-        qs = RPSprepare.getlist('stock')
+        qs = RPSprepare.getlist(stocktype)
         # todo 如果已经插入，则判断是否有更新
         try:
             # 批量创建对象，减少SQL查询次数
@@ -200,7 +201,7 @@ class RPS(RPSBase):
                 # 获取 v['tradedate']对应的股票RPS预计算列表
                 qsday = qs.filter(tradedate=v['tradedate'])
                 if ignoreSaved:
-                    if qsday.count() == cls.getlist('stock').filter(tradedate=v['tradedate']).count():
+                    if qsday.count() == cls.getlist(stocktype).filter(tradedate=v['tradedate']).count():
                         # RPS预计算数量和已保存的RPS数量相同，则跳过
                         # print('pass')
                         continue
@@ -209,37 +210,44 @@ class RPS(RPSBase):
                 del data['id']
                 # code = Listing.objects.get(code=v.code.code, category=11)
                 if len(data) > 0:
-                    df, dfsaved = cls.dfNotInModel(df, v['tradedate'])
+                    df, dfsaved = cls.dfNotInModel(data, v['tradedate'])
+                    if len(df) == 0 and len(dfsaved) > 0:
+                        # 当天所有数据都要更新
+                        cls.getlist(stocktype).filter(tradedate=v['tradedate']).delete()
+                        cls.savedf(data, isBuckCreate=True)
+                        continue
                     if len(df) > 0:
-                        del df['index']
                         cls.savedf(df, isBuckCreate=True)
                         print('saved:{}'.format(len(df)))
                     if len(dfsaved) > 0:
                         # 日期在原来保存区间的数据
-                        del df['index']
                         qssaved.append(dfsaved)
                         print('append to later save:{}'.format(len(dfsaved)))
-                    cls.savedf(data)
+                    # cls.savedf()
                 else:
                     # quantaxis中无数据
                     delisted.append(v['tradedate'])
             print('delisted count {} :\n {}'.format(len(delisted), delisted))
             cls.updateSaved(qssaved)
+            print('保存过的数据更新数量 {} :\n {}'.format(len(qssaved), qssaved))
         except Exception as e:
             print(e.args)
-        return cls.getlist('stock')
+        return cls.getlist(stocktype)
 
     @classmethod
     def dfNotInModel(cls, df, tradedate):
-        """ 查询df不再数据库中的数据
+        """ 查询df不在数据库时间大于等于tradedate中的数据
 
         :param df:
         :param code_id:  股票代码id
         :param start: 起始日期
-        :return: dataframe
+        :return: df不在数据库时间大于等于tradedate中的dataframe， df在数据库时间大于等于tradedate中的需要单独更新的数据dataframe
         """
+        if len(df) == 0:
+            return pd.DataFrame(), pd.DataFrame()
+
         # 保存过的不再保存
-        qs = cls.getlist('stock').filter(tradedate__gte=tradedate)
+        qs = cls.getlist('stock').filter(tradedate=tradedate)
         if qs.count() > 0:
             q = qs.values('tradedate', 'rps120', 'rps250', 'code_id')
             df2 = pd.DataFrame.from_records(q)
@@ -255,7 +263,7 @@ class RPS(RPSBase):
     class Meta:
         # app_label ='rps计算'
         verbose_name = '欧奈尔PRS'
-        # unique_together = (('code', 'tradedate'))
+        unique_together = (('code', 'tradedate'))
 
 
 class RPSprepare(RPSBase):
@@ -265,7 +273,7 @@ class RPSprepare(RPSBase):
 
     class Meta:
         # app_label ='rps计算中间量'
-        verbose_name = 'RPS准备'
+        verbose_name = 'RPS基础'
         unique_together = (('code', 'tradedate'))
 
     @classmethod
@@ -389,6 +397,7 @@ class RPSprepare(RPSBase):
 
             cls.updateSaved(qssaved)
 
+            print('保存过的数据更新数量 {} \n {}'.format(len(qssaved), qssaved))
             print('delisted count {} :\n {}'.format(len(delisted), delisted))
             # RPSprepare.objects.bulk_create(querysetlist)
         except Exception as e:
@@ -405,18 +414,18 @@ class RPSprepare(RPSBase):
         :return: dataframe
         """
         # 保存过的不再保存
-        if len(df) > 0:
-            qs = cls.getlist('stock').filter(tradedate__gte=start, code_id=code_id)
-            if qs.count() > 0:
-                q = qs.values('tradedate', 'rps120', 'rps250', 'code_id')
-                df2 = pd.DataFrame.from_records(q)
-                df2['rps120'] = df2['rps120'].apply(lambda x: float(x)).astype(float)
-                df2['rps250'] = df2['rps250'].apply(lambda x: float(x)).astype(float)
-                df = cls.dfNotInAnotherdf(df, df2)
-                # print(df)
-
-                return df[~(df['tradedate'] <= df2['tradedate'].max()) & (df['tradedate'] >= df2['tradedate'].min())], \
-                       df[(df['tradedate'] <= df2['tradedate'].max()) & (df['tradedate'] >= df2['tradedate'].min())]
-            return df, pd.DataFrame()
-        else:
+        if len(df) == 0:
             return pd.DataFrame(), pd.DataFrame()
+
+        qs = cls.getlist('stock').filter(tradedate__gte=start, code_id=code_id)
+        if qs.count() > 0:
+            q = qs.values('tradedate', 'rps120', 'rps250', 'code_id')
+            df2 = pd.DataFrame.from_records(q)
+            df2['rps120'] = df2['rps120'].apply(lambda x: float(x)).astype(float)
+            df2['rps250'] = df2['rps250'].apply(lambda x: float(x)).astype(float)
+            df = cls.dfNotInAnotherdf(df, df2)
+            # print(df)
+
+            return df[~(df['tradedate'] <= df2['tradedate'].max()) & (df['tradedate'] >= df2['tradedate'].min())], \
+                   df[(df['tradedate'] <= df2['tradedate'].max()) & (df['tradedate'] >= df2['tradedate'].min())]
+        return df, pd.DataFrame()

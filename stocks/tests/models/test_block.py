@@ -2,7 +2,7 @@
 """
 -------------------------------------------------
 
-@File    : test_BK.py
+@File    : test_block.py
 
 Description :
 
@@ -25,11 +25,11 @@ __author__ = 'pchaos'
 
 class TestBK(TestCase):
     def setUp(self):
-        qa.QA_util_log_info('Listing.importStockListing')
-        listing = Listing.importStockListing()
-        Listing.importIndexListing()
-        assert Listing.getlist('stock').count() > 2000
-        qa.QA_util_log_info('Block.initBlock')
+        # qa.QA_util_log_info('Listing.importStockListing')
+        # listing = Listing.importStockListing()
+        # Listing.importIndexListing()
+        # assert Listing.getlist('stock').count() > 2000
+        # qa.QA_util_log_info('Block.initBlock')
         Block.initBlock()
 
 
@@ -60,3 +60,11 @@ class TestBK(TestCase):
         # tdxdetail = BlockDetail.getlist(tdxblocks[0])
         tdxdetail = BlockDetail.getlist()
         self.assertTrue(len(tdxdetail) > 0, '版块数量应大于0： {} : {}'.format(tdxblocks[0], tdxdetail))
+
+    def test_insertBlock(self):
+        bkname = '自定义'
+        bk = Block.objects.all().filter(name=bkname)
+        newblockname = 'RPS'
+        Block.objects.create(code='RPS', name=newblockname, parentblock=bk[0], remarks='RPS版块')
+        bk = Block.objects.all().filter(name=newblockname)
+        self.assertTrue(len(bk) == 1, '{} 未保存成功'.format(newblockname))

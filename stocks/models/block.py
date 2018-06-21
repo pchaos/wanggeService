@@ -2,7 +2,7 @@
 """
 -------------------------------------------------
 
-@File    : bk.py
+@File    : block.py
 
 Description :  版块
 
@@ -125,7 +125,11 @@ class Block(StockBase):
             return cls.objects.all()
 
     def __str__(self):
-        return '{}_{}:{}'.format(self.parentblock.name, self.code, self.name)
+        try:
+            return '{}_{}:{}'.format(self.parentblock.name, self.code, self.name)
+        except:
+            # 版块为第一层时，parentblock.name会报错
+            return '{}_{}:{}'.format(self.parentblock, self.code, self.name)
 
     class Meta:
         verbose_name = '板块'

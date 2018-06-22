@@ -24,6 +24,7 @@ import pandas as pd
 import datetime
 from stocks.models import DATE_FORMAT
 
+
 def convertToDate(date, dateformat=DATE_FORMAT):
     """ 转换为日期类型
 
@@ -37,6 +38,7 @@ def convertToDate(date, dateformat=DATE_FORMAT):
         return date.date()
     except TypeError:
         return date
+
 
 class StockBase(models.Model):
     """ StockBase为所有model的基类，提供共用的类函数
@@ -81,7 +83,7 @@ class StockBase(models.Model):
             if debug:
                 for v in entries:
                     _, created = cls.objects.get_or_create(**v)
-                    if  created:
+                    if created:
                         print('create:{}'.format(v))
                     else:
                         print('exists:{}'.format(v))
@@ -98,8 +100,8 @@ class StockBase(models.Model):
     def savedfByUpdate(cls, df):
         entries = df.to_dict('records')
         with transaction.atomic():
-                for v in entries:
-                    _, created = cls.objects.update_or_create(**v)
+            for v in entries:
+                _, created = cls.objects.update_or_create(**v)
 
     @staticmethod
     def getRandomStr(types='letter', length=8):
@@ -175,6 +177,9 @@ class StockBase(models.Model):
         :return:
         """
         from stocks.models import Stocktradedate
+        if not date:
+            # 如果date为空，则赋值当天
+            date = datetime.datetime.now().date()
         date = convertToDate(date)
         tradedate = Stocktradedate.get_real_date(date, -1).date()
 
@@ -182,7 +187,7 @@ class StockBase(models.Model):
             if date == datetime.datetime.now().date():
                 # 当天并且是交易日
                 tradedate = Stocktradedate.preTradeday(tradedate)
-        if days == 0 :
+        if days == 0:
             return tradedate
         elif days < 0:
             for day in range(abs(days)):

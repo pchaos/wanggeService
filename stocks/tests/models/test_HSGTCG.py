@@ -47,6 +47,22 @@ def str2Float(astr):
     except:
         return 0
 
+def MAUpper( n):
+    import QUANTAXIS as qa
+    tdate = HSGTCG.getNearestTradedate()
+    tdate = HSGTCG.getNearestTradedate(tdate, -(n + 100))
+    # hsg = HSGTCG.getlist().filter(tradedate__gte=(tdate, tdate), hamount__gte=8000)
+    hsg = HSGTCG.getlist().filter(tradedate__gte=tdate).order_by('code', 'tradedate')
+    df = pd.DataFrame(list(hsg.values('hamount', 'code', 'tradedate')))
+    results = []
+    for c in df.code.unique():
+        v = df[df['code'] == c]
+        ma1 = qa.MA(v.hamount, n)
+        if (ma1.iloc[-1] - ma1.iloc[-2]) >= 0:
+            results.append(v.code.iloc[0])
+            continue
+    return results
+
 
 class TestHSGTCG(TestCase):
     def setUp(self):
@@ -146,3 +162,15 @@ class TestHSGTCG(TestCase):
         hsg = HSGTCG.getlist().filter(tradedate__range=(tdate1, tdate), hamount__gte=8000)
         newcomming = hsg.exclude(code__in=yesterdayhsg.values_list('code')).values('code')
         print(newcomming)
+
+
+    def test_hamountMA(self):
+
+        # n日持仓增加
+        n = 5
+        malist1 = MAUpper(n)
+        n=10
+        malist2 = MAUpper(n)
+        HSGTCG.dfNotInAnotherdf(pd.DataFrame(malist1), pd.DataFrame(malist2))
+        up = list(HSGTCG.dfNotInAnotherdf(pd.DataFrame(malist1), pd.DataFrame(malist2))[0])
+

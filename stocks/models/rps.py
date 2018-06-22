@@ -22,6 +22,7 @@ import datetime
 import QUANTAXIS as qa
 import numpy as np
 import pandas as pd
+import decimal
 
 from stocks.models import stockABS, Listing, convertToDate
 from stocks.models import Stocktradedate
@@ -259,6 +260,56 @@ class RPS(RPSBase):
             return df[~(df['tradedate'] <= df2['tradedate'].max()) & (df['tradedate'] >= df2['tradedate'].min())], \
                    df[(df['tradedate'] <= df2['tradedate'].max()) & (df['tradedate'] >= df2['tradedate'].min())]
         return df, pd.DataFrame()
+
+    @classmethod
+    def RPSIntensity(cls, intensity=90, start=None, end=None, period=250, stocktype='stock'):
+        """ 查询起止时间介于（satrt，end）之间，RPS强度大于intensity的股票
+
+        :param intensity: RPS强度
+        :param start: 开始日期
+        :param end:  结束日期
+        :param period: 查询RPS周期 目前股票支持120日、250日
+        :param stocktype: 股票：'stock'， 指数： 'index'
+        :return:
+        """
+        start = cls.getNearestTradedate(start)
+        end = cls.getNearestTradedate(end)
+        if period == 250:
+            return cls.RPS250Intensity(intensity, start, end, stocktype)
+        else:
+            return cls.RPS120Intensity(intensity, start, end, stocktype)
+
+    @classmethod
+    def RPS250Intensity(cls, intensity=90, start=None, end=None, stocktype='stock'):
+        """ 查询周期为250日起止时间介于（satrt，end）之间，RPS强度大于intensity
+
+        :param intensity: RPS强度
+        :param start: 开始日期
+        :param end:  结束日期
+        :param stocktype: 股票：'stock'， 指数： 'index'
+        :return:
+        """
+        if start == end:
+            # 查询某一天的RPS
+            return cls.getlist(stocktype).filter(tradedate=start, rps250__gte=intensity).exclude(
+                rps250=decimal.Decimal('NaN'))
+        else:
+            qs = cls.getlist(stocktype).filter(tradedate__range=(start, end), rps250__gte=intensity).exclude(
+                rps250=decimal.Decimal('NaN')).values('code').distinct()
+            return cls.getlist(stocktype).filter(tradedate__range=(start, end), code__in=qs.values('code')).exclude(
+                rps250=decimal.Decimal('NaN'))
+
+    @classmethod
+    def RPS120Intensity(cls, intensity=90, start=None, end=None, stocktype='stock'):
+        if start == end:
+            # 查询某一天的RPS
+            return cls.getlist(stocktype).filter(tradedate=start, rps120__gte=intensity).exclude(
+                rps120=decimal.Decimal('NaN'))
+        else:
+            qs = cls.getlist(stocktype).filter(tradedate__range=(start, end), rps120__gte=intensity).exclude(
+                rps120=decimal.Decimal('NaN')).values('code').distinct()
+            return cls.getlist(stocktype).filter(tradedate__range=(start, end), code__in=qs.values('code')).exclude(
+                rps120=decimal.Decimal('NaN'))
 
     class Meta:
         # app_label ='rps计算'

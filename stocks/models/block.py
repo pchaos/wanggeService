@@ -126,10 +126,10 @@ class Block(StockBase):
 
     def __str__(self):
         try:
-            return '{}_{}:{}'.format(self.parentblock.name, self.code, self.name)
+            return '{}__{}:{}'.format(self.parentblock.name, self.code, self.name)
         except:
             # 版块为第一层时，parentblock.name会报错
-            return '{}_{}:{}'.format(self.parentblock, self.code, self.name)
+            return '{}__{}:{}'.format(self.parentblock, self.code, self.name)
 
     class Meta:
         verbose_name = '板块'

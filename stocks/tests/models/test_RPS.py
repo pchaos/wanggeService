@@ -23,6 +23,7 @@ from stocks.models import convertToDate
 from .test_RPSprepare import TestRPSprepare
 import datetime
 import pandas as pd
+import decimal
 
 __author__ = 'pchaos'
 
@@ -64,3 +65,26 @@ class TestRPS(TestCase):
         qscounts = RPS.getlist('stock').filter(tradedate='2018-01-04').count()
         self.assertTrue(qscounts > 2000, '当天股票数量大于2000, 实际：{}'.format(qscounts))
 
+    def test_RPSGTE90(self):
+
+        tdate = RPSprepare.getNearestTradedate(days=-10)
+        # rps250 选择强度大于90时，需要排除decimal.Decimal('NaN')
+        counts = RPS.getlist('stock').filter(tradedate=tdate, rps250__gte=90).exclude(
+                        rps250=decimal.Decimal('NaN')).count()
+        print(counts)
+        self.assertTrue(counts > 250, 'RPS大于90的个数应大于250，实际：{}'.format(counts) )
+        self.assertTrue(counts < 400, '2018 06 21 RPS大于90的个数应小于400，实际：{}'.format(counts) )
+        counts1= RPS.getlist('stock').filter(tradedate=tdate, rps250__lte=10).count()
+        self.assertTrue(abs(counts - counts1) < 5, 'RPS大于90的数量应该和RPS小于10的数量差不多')
+
+    def test_RPSGTE90bwtweendays(self):
+        start='2018-6-1'; end=None
+        start = RPS.getNearestTradedate(start)
+        end = RPS.getNearestTradedate(end)
+        qs = RPS.getlist('stock').filter(tradedate__range=(start, end), rps250__gte=90).exclude(
+            rps250=decimal.Decimal('NaN')).values('code').distinct()
+        count1 = qs.values('code').distinct()
+        qs =  RPS.getlist('stock').filter(tradedate__range=(start, end), code__in=qs.values('code')).exclude(
+            rps250=decimal.Decimal('NaN'))
+        count2 = qs.values('code').distinct()
+        self.assertTrue(count1 == count2, '股票数量应该相同 {} == {}'.format(count1, count2))

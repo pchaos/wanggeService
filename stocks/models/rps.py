@@ -130,8 +130,9 @@ class RPS(RPSBase):
                 # 结果集中没有rpsname列名，则增加空列
                 dfd[rpsname] = pd.np.nan
             dfd.loc[:, (rpsname)] = rpsn['a']
+        # NaN 设置成 -1
+        dfd['rps250'] = dfd['rps250'].apply(lambda x: x if (float(x) > -99) else -1)
         dfd.reset_index(inplace=True)
-        # dfd.set_index('tradedate', inplace=True)
         return dfd[orgincolumns]
 
     @classmethod

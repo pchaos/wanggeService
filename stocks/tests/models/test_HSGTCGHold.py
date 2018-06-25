@@ -54,6 +54,41 @@ class TestHSGTCGHold(TestCase):
         finally:
             if browser:
                 browser.close()
+    def test_chromewebdriver(self):
+        """ 测试 webdriver chrome
+
+        :return:
+        """
+        from selenium.webdriver.chrome.options import Options
+
+        # CHROME_PATH = '/usr/bin/google-chrome'
+        WINDOW_SIZE = "1920,1080"
+
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--window-size=%s" % WINDOW_SIZE)
+        # chrome_options.binary_location = CHROME_PATH
+
+        browser = webdriver.Chrome(chrome_options=chrome_options)
+        try:
+            url = 'http://data.eastmoney.com/hsgtcg/StockStatistics.aspx'
+            browser.get(url)
+            # 北向持股
+            browser.find_element_by_css_selector('.border_left_1').click()
+            time.sleep(0.2)
+            # 自定义区间
+            browser.find_element_by_css_selector('.custom-text > span:nth-child(1)').click()
+            time.sleep(0.5)
+            # 开始日期赋值
+            tdate = browser.find_element_by_css_selector('input.date-input:nth-child(1)')
+            tdate.send_keys(str(datetime.datetime.now().date()-datetime.timedelta(10)))
+            time.sleep(0.5)
+            tdate = browser.find_element_by_css_selector('.search-btn')
+            time.sleep(5)
+
+        finally:
+            if browser:
+                browser.close()
 
     def test_stockstatistics(self):
         """ 北向持股向市值大于八千万

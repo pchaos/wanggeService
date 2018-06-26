@@ -33,8 +33,6 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
-# Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -47,7 +45,10 @@ INSTALLED_APPS = [
     'comment.apps.CommentConfig',
     'polls.apps.PollsConfig',
     'strategies.apps.StrategyConfig',
+    'django.contrib.humanize',
 ]
+# Application definition
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

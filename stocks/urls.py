@@ -20,6 +20,7 @@ from .views import ZXG_list, ZXG_detail, stockcode_list, stockcode_detail
 from .views import get_proxy_name
 from .views import ProxyListView, ProxyDetailView
 from .views import ProxyUpdate
+from .views import RPSListView
 
 app_name = "stocks"
 
@@ -36,6 +37,7 @@ urlpatterns = [
     url(r'^PROXY/$', ProxyListView.as_view(), name='proxy_list'),
     url(r'^PROXY/([0-9]+)$', ProxyUpdate.as_view(), name='proxy_update'),
     url(r'^PROXYDETAIL/([0-9]+)$', ProxyDetailView.as_view(), name='proxy_form'),
+    url(r'^rps/$', RPSListView.as_view(), name='rps_list'),
 
 ]
 

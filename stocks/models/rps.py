@@ -17,6 +17,7 @@ Change Activity:
 """
 from django.db import models
 from django.db import transaction
+from django.db.models import Max
 import datetime
 
 import QUANTAXIS as qa
@@ -175,7 +176,7 @@ class RPS(RPSBase):
         return cls.getlist('index')
 
     @classmethod
-    def importStockListing(cls, start='2014-1-1', end=None, ignoreSaved=True):
+    def importStockListing(cls, start=None, end=None, ignoreSaved=True):
         """ 插入所有股票RPS
 
         :param start: 计算的开始日期
@@ -188,11 +189,17 @@ class RPS(RPSBase):
         :return:
         """
         stocktype = 'stock'
+        if start is None:
+            # 数据库中最大的已计算日期
+            latest = cls.getlist('stock').aggregate(Max('tradedate'))['tradedate__max']
+            if latest:
+                start = cls.getNearestTradedate(latest, -5)
+            else:
+                start = '2014-1-1'
         if end is None:
             #  获取当天
             end = datetime.datetime.now().date()
         qs = RPSprepare.getlist(stocktype)
-        # todo 如果已经插入，则判断是否有更新
         try:
             # 批量创建对象，减少SQL查询次数
             querysetlist = []
@@ -225,7 +232,6 @@ class RPS(RPSBase):
                         # 日期在原来保存区间的数据
                         qssaved.append(dfsaved)
                         print('append to later save:{}'.format(len(dfsaved)))
-                    # cls.savedf()
                 else:
                     # quantaxis中无数据
                     delisted.append(v['tradedate'])
@@ -392,11 +398,18 @@ class RPSprepare(RPSBase):
         return cls.getlist('index')
 
     @classmethod
-    def importStockListing(cls, start='2014-1-1'):
+    def importStockListing(cls, start=None):
         """ 插入所有股票RPS预备数据
 
         :return:
         """
+        if start is None:
+            # 数据库中最大的已计算日期
+            latest = cls.getlist('stock').aggregate(Max('tradedate'))['tradedate__max']
+            if latest:
+                start = cls.getNearestTradedate(latest, -5)
+            else:
+                start = '2014-1-1'
         codelist = Listing.getlist('stock')
         # todo 如果已经插入，则判断是否有更新
         try:

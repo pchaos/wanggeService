@@ -32,7 +32,7 @@ __author__ = 'pchaos'
 
 
 class TestHSGTCGHold(TestCase):
-    def test_webdriver(self):
+    def test_firefoxwebdriver(self):
         browser = webdriver.Firefox()
         browser.maximize_window()
         try:
@@ -54,8 +54,10 @@ class TestHSGTCGHold(TestCase):
         finally:
             if browser:
                 browser.close()
+
     def test_chromewebdriver(self):
         """ 测试 webdriver chrome
+        chrome比firefox快一点
 
         :return:
         """

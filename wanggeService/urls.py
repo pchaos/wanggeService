@@ -18,11 +18,12 @@ from django.urls import path
 from django.conf.urls import url, include
 from rest_framework import routers
 from django.views.generic.base import RedirectView
-from stocks import views
+# from stocks import views
+from stocks.views import UserViewSet, GroupViewSet
 
 router = routers.DefaultRouter()
-router.register(r'users', views.UserViewSet)
-router.register(r'groups', views.GroupViewSet)
+router.register(r'users', UserViewSet)
+router.register(r'groups', GroupViewSet)
 
 # router.register(r'api/stocks/stocks', views.stockcode_list)
 # router.register(r'stockcodedetail', views.stockcode_detail)

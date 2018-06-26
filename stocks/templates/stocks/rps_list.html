@@ -1,0 +1,115 @@
+{% extends "stocks/base_generic.html" %}
+
+{% load humanize %}
+
+{% block title %}
+    <div class="container">
+            <h1>{{ title|default:"列表" }}</h1>
+    </div>
+{% endblock %}
+
+{% block pageheader %}
+    {% if rps_list %}
+        <form action="{% url 'stocks:rps_list'  %}">
+        <div class="row">
+            <div class="col-2"><a href="/" class="btn btn-info" role="button">主页</a></div>
+
+            {% url 'rps_list_code' as listcode %}
+            {{ listcode }}
+            <div class="col-xs-2">
+                <div class="form-group">
+                    <input type="text" for="ex1" maxlength="6" class="form-control" id="code" name="code" placeholder="请输入股票代码">
+                </div>
+            </div>
+            {% if listcode %}
+                <div class="col-4"><a href="{{ listcode }}" class="btn btn-info" role="button">近5日</a></div>
+            {% endif  %}
+            <div class="radio-inline">最近
+                <div class="form-check-inline">
+                    <label class="form-check-label">
+                        <input type="radio" id="1" class="form-check-input" name="days" value="5">5天
+                    </label>
+                </div>
+                <div class="form-check-inline">
+                    <label class="form-check-label">
+                        <input type="radio" id="2" class="form-check-input" name="days" value="10">10天
+                    </label>
+                </div>
+                <div class="form-check-inline">
+                    <label class="form-check-label">
+                        <input type="radio" id="3" class="form-check-input" name="days" value="30" checked>30天
+                    </label>
+                </div>
+                <div class="form-check-inline">
+                    <label class="form-check-label">
+                        <input type="radio" id="3" class="form-check-input" name="days" value="100">100天
+                    </label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <span class="glyphicon glyphicon-search"></span>
+                查询提交</button>
+            <div class="col-4">当前页记录数：{{ rps_list|length }}</div>
+
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if rps_list %}
+        <table class="table">
+            <thead>
+            <tr>
+                <th>代码</th>
+                <th>名称</th>
+                <th>120日RPS</th>
+                <th>250日RPS</th>
+                <th>日期</th>
+            </tr>排序
+            </thead>
+            <tbody>
+            {% for v in rps_list %}
+                <tr>
+{#                    <td><a href="{{ v.get_absolute_url }}  ?pk={{v.pk}}">{{ v.ip }}:{{ v.port }}</a></td>#}
+                    <td><a href="{% url 'stocks:rps_list' v.code.code %} ">{{ v.code.code }}</a></td>
+                    <td><a href="{% url 'stocks:rps_list' v.code.code %} ">{{ v.code.name }}</a></td>
+                    <td><a href="{% url 'stocks:rps_list' v.pk %} ">{{ v.rps120|floatformat:2}}</a></td>
+                    <td><a href="{% url 'stocks:rps_list' v.pk %} ">{{ v.rps250|floatformat:2 }}</a></td>
+                    <td> {{ v.tradedate }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <p>未找到RPS强度列表.</p>
+    {% endif %}
+
+    {#  翻页  #}
+    {% block pagination %}
+        {% if is_paginated %}
+            <div class="pagination">
+                <ul class="paper">
+                  {% if page_obj.has_previous %}
+                       <li class="previous">
+                        <a href="{{ request.path }}?page={{ page_obj.previous_page_number }}">previous</a>
+                      </li>
+                  {% endif %}
+                  <span class="page-current">
+                      <li>
+                      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                      </li>
+                  </span>
+                  {% if page_obj.has_next %}
+                      <li class="next">
+                      <a href="{{ request.path }}?page={{ page_obj.next_page_number }}">next</a>
+                      </li>
+                  {% endif %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endblock %}
+
+{% endblock %}
+

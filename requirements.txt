@@ -1,4 +1,4 @@
-Django
+Django>=2.0
 django-admin
 djangorestframework
 django-filter
@@ -7,6 +7,7 @@ pandas>=0.20.0
 urllib3
 requests
 easyutils
-quantaxis>=1.0.33
+quantaxis>1.0.33
 selenium
+lxml<=4.1.1
 bs4

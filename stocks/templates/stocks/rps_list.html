@@ -72,7 +72,7 @@
             {% for v in rps_list %}
                 <tr>
 {#                    <td><a href="{{ v.get_absolute_url }}  ?pk={{v.pk}}">{{ v.ip }}:{{ v.port }}</a></td>#}
-                    <td><a href="{% url 'stocks:rps_list' v.code.code %} ">{{ v.code.code }}</a></td>
+                    <td><a href="{% url 'stocks:rps_list' v.code_id %} ">{{ v.code.code }}</a></td>
                     <td><a href="{% url 'stocks:rps_list' v.code.code %} ">{{ v.code.name }}</a></td>
                     <td><a href="{% url 'stocks:rps_list' v.pk %} ">{{ v.rps120|floatformat:2}}</a></td>
                     <td><a href="{% url 'stocks:rps_list' v.pk %} ">{{ v.rps250|floatformat:2 }}</a></td>

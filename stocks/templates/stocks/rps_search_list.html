@@ -1,0 +1,80 @@
+{% extends "stocks/base_generic.html" %}
+
+{% load humanize %}
+
+{% block title %}
+    <div class="container">
+            <h1>{{ title|default:"列表" }}</h1>
+    </div>
+{% endblock %}
+
+{% block pageheader %}
+        <form id="searchform" action="{% url 'stocks:rps_search_list'  %}" method="get" accept-charset="utf-8">
+            {% csrf_token %}
+            {{ form.as_table }}
+            <button type="submit" class="btn btn-primary">
+                <span class="glyphicon glyphicon-search"></span>
+                查询提交</button>
+            <div class="col-4">当前页记录数：{{ rps_list|length }}</div>
+
+            </div>
+        </form>
+{% endblock %}
+
+{% block content %}
+    {% if rps_list %}
+        <table class="table">
+            <thead>
+            <tr>
+                <th>代码</th>
+                <th>名称</th>
+                <th>120日RPS</th>
+                <th>250日RPS</th>
+                <th>日期</th>
+            </tr>排序
+            </thead>
+            <tbody>
+            {% for v in rps_list %}
+                <tr>
+{#                    <td><a href="{{ v.get_absolute_url }}  ?pk={{v.pk}}">{{ v.ip }}:{{ v.port }}</a></td>#}
+                    <td><a href="{% url 'stocks:rps_search_list' v.code_id %} ">{{ v.code.code }}</a></td>
+                    <td><a href="{% url 'stocks:rps_search_list' v.code.code %} ">{{ v.code.name }}</a></td>
+                    <td><a href="{% url 'stocks:rps_search_list' v.pk %} ">{{ v.rps120|floatformat:2}}</a></td>
+                    <td><a href="{% url 'stocks:rps_search_list' v.pk %} ">{{ v.rps250|floatformat:2 }}</a></td>
+                    <td> {{ v.tradedate|date:'Y-m-d' }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <p>未找到RPS强度列表.</p>
+    {% endif %}
+
+    {#  翻页  #}
+    {% block pagination %}
+        {% if is_paginated %}
+            <div class="pagination">
+                <ul class="paper">
+                  {% if page_obj.has_previous %}
+                       <li class="previous">
+                        <a href="{{ request.path }}?page={{ page_obj.previous_page_number }}">previous</a>
+                      </li>
+                  {% endif %}
+                  <span class="page-current">
+                      <li>
+                      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                      </li>
+                  </span>
+                  {% if page_obj.has_next %}
+                      <li class="next">
+                      <a href="{{ request.path }}?page={{ page_obj.next_page_number }}">next</a>
+                      </li>
+                  {% endif %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endblock %}
+
+{% endblock %}
+

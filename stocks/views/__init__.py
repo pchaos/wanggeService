@@ -202,3 +202,4 @@ from .proxyview import ProxyDetailView
 from .proxyview import get_proxy_name
 from .proxyview import ProxyUpdate
 from .rps_list import RPSListView
+from .rps_list import RPSSearchListView

@@ -30,7 +30,7 @@ SECRET_KEY = '=8(2c%9*a_*i(*60(aptba==#9^s+$!0mjrzdr^n#_y)lp01y9'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['0.0.0.0']
+ALLOWED_HOSTS = ['*']
 
 
 INSTALLED_APPS = [

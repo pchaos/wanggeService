@@ -103,6 +103,8 @@ class RPSBase(stockABS):
 
 class RPS(RPSBase):
     """欧奈尔PRS"""
+    rps120 = models.DecimalField(verbose_name='RPS120', max_digits=7, decimal_places=3, null=True, db_index=True)
+    rps250 = models.DecimalField(verbose_name='RPS250', max_digits=7, decimal_places=3, null=True, db_index=True)
 
     @staticmethod
     def caculateRPS(df, nlist=[120, 250]):

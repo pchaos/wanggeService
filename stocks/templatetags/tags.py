@@ -53,15 +53,70 @@ def mod(value, arg):
 
 
 @register.filter(name='range')
-def filter_range(start, end):
-    """ {% for c in 1|range:6 %}
+def _range(_min, args=None):
+    """ Usage:
 
-{{ c }}
+{% load range %}
+
+<p>stop 5
+
+{% for value in 5|range %}
+
+{{ value }}
 
 {% endfor %}
 
-    :param start:
-    :param end:
+</p>
+
+<p>start 5 stop 10
+
+{% for value in 5|range:10 %}
+
+{{ value }}
+
+{% endfor %}
+
+</p>
+
+<p>start 5 stop 10 step 2
+
+{% for value in 5|range:"10,2" %}
+
+{{ value }}
+
+{% endfor %}
+
+</p>
+
+Output
+
+<p>stop 5
+
+0 1 2 3 4
+
+</p>
+
+<p>start 5 stop 10
+
+5 6 7 8 9
+
+</p>
+
+<p>start 5 stop 10 step 2
+
+5 7 9
+
+</p>
+
+    :param _min:
+    :param args:
     :return:
     """
-    return range(start, end)
+    _max, _step = None, None
+    if args:
+        if not isinstance(args, int):
+            _max, _step = map(int, args.split(','))
+        else:
+            _max = args
+    args = filter(None, (_min, _max, _step))
+    return range(*args)

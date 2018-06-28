@@ -60,16 +60,21 @@ class RPSSearchListView(generic.ListView):
             'rps120': 80,
            'rps250':80}
     form = RPSForm(initdata)
-    print(form)
+    days = 10
+    page = 1
 
     def get_queryset(self):
         queryset = RPS.getlist('stock')
-        form = RPSForm(self.request.GET)
-        if form.is_valid():
-            self.code = form.cleaned_data['code']
-            self.rps120 = form.cleaned_data['rps120']
-            self.rps250 = form.cleaned_data['rps250']
-            print(form.cleaned_data)
+        self.form = RPSForm(self.request.GET)
+        print(self.form)
+        if self.form.is_valid():
+            self.code = self.form.cleaned_data['code']
+            self.rps120 = self.form.cleaned_data['rps120']
+            self.rps250 = self.form.cleaned_data['rps250']
+            # todo form choice 赋值
+            # self.days = int(form.cleaned_data['days'])
+            self.page = int(self.form.cleaned_data['page'])
+            print(self.form.cleaned_data)
             if self.code:
                 try:
                     queryset = queryset.filter(code=Listing.getlist('stock').get(code=self.code))
@@ -85,6 +90,12 @@ class RPSSearchListView(generic.ListView):
                     queryset = queryset.filter(rps250__gte=self.rps250)
                 except:
                      pass
+            if self.days > 0:
+                try:
+                    tdate = RPS.getNearestTradedate(days=-self.days)
+                    queryset = queryset.filter(tradedate__gte=tdate)
+                except:
+                     pass
 
         return queryset.order_by('-tradedate', '-rps250', '-rps120')
 
@@ -93,6 +104,7 @@ class RPSSearchListView(generic.ListView):
         context['title'] = "RPS强度列表 {}".format(str(datetime.datetime.now())[:19])
         context['code'] = self.code
         context['form'] = self.form
+        context['trueurl'] = self.request.get_raw_uri()
         print(self.form)
         return context
 

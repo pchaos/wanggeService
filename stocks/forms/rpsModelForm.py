@@ -20,6 +20,7 @@ from django.forms import ModelForm
 from django import forms
 from stocks.models import RPS
 
+
 class RPSModelForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -28,9 +29,18 @@ class RPSModelForm(ModelForm):
         model = RPS
         fields = ('code', 'rps120', 'rps250', 'tradedate',)
 
+
 class RPSForm(forms.Form):
-    code = forms.CharField(label='代码', max_length=6, min_length = 0, required=False)
+    daysChoice = ((2, ("两天")),
+                  (5, ("五天")),
+                  (10, ("十天")),
+                  (30, ("三十天")),
+                  (60, ("六十天")),
+                  (100, ("100天")),
+                  (-1, ("其他")))
+    code = forms.CharField(label='代码', max_length=6, min_length=0, required=False)
     rps120 = forms.IntegerField(label='120日RPS', max_value=100, min_value=0, required=False)
     rps250 = forms.IntegerField(label='250日RPS', max_value=100, min_value=0, required=False)
-
-
+    days = forms.ChoiceField(label='查询天数：', choices=daysChoice, required=False)
+    # days = forms.ChoiceField(label='查询天数', choices=daysChoice, widget=forms.RadioSelect(), required=False)
+    page = forms.IntegerField(label='页数：')

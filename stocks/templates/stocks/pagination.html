@@ -1,0 +1,25 @@
+{#  翻页  #}
+{% block pagination %}
+    {% if is_paginated %}
+        <div class="pagination">
+            <ul class="paper">
+              {% if page_obj.has_previous %}
+                   <li class="previous">
+                    <a href="{{ request.get_raw_uri }}&page={{ page_obj.previous_page_number }}">previous</a>
+                  </li>
+              {% endif %}
+              <span class="page-current">
+                  <li>
+                  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                  </li>
+              </span>
+              {% if page_obj.has_next %}
+                  <li class="next">
+                  <a href="{{ request.get_raw_uri }}&page={{ page_obj.next_page_number }}">next</a>
+                  </li>
+
+              {% endif %}
+            </ul>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -261,11 +261,10 @@ class HSGTCG(HSGTCGBase):
                                                          hamount=v.hamount, hpercent=v.hpercent,
                                                          tradedate=v.tradedate)
                         except Exception as e:
-                            # print(code[0], v, type(v.close), type(v.hpercent))
                             print(code[0], e.args)
-                            # raise Exception(e.args)
                 bcount += 1
                 if bcount % 50 == 0:
+                    # 每50次，关闭浏览器，重新打开
                     if browser:
                         browser.close()
                         browser = cls.getBrowser(firefoxHeadless)

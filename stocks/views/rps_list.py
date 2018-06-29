@@ -47,7 +47,8 @@ class RPSListView(generic.ListView):
         return context
 
 class RPSSearchListView(generic.ListView):
-    """ 条件查询RPS强度
+    """ 条件查询RPS强度;
+    基于django.forms.form
 
     """
     model = RPS
@@ -56,24 +57,33 @@ class RPSSearchListView(generic.ListView):
     code=''
     rps120 = None
     rps250 = None
-    initdata = {'code': '',
-            'rps120': 80,
-           'rps250':80}
-    form = RPSForm(initdata)
     days = 10
     page = 1
+    initdata = {'code': '',
+            'rps120': str(80),
+            'rps250':str(80),
+            'days':days,
+            'page':page}
+    form = RPSForm(initdata)
 
     def get_queryset(self):
         queryset = RPS.getlist('stock')
         self.form = RPSForm(self.request.GET)
-        print(self.form)
+        # print(self.form)
         if self.form.is_valid():
             self.code = self.form.cleaned_data['code']
             self.rps120 = self.form.cleaned_data['rps120']
             self.rps250 = self.form.cleaned_data['rps250']
             # todo form choice 赋值
             # self.days = int(form.cleaned_data['days'])
-            self.page = int(self.form.cleaned_data['page'])
+            try:
+                self.page = int(self.form.cleaned_data['page'])
+                print('page:{}'.format(self.page))
+            except:
+                print('exception page:{}'.format(self.page))
+                print('self.form.cleaned_data:{}'.format(self.form.cleaned_data['page']))
+                # self.page = 1
+                pass
             print(self.form.cleaned_data)
             if self.code:
                 try:
@@ -105,7 +115,7 @@ class RPSSearchListView(generic.ListView):
         context['code'] = self.code
         context['form'] = self.form
         context['trueurl'] = self.request.get_raw_uri()
-        print(self.form)
+        # print('{} {}'.format(self.context_object_name, self.form))
         return context
 
 

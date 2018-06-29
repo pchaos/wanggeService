@@ -33,9 +33,9 @@ urlpatterns = [
     url(r'^', include(router.urls)),
     # url(r'^', include('strategies.urls')),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    url(r'^api/', include('stocks.urls', namespace='stocks')),
     url(r'^api/comment/', include('comment.urls', namespace='comments')),
     url(r'^polls/', include('polls.urls')),
     url(r'^strategies/', include('strategies.urls')),
+    url(r'^v1/', include('stocks.urls', namespace='stocks')),
 
 ]

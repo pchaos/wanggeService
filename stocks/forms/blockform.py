@@ -22,7 +22,11 @@ from stocks.models import Block
 __author__ = 'pchaos'
 
 
-class BlockForm(forms.ModelForm):
+class BlockModelForm(forms.ModelForm):
     class Meta:
         model = Block
-        exclude = ('id')
+        exclude = ('id',)
+
+class BlockForm(forms.Form):
+    code = forms.CharField(label='编码', max_length=18, required=False)
+    name = forms.CharField(label='板块名称', max_length=60, required=False)

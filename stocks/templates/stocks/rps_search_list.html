@@ -61,10 +61,10 @@
             <thead>
             <tr>
                 {% for i in 0|range:3 %}
-                    <th align="center">序号</th>
+                    <th>序号</th>
                     {% if code|length != 6 %}
-                        <th align="center">代码</th>
-                        <th align="center">名称</th>
+                        <th>代码</th>
+                        <th>名称</th>
                     {% endif %}
                     <th>120日RPS</th>
                     <th>250日RPS</th>
@@ -75,14 +75,14 @@
             <tbody>
                 <tr>
                 {% for v in rps_list %}
-                    <td align="center">{{ forloop.counter }}</td>
+                    <td>{{ forloop.counter }}</td>
                     {% if code|length != 6 %}
-                        <td align="center"><a href="{% url 'stocks:rps_search_list' v.code_id %} ">{{ v.code.code }}</a></td>
+                        <td><a href="{% url 'stocks:rps_search_list' v.code_id %} ">{{ v.code.code }}</a></td>
                         <td><a href="{% url 'stocks:rps_search_list' v.code.code %} "><p>{{ v.code.name }}</p></a></td>
                     {% endif %}
-                    <td align="center"><a href="{% url 'stocks:rps_search_list' v.pk %} ">{{ v.rps120|floatformat:2 }}</a></td>
-                    <td align="center"><a href="{% url 'stocks:rps_search_list' v.pk %} ">{{ v.rps250|floatformat:2 }}</a></td>
-                    <td align="center"> {{ v.tradedate|date:'Y-m-d' }}</td>
+                    <td><a href="{% url 'stocks:rps_search_list' v.pk %} ">{{ v.rps120|floatformat:2 }}</a></td>
+                    <td><a href="{% url 'stocks:rps_search_list' v.pk %} ">{{ v.rps250|floatformat:2 }}</a></td>
+                    <td> {{ v.tradedate|date:'Y-m-d' }}</td>
                     {% if not forloop.counter|mod:3 %}
                         </tr><tr>
                     {% endif %}

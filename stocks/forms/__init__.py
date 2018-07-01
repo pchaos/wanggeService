@@ -20,3 +20,5 @@ __author__ = 'pchaos'
 from .proxyModelForm import ProxylistModelForm
 from .rpsModelForm import RPSModelForm
 from .rpsModelForm import RPSForm
+from .blockform import BlockModelForm, BlockForm
+

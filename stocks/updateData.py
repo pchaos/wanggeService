@@ -16,8 +16,11 @@ Change Activity:
 -------------------------------------------------
 """
 __author__ = 'pchaos'
-
 import sys; print('Python %s on %s' % (sys.version, sys.platform))
+import os
+sys.path.append('~/myDocs/YUNIO/tmp/gupiao/wanggeService/stocks/')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "wanggeService.settings")
+
 import django; print('Django %s' % django.get_version())
 # sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])
 if 'setup' in dir(django): django.setup()

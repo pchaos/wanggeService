@@ -11,7 +11,9 @@ Description :
 date：          18-6-24
 -------------------------------------------------
 Change Activity:
-               18-6-24:
+               2018-7-2:
+               add  get client's IP address
+
 @Contact : p19992003#gmail.com                   
 -------------------------------------------------
 """
@@ -59,11 +61,14 @@ class RPSSearchListView(generic.ListView):
     rps250 = None
     days = 10
     page = 1
+    column_num = 3
     initdata = {'code': '',
             'rps120': str(80),
-            'rps250':str(80),
-            'days':days,
-            'page':page}
+            'rps250':str(80)
+            # 'days':str(days),
+            # 'page':str(page),
+            # 'column_num': str(column_num)
+            }
     form = RPSForm(initdata)
 
     def get_queryset(self):
@@ -74,11 +79,11 @@ class RPSSearchListView(generic.ListView):
             self.code = self.form.cleaned_data['code']
             self.rps120 = self.form.cleaned_data['rps120']
             self.rps250 = self.form.cleaned_data['rps250']
+            self.column_num = self.form.cleaned_data['column_num']
             # todo form choice 赋值
             # self.days = int(form.cleaned_data['days'])
             try:
                 self.page = int(self.form.cleaned_data['page'])
-                print('page:{}'.format(self.page))
             except:
                 print('exception page:{}'.format(self.page))
                 print('self.form.cleaned_data:{}'.format(self.form.cleaned_data['page']))
@@ -113,11 +118,35 @@ class RPSSearchListView(generic.ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = "RPS强度列表 {}".format(str(datetime.datetime.now())[:19])
         context['code'] = self.code
+        if self.column_num is None:
+            self.column_num = 3
+        context['column_num'] = self.column_num
+        print('column_num :{}'.format(self.column_num))
         context['form'] = self.form
         context['trueurl'] = self.request.get_raw_uri()
+        context['yourip'] = self.get_IP()
         # print('{} {}'.format(self.context_object_name, self.form))
         return context
 
+    def get_IP(self):
+        """  get client's IP address
+
+        :return: client ip
+        """
+        from ipware import get_client_ip
+        client_ip, is_routable = get_client_ip(self.request)
+        if client_ip is None:
+            # Unable to get the client's IP address
+            return 'N/A'
+        else:
+            # We got the client's IP address
+            if is_routable:
+                # The client's IP address is publicly routable on the Internet
+                pass
+            else:
+                # The client's IP address is private
+                pass
+        return client_ip
 
 def get_name(request):
     # if this is a POST request we need to process the form data

@@ -5,6 +5,9 @@
 {% block title %}
     <div class="container">
             <h1>{{ title|default:"列表" }}</h1>
+            <div align="right">{% if yourip %}
+                <h5>--来访者: {{ yourip }}</h5>
+            {% endif %}</div>
     </div>
 {% endblock %}
 
@@ -56,7 +59,7 @@
 {#            {% endfor %}#}
 {#            </tbody>#}
 {#        </table>#}
-        <table class="table" border="1">
+        <table class="table" border="1" >
             {% load tags %}
             <thead>
             <tr>

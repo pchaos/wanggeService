@@ -20,7 +20,7 @@ from rest_framework import routers
 from django.views.generic.base import RedirectView
 # from stocks import views
 from stocks.views import UserViewSet, GroupViewSet
-
+from stocks.views import index
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'groups', GroupViewSet)
@@ -30,6 +30,7 @@ router.register(r'groups', GroupViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    url(r'^$', index, name='home'),
     url(r'^', include(router.urls)),
     # url(r'^', include('strategies.urls')),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),

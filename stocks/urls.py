@@ -22,6 +22,8 @@ from .views import ProxyListView, ProxyDetailView
 from .views import ProxyUpdate
 from .views import RPSListView
 from .views import RPSSearchListView
+from .views import BlockSearchListView
+from .views import CategoryListView
 
 app_name = "stocks"
 
@@ -38,8 +40,10 @@ urlpatterns = [
     url(r'^PROXY/$', ProxyListView.as_view(), name='proxy_list'),
     url(r'^PROXY/([0-9]+)$', ProxyUpdate.as_view(), name='proxy_update'),
     url(r'^PROXYDETAIL/([0-9]+)$', ProxyDetailView.as_view(), name='proxy_form'),
-    url(r'^rps/$', RPSListView.as_view(), name='rps_list'),
+    # url(r'^rps/$', RPSListView.as_view(), name='rps_list'),
     url(r'^RPS/$', RPSSearchListView.as_view(), name='rps_search_list'),
+    url(r'^BLOCK/$', BlockSearchListView.as_view(), name='block_search_list'),
+    url(r'^product/$', CategoryListView.as_view(), name='product_search_list'),
 
 ]
 

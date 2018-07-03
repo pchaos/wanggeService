@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'mptt',
     'stocks.apps.WanggesConfig',
     'comment.apps.CommentConfig',
     'polls.apps.PollsConfig',

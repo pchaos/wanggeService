@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User, Group
+from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -8,6 +9,10 @@ from stocks.models import Listing as SC
 from stocks.serializers import ListingSerializer
 from stocks.models import BlockDetail
 from stocks.serializers import BKDetailSerializer
+
+def index(request):
+    #
+    return render(request, 'index.html')
 
 class UserViewSet(viewsets.ModelViewSet):
     """

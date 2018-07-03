@@ -42,4 +42,4 @@ def importRPS():
 if __name__ == '__main__':
 
     importHSGTCG()
-    importRPS()
+    # importRPS()

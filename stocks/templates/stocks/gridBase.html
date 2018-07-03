@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-hans">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css"
+          integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'stocks/mystyles.css' %}"/>
+    <title>stokcs blog</title>
+    <style>
+        body {
+            display: grid;
+            grid-template-areas: "nav header header" "nav article ads" "nav footer footer";
+            grid-template-rows: 80px 1fr 70px;
+            grid-template-columns: 20% 1fr 15%;
+            grid-row-gap: 10px;
+            grid-column-gap: 10px;
+            height: 100vh;
+            margin: 0;
+        }
+
+        header, footer, article, nav, div {
+            padding: 1.2em;
+            background: #88eeba;
+        }
+
+        #pageHeader {
+            grid-area: header;
+        }
+
+        #pageFooter {
+            grid-area: footer;
+        }
+
+        #mainArticle {
+            grid-area: article;
+        }
+
+        #mainNav {
+            grid-area: nav;
+        }
+
+        #siteAds {
+            grid-area: ads;
+        }
+
+        /* Stack the layout on small devices/viewports. */
+        @media all and (max-width: 575px) {
+            body {
+                grid-template-areas: "header" "article" "ads" "nav" "footer";
+                grid-template-rows: 80px 1fr 70px 1fr 70px;
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<header id="pageHeader">
+    {% block pageheader %}
+        <h1><a href="/">欧奈尔</a></h1>
+    {% endblock %}
+</header>
+<article id="mainArticle">
+    {% block content %}
+    {% endblock %}
+</article>
+<nav id="mainNav">
+    {% block nav %}{% endblock %}
+</nav>
+<div id="siteAds">
+    {% block ads %}
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- 首页的页首横幅 -->
+<ins class="adsbygoogle"
+style="display:inline-block;width:728px;height:90px"
+data-ad-client="ca-pub-1234567890123456"
+data-ad-slot="1234567890"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    {% endblock %}
+</div>
+<footer id="pageFooter">
+    {% block footer %}
+        <p class="text-right">From pchaos --- p19992003 # gmail 。 com</p>
+    {% endblock %}
+</footer>
+</body>
+</html>

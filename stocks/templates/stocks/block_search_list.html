@@ -1,0 +1,123 @@
+{% extends "stocks/base_generic.html" %}
+
+{% load humanize %}
+
+{% block title %}
+    <div class="container">
+            <h1>{{ title|default:"列表" }}</h1>
+    </div>
+{% endblock %}
+
+{% block pageheader %}
+    <form id="searchform" action="{% url 'stocks:block_search_list' %}" method="get" accept-charset="utf-8">
+        {% csrf_token %}
+        {{ form }}
+        <button type="submit" class="btn btn-primary">
+            <span class="glyphicon glyphicon-search"></span>
+            查询提交
+        </button>
+
+        <div class="col-4">当前页记录数：{{ object_list|length }}</div>
+        {#            {% include 'stocks/pagination.html' %}#}
+        </div>
+    </form>
+{% endblock %}
+
+{% block content %}
+    {% if object_list %}
+{#        <table class="table">#}
+{#            <thead>#}
+{#            <tr>#}
+{#                <th>序号</th>#}
+{#                {% if code|length != 6 %}#}
+{#                <th>代码</th>#}
+{#                <th>名称</th>#}
+{#                {% endif %}#}
+{#                <th>120日RPS</th>#}
+{#                <th>250日RPS</th>#}
+{#                <th>日期</th>#}
+{#            </tr>#}
+{#            </thead>#}
+{#            <tbody>#}
+{#            {% for v in rps_list %}#}
+{#                {% if forloop.first %}#}
+{#                    {% if code|length == 6 %}#}
+{#                        <h3>{{ v.code.code }} {{ v.code.name }} </h3>#}
+{#                    {% endif %}#}
+{#                {% endif %}#}
+{#                <tr>#}
+{#                    <td>{{ forloop.counter }}</td>#}
+{#                    {% if code|length != 6 %}#}
+{#                    <td><a href="{% url 'stocks:block_search_list' v.code_id %} ">{{ v.code.code }}</a></td>#}
+{#                    <td><a href="{% url 'stocks:block_search_list' v.code.code %} ">{{ v.code.name }}</a></td>#}
+{#                    {% endif %}#}
+{#                    <td><a href="{% url 'stocks:block_search_list' v.pk %} ">{{ v.rps120|floatformat:2}}</a></td>#}
+{#                    <td><a href="{% url 'stocks:block_search_list' v.pk %} ">{{ v.rps250|floatformat:2 }}</a></td>#}
+{#                    <td> {{ v.tradedate|date:'Y-m-d' }}</td>#}
+{#                </tr>#}
+{#            {% endfor %}#}
+{#            </tbody>#}
+{#        </table>#}
+        <table class="table" border="1" >
+            {% load tags %}
+            <thead>
+            <tr>
+                {% for i in 0|range:3 %}
+                    <th>序号</th>
+                    {% if code|length != 6 %}
+                        <th>代码</th>
+                        <th>名称</th>
+                    {% endif %}
+                    <th>120日RPS</th>
+                    <th>250日RPS</th>
+                    <th>日期</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+                <tr>
+                {% for v in object_list %}
+                    <td>{{ forloop.counter }}</td>
+                    {% if code|length != 6 %}
+                        <td><a href="{% url 'stocks:block_search_list' %} ">{{ v.code.code }}</a></td>
+                        <td><a href="{% url 'stocks:block_search_list' %} "><p>{{ v.code.name }}</p></a></td>
+                    {% endif %}
+                    <td><a href="{% url 'stocks:block_search_list' v.pk %} ">{{ v.name }}</a></td>
+                    <td><a href="{% url 'stocks:block_search_list' v.pk %} ">{{ v.parentblock.name }}</a></td>
+                    <td><a href="{% url 'stocks:block_search_list' v.pk %} ">{{ v.isactived }}</a></td>
+                    <td> {{ v.updated_time|date:'Y-m-d' }}</td>
+                    {% if not forloop.counter|mod:3 %}
+                        </tr><tr>
+                    {% endif %}
+                {% endfor %}
+                </tr>
+{#                {% for v in rps_list %}#}
+{#                    <div class="row">#}
+{#                        {% if forloop.first %}#}
+{#                            {% if code|length == 6 %}#}
+{#                                <h3>{{ v.code.code }} {{ v.code.name }} </h3>#}
+{#                            {% endif %}#}
+{#                        {% endif %}#}
+{#                        {% cycle 'row'  'endrow' as row silent %}#}
+{#                        {% if row == 'row' %}<tr>{% endif %}#}
+{#                            <td>{{ forloop.counter }}</td>#}
+{#                            {% if code|length != 6 %}#}
+{#                                <td><a href="{% url 'stocks:block_search_list' v.code_id %} ">{{ v.code.code }}</a></td>#}
+{#                                <td><a href="{% url 'stocks:block_search_list' v.code.code %} "><p>{{ v.code.name }}</p></a></td>#}
+{#                            {% endif %}#}
+{#                            <td><a href="{% url 'stocks:block_search_list' v.pk %} ">{{ v.rps120|floatformat:2}}</a></td>#}
+{#                            <td><a href="{% url 'stocks:block_search_list' v.pk %} ">{{ v.rps250|floatformat:2 }}</a></td>#}
+{#                            <td> {{ v.tradedate|date:'Y-m-d' }}</td>#}
+{#                        {% if row == 'endrow' %}</tr>{% endif %}#}
+{#                    </div>#}
+{#                {% endfor %}#}
+            </tbody>
+        </table>
+    {% else %}
+        <p>未找到版块列表.</p>
+    {% endif %}
+
+    {% include 'stocks/pagination.html' %}
+
+{% endblock %}
+

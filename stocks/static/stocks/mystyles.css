@@ -1,12 +1,15 @@
 
-td,th {
-  text-align: center;
+td, th {
+    text-align: center;
 }
 
 thead th, thead td {
-  text-align: center;
+    text-align: center;
+    /*font-size: smaller;*/
 }
 
 tbody th, tbody td {
-  text-align: center;
+    text-align: center;
 }
+
+table { margin: auto; }

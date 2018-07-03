@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Django Mtpp Demo | Category List</title>
+</head>
+<body>
+    <h1>Category Tree</h1>
+    {% load mptt_tags %}
+
+
+    <ul>
+        {% recursetree category_list %}
+            <li>
+                {{ node.name }}
+                {% if not node.is_leaf_node %}
+                    <ul class="children">
+                        {{ children }}
+                    </ul>
+                {% endif %}
+            </li>
+        {% endrecursetree %}
+    </ul>
+
+
+    <h2>Category Tree Select </h2>
+
+    <div class="category">
+        <form action="." method="get"></form>
+        {{ category_form.as_p }}
+
+        <input type="submit" value="查询" />
+    </div>
+
+    <h2>Multiple Select</h2>
+
+    <select name="classifiers" multiple="multiple" size="15">
+        {% for node,structure in category_list|tree_info:"ancestors" %}
+            {% if node.is_child_node %}
+                <option value="{{ node.pk }}">
+                    {{ structure.ancestors|tree_path }} :: {{ node }}
+                </option>
+            {% endif %}
+        {% endfor %}
+    </select>
+
+
+</body>
+</html>

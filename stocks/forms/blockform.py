@@ -25,7 +25,7 @@ __author__ = 'pchaos'
 class BlockModelForm(forms.ModelForm):
     class Meta:
         model = Block
-        exclude = ('id',)
+        exclude = ('id','value1', 'value2', 'value3', 'remarks')
 
 class BlockForm(forms.Form):
     code = forms.CharField(label='编码', max_length=18, required=False)

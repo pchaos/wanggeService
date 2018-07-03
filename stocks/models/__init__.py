@@ -185,3 +185,4 @@ from .block import Block
 from .block import BlockDetail
 from .hsgtcg import HSGTCG, HSGTCGHold
 from .proxylist import Proxy
+from .productcategory import Category, Product

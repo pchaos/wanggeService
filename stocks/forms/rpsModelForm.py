@@ -44,4 +44,4 @@ class RPSForm(forms.Form):
     days = forms.ChoiceField(label='查询天数：', choices=daysChoice, required=False)
     # days = forms.ChoiceField(label='查询天数', choices=daysChoice, widget=forms.RadioSelect(), required=False)
     page = forms.IntegerField(label='页数：', min_value=1, required=False)
-    column = forms.IntegerField(label='分栏数：', required=False, max_value=10, min_value=1)
+    column_num = forms.IntegerField(label='分栏数：', required=False, max_value=10, min_value=1)

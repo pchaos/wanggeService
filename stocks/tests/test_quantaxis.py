@@ -400,3 +400,19 @@ class testQuantaxis(TestCase):
         """
         self.assertTrue(set(data.source) == {'tdx'}, '版块来源数大于一个，为 {}'.format(set(data.source)))
 
+    def test_useraddfunc(self):
+        # tdate = HSGTCGHold.getNearestTradedate(days=-120)
+        tdate = '2018-1-2'
+        end = datetime.datetime.now().date()
+        code = qa.QA_fetch_stock_list_adv().code.tolist()
+        data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end)
+        ind = data.add_func(lambda x: x.tail(20).high.max() == x.high.max())
+        code = list(ind[ind].reset_index().code)
+
+
+        # 前100日内有连续两天wr==0
+        day_data = qa.QA_fetch_stock_day_adv(code, '2018-01-03', '2018-07-04')
+        ind = day_data.add_func(qa.QA_indicator_WR, 10, 6)
+        res = ind.groupby(level=1, as_index=False, sort=False, group_keys=False).apply(
+            lambda x: (x.tail(100))['WR1'].rolling(2).sum() == 0)
+        print(res[res])

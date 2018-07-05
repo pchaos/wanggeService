@@ -9,7 +9,7 @@ requests
 easyutils
 quantaxis>1.0.33
 selenium
-lxml<=4.1.1
+lxml==4.1.*
 bs4
 django-ipware
 django-mptt

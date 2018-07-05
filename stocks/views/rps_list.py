@@ -125,6 +125,7 @@ class RPSSearchListView(generic.ListView):
         context['form'] = self.form
         context['trueurl'] = self.request.get_raw_uri()
         context['yourip'] = self.get_IP()
+        print(context['yourip'])
         # print('{} {}'.format(self.context_object_name, self.form))
         return context
 

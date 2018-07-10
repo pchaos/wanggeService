@@ -210,3 +210,4 @@ from .rps_list import RPSListView
 from .rps_list import RPSSearchListView
 from .block_list import BlockSearchListView
 from .category_list import CategoryListView
+from .architechuture_list import ArchitechtureList

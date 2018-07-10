@@ -13,7 +13,7 @@
 
 {% block pageheader %}
     <form id="searchform" action="{% url 'stocks:rps_search_list' %}" method="get" accept-charset="utf-8">
-        {% csrf_token %}
+{#        {% csrf_token %}#}
         {{ form }}
         <button type="submit" class="btn btn-primary">
             <span class="glyphicon glyphicon-search"></span>

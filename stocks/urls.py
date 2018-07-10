@@ -24,6 +24,7 @@ from .views import RPSListView
 from .views import RPSSearchListView
 from .views import BlockSearchListView
 from .views import CategoryListView
+from .views import ArchitechtureList
 
 app_name = "stocks"
 
@@ -44,6 +45,8 @@ urlpatterns = [
     url(r'^RPS/$', RPSSearchListView.as_view(), name='rps_search_list'),
     url(r'^BLOCK/$', BlockSearchListView.as_view(), name='block_search_list'),
     url(r'^product/$', CategoryListView.as_view(), name='product_search_list'),
+    url(r'^architechture/1$', ArchitechtureList.as_view(template_name='stocks/architechure/基本面排雷.html'), name='architechture_list1'),
+    url(r'^architechture/2$', ArchitechtureList.as_view(template_name='stocks/architechure/投资者最容易走的16种坑.html'), name='architechture_list2'),
 
 ]
 

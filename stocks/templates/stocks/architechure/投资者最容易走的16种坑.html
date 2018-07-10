@@ -1,13 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<div class="article">
-    <h1 class="title">投资者最容易走的16种坑（附投资建议）|读威廉•欧奈尔《笑傲股市》</h1>
+{% extends "stocks/architechure/architechtureBase.html" %}
+{% block title %}
+    <div class="container">
+        <h1>投资者最容易走的16种坑（附投资建议）|读威廉•欧奈尔《笑傲股市》</h1>
+    </div>
+{% endblock %}
 
+{% block content %}
+<div class="article">
     <!-- 文章内容 -->
     <div data-note-content="" class="show-content">
         <div class="show-content-free">
@@ -61,6 +60,4 @@
         </div>
     </div>
 </div>
-
-</body>
-</html>
+{% endblock %}

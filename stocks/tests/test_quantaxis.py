@@ -401,14 +401,69 @@ class testQuantaxis(TestCase):
         self.assertTrue(set(data.source) == {'tdx'}, '版块来源数大于一个，为 {}'.format(set(data.source)))
 
     def test_useraddfunc(self):
+        from django.db.models import Q
+        from stocks.models import Listing, RPS
+
+        def cmpfunc(df):
+            # 标记创新高
+            return pd.DataFrame(df.high == df.high.max())
+
+        def cmpfunc120(df):
+            # 标记创半年新高
+            return pd.DataFrame(df.high == df.high.rolling(120).max())
+
+        def cmpfuncPeriod(df, days):
+            # 标记创半年新高
+            return pd.DataFrame(df.high == df.high.rolling(days).max())
+
+        def higher(df):
+
+            return ind[ind['high']]
+
         # tdate = HSGTCGHold.getNearestTradedate(days=-120)
         tdate = '2018-1-2'
         end = datetime.datetime.now().date()
         code = qa.QA_fetch_stock_list_adv().code.tolist()
-        data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end)
+        data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end).to_qfq()
         ind = data.add_func(lambda x: x.tail(20).high.max() == x.high.max())
         code = list(ind[ind].reset_index().code)
+        # 半年新高
+        code = pd.DataFrame(list(RPS.getlist().filter(tradedate__gte='2018-1-1').filter(
+            (Q(rps120__gte=90) & Q(rps250__gte=80)) | (Q(rps120__gte=80) & Q(rps250__gte=90))). \
+                                 values('code__code').distinct()))['code__code'].values.tolist()
+        n = 120
+        m = 120  # 新高范围
+        df = self.firstHigh(code, end, m, n)
+        for v in [df.iloc[a] for a in df.index]:
+            print(v.code, v.date)
+            try:
+                day_data = qa.QA_fetch_stock_day_adv(v.code, v.date, end).to_qfq()
+                ddf = day_data.data[['high', 'close', 'low']].reset_index()
+            except Exception as e:
+                print(e.args)
 
+        n = 120
+        m = 250
+        # tdate = Listing.getNearestTradedate(days=-(n * 2))
+        tdate = Listing.getNearestTradedate(days=-(n + m + 2))
+        data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end).to_qfq()
+        ind = data.add_func(cmpfunc120)
+        # ind1 = data.add_func(lambda x: cmpfuncPeriod(x, n))
+        ind1 = data.add_func(lambda x: cmpfuncPeriod(x, m))
+        results = ind[ind['high']]
+        assert ind[ind['high']].equals(ind1[ind1['high']])
+
+        df = data[ind.high].data.high.reset_index()
+        usedcode = []
+        for v in [df.iloc[a] for a in df.index]:
+            if not (v.code in usedcode):
+                # 创新高的股票代码
+                usedcode.append([ v.date, v.code,v.high])
+
+        data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end).to_qfq()
+        # 收盘在50日线之上
+        ind = data.add_func(lambda x: float(qa.QA_indicator_MA(x.tail(50), 50)[-1:].MA) <= float(x.tail(1).close))
+        code = list(ind[ind].reset_index().code)
 
         # 前100日内有连续两天wr==0
         day_data = qa.QA_fetch_stock_day_adv(code, '2018-01-03', '2018-07-04')
@@ -416,3 +471,23 @@ class testQuantaxis(TestCase):
         res = ind.groupby(level=1, as_index=False, sort=False, group_keys=False).apply(
             lambda x: (x.tail(100))['WR1'].rolling(2).sum() == 0)
         print(res[res])
+
+    def firstHigh(self, code, end, m, n):
+        def cmpfuncPeriod(df, days):
+            # 标记创半年新高
+            return pd.DataFrame(df.high == df.high.rolling(days).max())
+
+        tdate = Listing.getNearestTradedate(days=-(n + m))
+        data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end).to_qfq()
+        ind = data.add_func(lambda x: cmpfuncPeriod(x, m))
+        results = ind[ind['high']]
+        df = data[ind.high].data.high.reset_index()
+        # gg = df.groupby('code').date.first() # 更快速？
+        usedcode = []
+        fh =[]
+        for v in [df.iloc[a] for a in df.index]:
+            if not (v.code in usedcode):
+                # 创新高的股票代码
+                usedcode.append(v.code)
+                fh.append([ v.date, v.code])
+        return pd.DataFrame(fh, columns=['date', 'code'])

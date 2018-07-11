@@ -197,3 +197,7 @@ class StockBase(models.Model):
                 tradedate = Stocktradedate.nextTradeday(tradedate)
 
         return tradedate
+
+    @classmethod
+    def getList(cls):
+        return cls.objects.all()

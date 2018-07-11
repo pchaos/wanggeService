@@ -22,3 +22,8 @@ __author__ = 'pchaos'
 
 class TestFreshHigh(TestCase):
     pass
+
+
+class TestFreshHigh(TestCase):
+    def test_updateHigh(self):
+        self.fail()

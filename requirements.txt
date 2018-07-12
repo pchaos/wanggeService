@@ -13,3 +13,4 @@ lxml==4.1.*
 bs4
 django-ipware
 django-mptt
+django_filters

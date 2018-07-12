@@ -1,0 +1,79 @@
+{% extends "stocks/base_generic.html" %}
+
+{% load humanize %}
+
+{% block title %}
+    <a href="{% url "home" %}">首页</a>
+    <div class="container">
+        <h1>{{ title|default:"列表" }}</h1>
+        <div align="right">{% if yourip %}
+            <h5>--来访者: {{ yourip }}</h5>
+        {% endif %}</div>
+    </div>
+{% endblock %}
+
+{% block pageheader %}
+    <form id="searchform" action="{% url 'stocks:freshhigh_search_list' %}" method="get" accept-charset="utf-8">
+        {#        {% csrf_token %}#}
+        {{ filter.form.as_p }}
+        <button type="submit" class="btn btn-primary">
+            <span class="glyphicon glyphicon-search"></span>
+            查询提交
+        </button>
+        <div class="col-4">当前页记录数：{{ object_list|length }}</div>
+        {#            {% include 'stocks/pagination.html' %}#}
+        </div>
+    </form>
+{% endblock %}
+
+{% block content %}
+    {% if object_list %}
+        <table class="table" border="1">
+            {% load tags %}
+            <thead>
+            <tr>
+                {% for i in 0|range:1 %}
+                    <th>序号</th>
+                    {% if code|length != 6 %}
+                        <th>代码</th>
+                        <th>名称</th>
+                    {% endif %}
+                    <th>新高价格</th>
+                    <th>阶段低点</th>
+                    <th>跌幅（%）</th>
+                    <th>新高日期</th>
+                    <th>低点日期</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                {% for v in object_list %}
+                    <td>{{ forloop.counter }}</td>
+                    {% if code|length != 6 %}
+                        <td><a href="{% url 'stocks:freshhigh_search_list' v.code_id %} ">{{ v.code.code }}</a></td>
+                        <td><a href="{% url 'stocks:freshhigh_search_list' v.code.code %} "><p>{{ v.code.name }}</p></a>
+                        </td>
+                    {% endif %}
+                    <td><a href="{% url 'stocks:freshhigh_search_list' v.pk %} ">{{ v.high|floatformat:2 }}</a></td>
+                    <td><a href="{% url 'stocks:freshhigh_search_list' v.pk %} ">{{ v.low|floatformat:2 }}</a></td>
+                    <td> {{ v.high|diefu:v.low }} </td>
+                    <td> {{ v.htradedate|date:'Y-m-d' }}</td>
+                    <td> {{ v.ltradedate|date:'Y-m-d' }}</td>
+                    {% if not forloop.counter|mod:1 %}
+                        </tr>
+                        <tr>
+                    {% endif %}
+                {% endfor %}
+                </tr>
+
+            </tbody>
+        </table>
+    {% else %}
+        <p>未找到创新高后调整幅度列表.</p>
+    {% endif %}
+
+    {% include 'stocks/pagination.html' %}
+
+{% endblock %}
+

@@ -25,6 +25,7 @@ from .views import RPSSearchListView
 from .views import BlockSearchListView
 from .views import CategoryListView
 from .views import ArchitechtureList
+from .views import FreshHighSearchListView
 
 app_name = "stocks"
 
@@ -43,6 +44,7 @@ urlpatterns = [
     url(r'^PROXYDETAIL/([0-9]+)$', ProxyDetailView.as_view(), name='proxy_form'),
     # url(r'^rps/$', RPSListView.as_view(), name='rps_list'),
     url(r'^RPS/$', RPSSearchListView.as_view(), name='rps_search_list'),
+    url(r'^HIGH/$', FreshHighSearchListView.as_view(), name='freshhigh_search_list'),
     url(r'^BLOCK/$', BlockSearchListView.as_view(), name='block_search_list'),
     url(r'^product/$', CategoryListView.as_view(), name='product_search_list'),
     url(r'^architechture/1$', ArchitechtureList.as_view(template_name='stocks/architechure/基本面排雷.html'), name='architechture_list1'),

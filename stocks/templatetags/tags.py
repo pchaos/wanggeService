@@ -7,16 +7,16 @@
 Description : table with n items per row using custom modulo tag
 As a quick, simple way to take a list of items make a table with n items per row I added a custom template filter for modulo of an integer.
 
-To make the custom filter first create a "templatetags" directory in your application folder then add an empty file called "init.py" in that new directory. Finally add a file "myapp_tags.py" with the above code in it.
+To make the custom filter first create a "templatetags" directory in your application folder then add an empty file called "init.py" in that new directory. Finally add a file "tags.py" with the above code in it.
 
-In the template you load your custom filter with {% load pictures_tags %} and then you can make a table with n elements per row using a simple for loop and in if statement.
+In the template you load your custom filter with {% load tags %} and then you can make a table with n elements per row using a simple for loop and in if statement.
 
 This works because if ( for_loop.counter modulo n ) is zero ("if not" evaluates to True on zero values), then it makes a new table row. You might note that if the number of items in list is a multiple of n, there will be an empty row at the end... preventing that adds needless complexity so I left that out!
 
 #put following in your template and change mod:5
 #according to the number of cells per table row desired
 
-{% load pictures_tags %}
+{% load tags %}
 
 <table>
 <tr>
@@ -47,16 +47,38 @@ from django import template
 register = template.Library()
 
 
-@register.filter
+@register.filter(name='mod')
 def mod(value, arg):
+    """ 取模
+
+    :param value:
+    :param arg:
+    :return:
+    """
     return value % arg
+
+
+@register.filter(name='diefu')
+def diefu(value, arg):
+    """ 计算跌幅
+    计算公式： (value - arg) / value * 100%
+
+    :param value:
+    :param arg:
+    :return:  arg相对value的跌幅百分比
+    """
+    print('diefu:{} {}'.format(value, arg))
+    if value:
+        return round((value - arg) / value * 100, 2)
+    else:
+        return None
 
 
 @register.filter(name='range')
 def _range(_min, args=None):
     """ Usage:
 
-{% load range %}
+{% load tags %}
 
 <p>stop 5
 

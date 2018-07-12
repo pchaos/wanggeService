@@ -46,7 +46,7 @@ class FreshHighSearchListView(generic.ListView):
 
     def get_queryset(self):
         self.f = FreshHighFilter(self.request.GET, queryset=FreshHigh.objects.all().order_by('code'))
-        print('FreshHighFilter:{}'.format(self.f.qs))
+        # print('FreshHighFilter:{}'.format(self.f.qs))
         return self.f.qs
 
     def get_context_data(self, **kwargs):

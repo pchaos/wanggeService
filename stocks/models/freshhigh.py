@@ -90,6 +90,8 @@ class FreshHigh(StockBase):
             start = cls.getNearestTradedate(days=-(n))
         else:
             start = convertToDate(start)
+        if start  <  end:
+            start = end - datetime.timedelta(10)
 
         # 查找大于start日期的RPS强度
         code = pd.DataFrame(list(RPS.getlist().filter(tradedate__gte=start, tradedate__lte=end).filter(

@@ -16,9 +16,9 @@ Change Activity:
 -------------------------------------------------
 """
 __author__ = 'pchaos'
+
 import sys; print('Python %s on %s' % (sys.version, sys.platform))
 import os
-sys.path.append('~/myDocs/YUNIO/tmp/gupiao/wanggeService/stocks/')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "wanggeService.settings")
 
 import django; print('Django %s' % django.get_version())
@@ -27,6 +27,22 @@ if 'setup' in dir(django): django.setup()
 # import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)
 from stocks.models import HSGTCG, HSGTCGHold
 from stocks.models import RPSprepare, RPS
+from stocks.models import FreshHigh
+
+import datetime
+from QUANTAXIS import (QA_SU_save_etf_day, QA_SU_save_index_day, QA_SU_save_stock_min,
+                       QA_SU_save_stock_block, QA_SU_save_stock_day,QA_SU_save_etf_min,
+                       QA_SU_save_stock_list, QA_SU_save_stock_xdxr,
+                       QA_util_log_info)
+
+def saveTDXday():
+    print('SAVE/UPDATE {}'.format(datetime.datetime.now()))
+    QA_SU_save_stock_day('tdx')
+    QA_SU_save_stock_xdxr('tdx')
+    # QA_SU_save_etf_day('tdx')
+    # QA_SU_save_index_day('tdx')
+    QA_SU_save_stock_list('tdx')
+    QA_SU_save_stock_block('tdx')
 
 
 def importHSGTCG():
@@ -39,7 +55,18 @@ def importRPS():
     RPSprepare.importStockListing(tdate)
     RPS.importStockListing(tdate)
 
+def importFreshHigh():
+    tdate = RPSprepare.getNearestTradedate(days=-7)
+    FreshHigh.importList(tdate, n=-(datetime.datetime.now().date() -tdate).days)
+
+def importALl():
+    saveTDXday()
+    importRPS()
+    importFreshHigh()
+
 if __name__ == '__main__':
 
     importHSGTCG()
-    importRPS()
+    importALl()
+else:
+    importALl()

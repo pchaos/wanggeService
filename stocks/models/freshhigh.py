@@ -95,8 +95,8 @@ class FreshHigh(StockBase):
         code = pd.DataFrame(list(RPS.getlist().filter(tradedate__gte=start, tradedate__lte=end).filter(
             (Q(rps120__gte=90) & Q(rps250__gte=80)) | (Q(rps120__gte=80) & Q(rps250__gte=90))). \
                                  values('code__code').distinct()))['code__code'].values.tolist()
-        # df = firstHigh(code, start, end, n, m)
-        df = firstHigh(code[:20], start, end, n, m)
+        df = firstHigh(code, start, end, n, m)
+        # df = firstHigh(code[:20], start, end, n, m)  # 测试时使用较少数据
         with transaction.atomic():
             for v in [df.iloc[a] for a in df.index]:
                 print(v.code, v.date)
@@ -128,9 +128,9 @@ class FreshHigh(StockBase):
                             except Exception as e:
                                 # ddf中没找到相关数据
                                 pass
-
-                    entries = ddf.to_dict('records')
-                    cls.updateHigh(c, entries)
+                    if len(ddf) > 0:
+                        entries = ddf.to_dict('records')
+                        cls.updateHigh(c, entries)
 
                 except Exception as e:
                     print(e.args)

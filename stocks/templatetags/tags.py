@@ -67,7 +67,6 @@ def diefu(value, arg):
     :param arg:
     :return:  arg相对value的跌幅百分比
     """
-    print('diefu:{} {}'.format(value, arg))
     if value:
         return round((value - arg) / value * 100, 2)
     else:

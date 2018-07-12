@@ -90,24 +90,25 @@ class FreshHigh(StockBase):
             (Q(rps120__gte=90) & Q(rps250__gte=80)) | (Q(rps120__gte=80) & Q(rps250__gte=90))). \
                                  values('code__code').distinct()))['code__code'].values.tolist()
         df = firstHigh(code, start, end, n, m)
-        for v in [df.iloc[a] for a in df.index]:
-            print(v.code, v.date)
-            try:
-                day_data = qa.QA_fetch_stock_day_adv(v.code, v.date, end).to_qfq()
-                ddf = day_data.data[['high', 'close', 'low']].reset_index()
-                ddf['high'] = ddf['high'].apply(lambda x: round(x, 3))
-                ddf['close'] = ddf['close'].apply(lambda x: round(x, 3))
-                ddf['low'] = ddf['low'].apply(lambda x: round(x, 3))
-                ddf['date'] = ddf['date'].apply(lambda x: x.date())
-                c = Listing.getlist('stock').get(code=v['code'])
-                qs = cls.objects.all().filter(code=c).aggregate(Max("ltradedate"))
-                if qs['ltradedate__max']:
-                    ddf = ddf[ddf['date'].apply(lambda x: x >= qs['ltradedate__max'])]
-                entries = ddf.to_dict('records')
-                cls.updateHigh(c, entries)
+        with transaction.atomic():
+            for v in [df.iloc[a] for a in df.index]:
+                print(v.code, v.date)
+                try:
+                    day_data = qa.QA_fetch_stock_day_adv(v.code, v.date, end).to_qfq()
+                    ddf = day_data.data[['high', 'close', 'low']].reset_index()
+                    ddf['high'] = ddf['high'].apply(lambda x: round(x, 3))
+                    ddf['close'] = ddf['close'].apply(lambda x: round(x, 3))
+                    ddf['low'] = ddf['low'].apply(lambda x: round(x, 3))
+                    ddf['date'] = ddf['date'].apply(lambda x: x.date())
+                    c = Listing.getlist('stock').get(code=v['code'])
+                    qs = cls.objects.all().filter(code=c).aggregate(Max("ltradedate"))
+                    if qs['ltradedate__max']:
+                        ddf = ddf[ddf['date'].apply(lambda x: x >= qs['ltradedate__max'])]
+                    entries = ddf.to_dict('records')
+                    cls.updateHigh(c, entries)
 
-            except Exception as e:
-                print(e.args)
+                except Exception as e:
+                    print(e.args)
 
     @classmethod
     def updateHigh(cls, code, entries):

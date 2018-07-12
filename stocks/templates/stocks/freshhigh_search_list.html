@@ -6,9 +6,6 @@
     <a href="{% url "home" %}">首页</a>
     <div class="container">
         <h1>{{ title|default:"列表" }}</h1>
-        <div align="right">{% if yourip %}
-            <h5>--来访者: {{ yourip }}</h5>
-        {% endif %}</div>
     </div>
 {% endblock %}
 
@@ -20,7 +17,7 @@
             <span class="glyphicon glyphicon-search"></span>
             查询提交
         </button>
-        <div class="col-4">当前页记录数：{{ object_list|length }}</div>
+        <div class="col-4">{% if is_paginated %}共{{ page_obj.paginator.count }}条记录&nbsp;&nbsp;&nbsp; {% endif %}每页记录数：{{ object_list|length }} </div>
         {#            {% include 'stocks/pagination.html' %}#}
         </div>
     </form>

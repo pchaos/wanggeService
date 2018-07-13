@@ -13,3 +13,7 @@ tbody th, tbody td {
 }
 
 table { margin: auto; }
+
+h1 {
+    text-align: center;
+}

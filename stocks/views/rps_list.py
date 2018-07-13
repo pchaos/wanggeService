@@ -85,14 +85,15 @@ class RPSSearchListView(generic.ListView):
             try:
                 self.page = int(self.form.cleaned_data['page'])
             except:
-                print('exception page:{}'.format(self.page))
-                print('self.form.cleaned_data:{}'.format(self.form.cleaned_data['page']))
+                # print('exception page:{}'.format(self.page))
+                # print('self.form.cleaned_data:{}'.format(self.form.cleaned_data['page']))
                 # self.page = 1
                 pass
             print(self.form.cleaned_data)
             if self.code:
                 try:
                     queryset = queryset.filter(code=Listing.getlist('stock').get(code=self.code))
+                    self.days = 60
                 except:
                      pass
             if self.rps120:

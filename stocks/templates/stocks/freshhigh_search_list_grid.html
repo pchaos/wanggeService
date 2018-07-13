@@ -8,7 +8,7 @@
 
 {% block nav %}
     <a href="{% url "home" %}">首页</a>
-    <br /><br />
+    <br/><br/>
     <form id="searchform" action="{% url 'stocks:freshhigh_search_list' %}" method="get" accept-charset="utf-8">
         {#        {% csrf_token %}#}
         {{ filter.form.as_p }}
@@ -16,7 +16,7 @@
             <span class="glyphicon glyphicon-search"></span>
             查询提交
         </button>
-    <a href="{% url 'stocks:freshhigh_search_list'%}">清空查询条件</a>
+        <a href="{% url 'stocks:freshhigh_search_list' %}">清空查询条件</a>
     </form>
 {% endblock %}
 
@@ -61,10 +61,14 @@
                         </td>
                     {% endif %}
 
-                    <td><a href="{% url 'stocks:rps_search_list'%}?code={{v.code.code}}">{{ v.high|floatformat:2 }}</a></td>
-                    <td><a href="{% url 'stocks:rps_search_list'%}?code={{v.code.code}} ">{{ v.low|floatformat:2 }}</a></td>
+                    <td><a href="">{{ v.high|floatformat:2 }}</a></td>
+                    <td>
+                        <a href="{% url 'stocks:rps_search_list' %}?code={{ v.code.code }} ">{{ v.low|floatformat:2 }}</a>
+                    </td>
                     <td> {{ v.high|diefu:v.low }} </td>
-                    <td><a href="{% url 'stocks:freshhigh_search_list' %}?htradedate__gt={{ v.htradedate|addDays:-1|date:'Y-m-d' }}">{{ v.htradedate|date:'Y-m-d' }}</a></td>
+                    <td>
+                        <a href="{% url 'stocks:freshhigh_search_list' %}?htradedate__gt={{ v.htradedate|addDays:-1|date:'Y-m-d' }}">{{ v.htradedate|date:'Y-m-d' }}</a>
+                    </td>
                     <td> {{ v.ltradedate|date:'Y-m-d' }}</td>
                     <td> {{ v.htradedate|diffday:v.ltradedate }} </td>
                     {% if not forloop.counter|mod:1 %}
@@ -90,6 +94,8 @@
     </div>
     {% if is_paginated %}每页{% endif %}记录数：{{ object_list|length }}
     {% include 'stocks/pagination.html' %}
-    <br /> <br />
-    {% if filter.form.code__code.value|length == 6 %}<a href="{% url 'stocks:rps_search_list'%}?code={{ filter.form.code__code.value }}">RPS强度</a>{% endif %}
+    <br/> <br/>
+    {% if filter.form.code__code.value|length == 6 %}
+        <a href="{% url 'stocks:rps_search_list' %}?code={{ filter.form.code__code.value }}">RPS强度</a>
+    {% endif %}
 {% endblock %}

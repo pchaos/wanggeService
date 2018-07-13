@@ -50,6 +50,7 @@ urlpatterns = [
     url(r'^architechture/1$', ArchitechtureList.as_view(template_name='stocks/architechure/基本面排雷.html'), name='architechture_list1'),
     url(r'^architechture/2$', ArchitechtureList.as_view(template_name='stocks/architechure/投资者最容易走的16种坑.html'), name='architechture_list2'),
     url(r'^architechture/3$', ArchitechtureList.as_view(template_name='stocks/architechure/价值投资的哲学——快就是慢，慢就是快.html'), name='architechture_list3'),
+    url(r'^architechture/4$', ArchitechtureList.as_view(template_name='stocks/architechure/欧奈尔RPS应用举例：汤臣倍健.html'), name='architechture_list4'),
 
 ]
 

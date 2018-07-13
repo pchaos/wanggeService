@@ -90,7 +90,7 @@ class FreshHigh(StockBase):
             start = cls.getNearestTradedate(days=-(n))
         else:
             start = convertToDate(start)
-        if start  <  end:
+        if start  >  end:
             start = end - datetime.timedelta(10)
 
         # 查找大于start日期的RPS强度

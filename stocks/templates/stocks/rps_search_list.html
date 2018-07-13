@@ -80,10 +80,10 @@
                 {% for v in rps_list %}
                     <td>{{ forloop.counter }}</td>
                     {% if code|length != 6 %}
-                        <td><a href="{% url 'stocks:freshhigh_search_list' %}?code__code={{ v.code.code }}">{{ v.code.code }}</a></td>
+                        <td><a href="{% url 'stocks:rps_search_list'%}?code={{v.code.code}}">{{ v.code.code }}</a></td>
                         <td><a href="{% url 'stocks:freshhigh_search_list' %}?code__code={{ v.code.code }}">{{ v.code.name }}</a></td>
                     {% endif %}
-                    <td><a href="{% url 'stocks:rps_search_list' v.pk %} ">{{ v.rps120|floatformat:2 }}</a></td>
+                    <td><a href="{% url 'stocks:rps_search_list'%}?code={{v.code.code}}">{{ v.rps120|floatformat:2 }}</a></td>
                     <td><a href="{% url 'stocks:freshhigh_search_list' %}?code__code={{ v.code.code }}">{{ v.rps250|floatformat:2 }}</a></td>
                     <td> {{ v.tradedate|date:'Y-m-d' }}</td>
                     {% if not forloop.counter|mod:3 %}

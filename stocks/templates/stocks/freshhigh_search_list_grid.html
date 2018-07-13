@@ -60,8 +60,8 @@
                         </td>
                     {% endif %}
 
-                    <td><a href="{% url 'stocks:freshhigh_search_list' v.pk %} ">{{ v.high|floatformat:2 }}</a></td>
-                    <td><a href="{% url 'stocks:freshhigh_search_list' v.pk %} ">{{ v.low|floatformat:2 }}</a></td>
+                    <td><a href="{% url 'stocks:rps_search_list'%}?code={{v.code.code}}">{{ v.high|floatformat:2 }}</a></td>
+                    <td><a href="{% url 'stocks:rps_search_list'%}?code={{v.code.code}} ">{{ v.low|floatformat:2 }}</a></td>
                     <td> {{ v.high|diefu:v.low }} </td>
                     <td><a href="{% url 'stocks:freshhigh_search_list' %}?htradedate__gt={{ v.htradedate|addDays:-1|date:'Y-m-d' }}">{{ v.htradedate|date:'Y-m-d' }}</a></td>
                     <td> {{ v.ltradedate|date:'Y-m-d' }}</td>
@@ -89,4 +89,6 @@
     </div>
     {% if is_paginated %}每页{% endif %}记录数：{{ object_list|length }}
     {% include 'stocks/pagination.html' %}
+    <br /> <br />
+    {% if filter.form.code__code.value|length == 6 %}<a href="{% url 'stocks:rps_search_list'%}?code={{ filter.form.code__code.value }}">RPS强度</a>{% endif %}
 {% endblock %}

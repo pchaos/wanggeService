@@ -63,7 +63,7 @@
                     <td><a href="{% url 'stocks:freshhigh_search_list' v.pk %} ">{{ v.high|floatformat:2 }}</a></td>
                     <td><a href="{% url 'stocks:freshhigh_search_list' v.pk %} ">{{ v.low|floatformat:2 }}</a></td>
                     <td> {{ v.high|diefu:v.low }} </td>
-                    <td><a href="{% url 'stocks:freshhigh_search_list' %}?htradedate__gt={{ v.htradedate|date:'Y-m-d' }}">{{ v.htradedate|date:'Y-m-d' }}</a></td>
+                    <td><a href="{% url 'stocks:freshhigh_search_list' %}?htradedate__gt={{ v.htradedate|addDays:-1|date:'Y-m-d' }}">{{ v.htradedate|date:'Y-m-d' }}</a></td>
                     <td> {{ v.ltradedate|date:'Y-m-d' }}</td>
                     <td> {{ v.htradedate|diffday:v.ltradedate }} </td>
                     {% if not forloop.counter|mod:1 %}

@@ -41,3 +41,16 @@ class TestChangePage(TestCase):
         result = url + '?{}'.format(pg) + str(page)
         self.assertTrue(s == result, '{} ！= {}'.format(s, result))
 
+        page = 10
+        url ='http://127.0.0.1:8000/v1/HIGH/?other=87&other2=89'
+        s = changePage(url, page)
+        result = url + '&{}'.format(pg) + str(page)
+        self.assertTrue(s == result, '{} ！= {}'.format(s, result))
+
+        page = 101
+        url ='http://127.0.0.1:8000/v1/HIGH/?other=87&other2=89&page={}'.format(page)
+        page = 10
+        s = changePage(url, page)
+        result = 'http://127.0.0.1:8000/v1/HIGH/?other=87&other2=89&page={}'.format(page)
+        self.assertTrue(s == result, '{} ！= {}'.format(s, result))
+

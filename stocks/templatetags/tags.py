@@ -43,6 +43,7 @@ Change Activity:
 __author__ = 'pchaos'
 
 from django import template
+import datetime
 
 register = template.Library()
 
@@ -97,13 +98,13 @@ def changePage(url, page):
     :return:
     """
     print('url:{} page:{}'.format(url, page))
-    pg= 'page='
+    pg = 'page='
     if page:
         if pg in url:
             params = url[url.index(pg):].split('&')
             s = ''
             for para in params:
-                if not(pg in para):
+                if not (pg in para):
                     s += para + '&'
             s += 'page={}'.format(page)
             return url[:url.index(pg)] + s
@@ -116,6 +117,20 @@ def changePage(url, page):
             return s
     else:
         return url
+
+
+@register.filter(name='addDays')
+def addDays(day, days):
+    """ 计算day+days天
+        计算公式
+
+    :param day:
+    :param days:
+    :return:
+    """
+    if day:
+        return day + datetime.timedelta(days=days)
+    return day
 
 
 @register.filter(name='range')

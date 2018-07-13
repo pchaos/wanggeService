@@ -66,8 +66,8 @@ class FreshHigh(StockBase):
                 # 标记创半年新高
                 return pd.DataFrame(df.high == df.high.rolling(days).max())
 
-            # 半年新高
-            tdate = Listing.getNearestTradedate(days=-(n + m))
+            # 半年内新高
+            tdate = FreshHigh.getNearestTradedate(days=-(n + m))
             if start and (start - datetime.timedelta(m)) < tdate:
                 tdate = start - datetime.timedelta(m)
 
@@ -85,12 +85,15 @@ class FreshHigh(StockBase):
                     fh.append([v.date, v.code])
             return pd.DataFrame(fh, columns=['date', 'code'])
 
+        if n < 0:
+            raise Exception('n不能小于零：{}'.format(n))
+
         if not start:
             # 默认根据n，m周期计算获取数据开始日期
             start = cls.getNearestTradedate(days=-(n))
         else:
             start = convertToDate(start)
-        if start  >  end:
+        if start > end:
             start = end - datetime.timedelta(10)
 
         # 查找大于start日期的RPS强度
@@ -126,7 +129,8 @@ class FreshHigh(StockBase):
                                         # 如果需要更令更老的数据，则删除重建
                                         cls.objects.all().filter(code=code).delete()
                                     else:
-                                        ddf = ddf[ddf['date'].apply(lambda x: x >= qs['ltradedate__max'] or x < qs['htradedate__min'])]
+                                        ddf = ddf[ddf['date'].apply(
+                                            lambda x: x >= qs['ltradedate__max'] or x < qs['htradedate__min'])]
                             except Exception as e:
                                 # ddf中没找到相关数据
                                 pass
@@ -183,7 +187,6 @@ class FreshHigh(StockBase):
         freshhigh.low = low
         freshhigh.ltradedate = ltradedate
         freshhigh.save()
-
 
     def __str__(self):
         return '{} {} {} {} {} '.format(self.code, self.high, self.htradedate, self.low, self.ltradedate)

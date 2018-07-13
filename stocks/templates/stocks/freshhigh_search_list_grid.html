@@ -87,6 +87,6 @@
     <div class="col-8">
         {% if is_paginated %}共{{ page_obj.paginator.count }}条记录&nbsp;&nbsp;&nbsp; {% endif %}
     </div>
-    每页记录数：{{ object_list|length }}
+    {% if is_paginated %}每页{% endif %}记录数：{{ object_list|length }}
     {% include 'stocks/pagination.html' %}
 {% endblock %}

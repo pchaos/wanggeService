@@ -97,7 +97,6 @@ def changePage(url, page):
     :param page:
     :return:
     """
-    print('url:{} page:{}'.format(url, page))
     pg = 'page='
     if page:
         if pg in url:

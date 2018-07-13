@@ -45,7 +45,7 @@ class FreshHighSearchListView(generic.ListView):
     f = None
 
     def get_queryset(self):
-        self.f = FreshHighFilter(self.request.GET, queryset=FreshHigh.objects.all().order_by('code'))
+        self.f = FreshHighFilter(self.request.GET, queryset=FreshHigh.objects.all().order_by('code', 'htradedate'))
         # print('FreshHighFilter:{}'.format(self.f.qs))
         return self.f.qs
 

@@ -10,14 +10,14 @@
 
 {% block pageheader %}
     <form id="searchform" action="{% url 'stocks:rps_search_list' %}" method="get" accept-charset="utf-8">
-{#        {% csrf_token %}#}
+        {#        {% csrf_token %}#}
         {{ form }}
         <button type="submit" class="btn btn-primary">
             <span class="glyphicon glyphicon-search"></span>
             查询提交
         </button>
-        <div class="col-4">当前页记录数：{{ rps_list|length }}</div>
-        {#            {% include 'stocks/pagination.html' %}#}
+        <div class="col-4">{% if is_paginated %}共{{ page_obj.paginator.count }}条记录&nbsp;&nbsp;&nbsp; {% endif %}
+            每页记录数：{{ object_list|length }} </div>
         </div>
     </form>
 {% endblock %}

@@ -33,7 +33,6 @@
 
             <div class="col-4">{% if is_paginated %}共{{ page_obj.paginator.count }}条记录&nbsp;&nbsp;&nbsp; {% endif %}
                 每页记录数：{{ object_list|length }} </div>
-            {#            {% include 'stocks/pagination.html' %}#}
         </div>
     </form>
 {% endblock %}

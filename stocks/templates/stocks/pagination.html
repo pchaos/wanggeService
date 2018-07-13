@@ -6,7 +6,7 @@
             <ul class="paper">
                 {% if page_obj.has_previous %}
                     <li class="previous">
-                        <a href="{{ request.get_raw_uri }}?page={{ page_obj.previous_page_number }}">previous</a>
+                        <a href="{{ request.get_raw_uri|changePage:page_obj.previous_page_number }}">previous</a>
                     </li>
                 {% endif %}
                 <span class="page-current">

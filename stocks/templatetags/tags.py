@@ -73,6 +73,51 @@ def diefu(value, arg):
         return None
 
 
+@register.filter(name='diffday')
+def diffday(startDay, endDay):
+    """ 计算startDay与endDay之间的间隔天数
+    计算公式： (endDay - startday).days
+
+    :param startDay:
+    :param endDay:
+    :return:  startDay与endDay之间的间隔天数
+    """
+    if startDay and endDay:
+        return (endDay - startDay).days
+    else:
+        return None
+
+
+@register.filter(name='changePage')
+def changePage(url, page):
+    """ 重新组织page格式
+
+    :param url:
+    :param page:
+    :return:
+    """
+    print('url:{} page:{}'.format(url, page))
+    pg= 'page='
+    if page:
+        if pg in url:
+            params = url[url.index(pg):].split('&')
+            s = ''
+            for para in params:
+                if not(pg in para):
+                    s += para + '&'
+            s += 'page={}'.format(page)
+            return url[:url.index(pg)] + s
+        else:
+            # 没有显式page页
+            if '?' in url:
+                s = url + '&page={}'.format(page)
+            else:
+                s = url + '?page={}'.format(page)
+            return s
+    else:
+        return url
+
+
 @register.filter(name='range')
 def _range(_min, args=None):
     """ Usage:

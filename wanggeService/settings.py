@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'polls.apps.PollsConfig',
     'strategies.apps.StrategyConfig',
     'django.contrib.humanize',
+    'widget_tweaks',
 ]
 # Application definition
 

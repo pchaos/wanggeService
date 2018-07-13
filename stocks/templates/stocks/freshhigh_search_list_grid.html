@@ -1,15 +1,14 @@
-{% extends "stocks/base_generic.html" %}
+{% extends "stocks/gridBase.html" %}
 
 {% load humanize %}
 
 {% block title %}
-    <a href="{% url "home" %}">首页</a>
-    <div class="container">
-        <h1>{{ title|default:"列表" }}</h1>
-    </div>
+
 {% endblock %}
 
-{% block pageheader %}
+{% block nav %}
+    <a href="{% url "home" %}">首页</a>
+    <br /><br />
     <form id="searchform" action="{% url 'stocks:freshhigh_search_list' %}" method="get" accept-charset="utf-8">
         {#        {% csrf_token %}#}
         {{ filter.form.as_p }}
@@ -17,25 +16,14 @@
             <span class="glyphicon glyphicon-search"></span>
             查询提交
         </button>
-    <!-- 测试widget_tweaks用法 -->
-    {% load widget_tweaks %}
-        <div class="form-group col-sm-4 col-md-3">
-            {{ filter.form.code__code.label_tag }}
-            {% render_field filter.form.code__code class="form-control" %}
-        </div>
-        <div class="form-group col-sm-4 col-md-3">
-            {{ filter.form.code__name.label_tag }}
-            {% render_field filter.form.code__name class="form-control" %}
-        </div>
-        <div class="form-group col-sm-4 col-md-3">
-            {{ filter.form.htradedate__lt.label_tag }}
-            {% render_field filter.form.htradedate__lt class="form-control" %}
-
-            <div class="col-4">{% if is_paginated %}共{{ page_obj.paginator.count }}条记录&nbsp;&nbsp;&nbsp; {% endif %}
-                每页记录数：{{ object_list|length }} </div>
-            {#            {% include 'stocks/pagination.html' %}#}
-        </div>
     </form>
+{% endblock %}
+
+{% block pageheader %}
+
+    <div class="container">
+        <h1>{{ title|default:"列表" }}</h1>
+    </div>
 {% endblock %}
 
 {% block content %}
@@ -71,10 +59,11 @@
                             <p>{{ v.code.name }}</p></a>
                         </td>
                     {% endif %}
+
                     <td><a href="{% url 'stocks:freshhigh_search_list' v.pk %} ">{{ v.high|floatformat:2 }}</a></td>
                     <td><a href="{% url 'stocks:freshhigh_search_list' v.pk %} ">{{ v.low|floatformat:2 }}</a></td>
                     <td> {{ v.high|diefu:v.low }} </td>
-                    <td> {{ v.htradedate|date:'Y-m-d' }}</td>
+                    <td><a href="{% url 'stocks:freshhigh_search_list' %}?htradedate__gt={{ v.htradedate|date:'Y-m-d' }}">{{ v.htradedate|date:'Y-m-d' }}</a></td>
                     <td> {{ v.ltradedate|date:'Y-m-d' }}</td>
                     <td> {{ v.htradedate|diffday:v.ltradedate }} </td>
                     {% if not forloop.counter|mod:1 %}
@@ -94,3 +83,10 @@
 
 {% endblock %}
 
+{% block ads %}
+    <div class="col-8">
+        {% if is_paginated %}共{{ page_obj.paginator.count }}条记录&nbsp;&nbsp;&nbsp; {% endif %}
+    </div>
+    每页记录数：{{ object_list|length }}
+    {% include 'stocks/pagination.html' %}
+{% endblock %}

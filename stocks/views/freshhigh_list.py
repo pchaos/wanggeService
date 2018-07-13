@@ -41,7 +41,7 @@ class FreshHighSearchListView(generic.ListView):
     """
     model = FreshHigh
     paginate_by = 150  # if pagination is desired
-    template_name = 'stocks/freshhigh_search_list.html'
+    template_name = 'stocks/freshhigh_search_list_grid.html'
     f = None
 
     def get_queryset(self):

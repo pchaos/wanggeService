@@ -60,9 +60,11 @@ def importFreshHigh():
     FreshHigh.importList(tdate, n=-(datetime.datetime.now().date() -tdate).days)
 
 def importALl():
-    saveTDXday()
-    importRPS()
-    importFreshHigh()
+    if datetime.datetime.now().time().hour > 17 * 100 + datetime.datetime.now().time().minute > 1730:
+        # 每天17:30点有后才更新数据
+        saveTDXday()
+        importRPS()
+        importFreshHigh()
 
 if __name__ == '__main__':
 

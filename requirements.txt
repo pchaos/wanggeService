@@ -14,3 +14,4 @@ bs4
 django-ipware
 django-mptt
 django_filters
+django-widget-tweaks

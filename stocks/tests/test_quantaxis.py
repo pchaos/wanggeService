@@ -458,7 +458,7 @@ class testQuantaxis(TestCase):
         for v in [df.iloc[a] for a in df.index]:
             if not (v.code in usedcode):
                 # 创新高的股票代码
-                usedcode.append([ v.date, v.code,v.high])
+                usedcode.append([v.date, v.code, v.high])
 
         data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end).to_qfq()
         # 收盘在50日线之上
@@ -484,10 +484,44 @@ class testQuantaxis(TestCase):
         df = data[ind.high].data.high.reset_index()
         # gg = df.groupby('code').date.first() # 更快速？
         usedcode = []
-        fh =[]
+        fh = []
         for v in [df.iloc[a] for a in df.index]:
             if not (v.code in usedcode):
                 # 创新高的股票代码
                 usedcode.append(v.code)
-                fh.append([ v.date, v.code])
+                fh.append([v.date, v.code])
         return pd.DataFrame(fh, columns=['date', 'code'])
+
+    def test_QATdx_QA_fetch_get_stock_day(self):
+        code = '000002'
+        data = qa.QAFetch.QATdx.QA_fetch_get_stock_day(code, '2017-01-01',
+                                                       datetime.datetime.now().date().strftime("%Y-%m-%d"))
+        data1 = qa.QAFetch.QATdx.QA_fetch_get_stock_day(code, '2017-01-01', '2018-7-10')
+        self.assertTrue(not data.equals(data1), '结束时间不同，获得数据应该不相同：{} {}'.format(data, data1))
+
+    def test_QATdx_QA_fetch_get_stock_day_resample(self):
+        def resample(df, period='w'):
+            # https://pandas-docs.github.io/pandas-docs-travis/timeseries.html#offset-aliases
+            # 周 W、月 M、季度 Q、10天 10D、2周 2W
+            df = df.reset_index(drop=True).set_index('date')
+            weekly_df = df.resample(period).last()
+            weekly_df['open'] = df['open'].resample(period).first()
+            weekly_df['high'] = df['high'].resample(period).max()
+            weekly_df['low'] = df['low'].resample(period).min()
+            weekly_df['close'] = df['close'].resample(period).last()
+            weekly_df['volume'] = df['volume'].resample(period).sum()
+            weekly_df['amount'] = df['amount'].resample(period).sum()
+            # 去除空的数据（没有交易的周）
+            weekly_df = weekly_df[weekly_df.close.notnull()]
+            weekly_df.reset_index(inplace=True)
+            return weekly_df
+
+        code = '000002'
+        tdate = '2017-1-1'
+        end = datetime.datetime.now().date()
+        data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end).to_qfq()
+        df = data.add_func(lambda x: resample(x, 'w'))
+        df = data.add_func(lambda x: resample(x, 'm'))
+        df = data.data.reset_index(drop=True)
+
+        data1 = qa.QAFetch.QATdx.QA_fetch_get_stock_day(code, '2017-01-01', end.strftime("%Y-%m-%d"), frequence='w')

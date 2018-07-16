@@ -98,23 +98,27 @@ def changePage(url, page):
     :return:
     """
     pg = 'page='
-    if page:
-        if pg in url:
-            params = url[url.index(pg):].split('&')
-            s = ''
-            for para in params:
-                if not (pg in para):
-                    s += para + '&'
-            s += 'page={}'.format(page)
-            return url[:url.index(pg)] + s
-        else:
-            # 没有显式page页
-            if '?' in url:
-                s = url + '&page={}'.format(page)
+    try:
+        if page:
+            if pg in url:
+                params = url[url.index(pg):].split('&')
+                s = ''
+                for para in params:
+                    if not (pg in para):
+                        s += para + '&'
+                s += 'page={}'.format(page)
+                return url[:url.index(pg)] + s
             else:
-                s = url + '?page={}'.format(page)
-            return s
-    else:
+                # 没有显式page页
+                if '?' in url:
+                    s = url + '&page={}'.format(page)
+                else:
+                    s = url + '?page={}'.format(page)
+                return s
+        else:
+            return url
+    except Exception as e:
+        print(e.args)
         return url
 
 

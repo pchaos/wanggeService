@@ -503,25 +503,38 @@ class testQuantaxis(TestCase):
         def resample(df, period='w'):
             # https://pandas-docs.github.io/pandas-docs-travis/timeseries.html#offset-aliases
             # 周 W、月 M、季度 Q、10天 10D、2周 2W
-            df = df.reset_index(drop=True).set_index('date')
+            df = df.reset_index().set_index('date', drop=False)
             weekly_df = df.resample(period).last()
             weekly_df['open'] = df['open'].resample(period).first()
             weekly_df['high'] = df['high'].resample(period).max()
             weekly_df['low'] = df['low'].resample(period).min()
             weekly_df['close'] = df['close'].resample(period).last()
+            weekly_df['date'] = df['date'].resample(period).last()
             weekly_df['volume'] = df['volume'].resample(period).sum()
             weekly_df['amount'] = df['amount'].resample(period).sum()
             # 去除空的数据（没有交易的周）
             weekly_df = weekly_df[weekly_df.close.notnull()]
-            weekly_df.reset_index(inplace=True)
-            return weekly_df
+            weekly_df.reset_index(inplace=True, drop=True)
+            return weekly_df.set_index('date')
 
         code = '000002'
         tdate = '2017-1-1'
-        end = datetime.datetime.now().date()
-        data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end).to_qfq()
+        end = datetime.datetime.now().date() - datetime.timedelta(10)
+        data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end)
+        # data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end).to_qfq()
         df = data.add_func(lambda x: resample(x, 'w'))
-        df = data.add_func(lambda x: resample(x, 'm'))
+        # df = data.add_func(lambda x: resample(x, 'm'))
         df = data.data.reset_index(drop=True)
 
+        code = '000002'
+        tdate = '2017-1-1'
+        end = datetime.datetime.now().date() - datetime.timedelta(10)
+        data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end)
         data1 = qa.QAFetch.QATdx.QA_fetch_get_stock_day(code, '2017-01-01', end.strftime("%Y-%m-%d"), frequence='w')
+
+        data2 = data.add_func(lambda x: qa.QA_data_day_resample(x))
+        self.assertTrue(len(data1) == len(data2), 'data1 len:{}, data2 len:{}'.format(data1, data2))
+        self.assertTrue(
+            data1[['close', 'open', 'high', 'vol', 'amount']].equals(data2[['close', 'open', 'high', 'vol', 'amount']]),
+            'data1:{}, data2: {}'.format(data1[['close', 'open', 'high', 'vol', 'amount']],
+                                         data2[['close', 'open', 'high', 'vol', 'amount']]))

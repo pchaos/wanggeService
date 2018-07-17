@@ -57,14 +57,16 @@ def importRPS():
 
 def importFreshHigh():
     tdate = RPSprepare.getNearestTradedate(days=-7)
-    FreshHigh.importList(tdate, n=(datetime.datetime.now().date() -tdate).days)
+    FreshHigh.importList(tdate, n=(datetime.datetime.now().date() - tdate).days)
 
 def importALl():
-    if datetime.datetime.now().time().hour > 17 * 100 + datetime.datetime.now().time().minute > 1730:
+    if datetime.datetime.now().time().hour * 100 + datetime.datetime.now().time().minute > 1730:
         # 每天17:30点有后才更新数据
         saveTDXday()
         importRPS()
         importFreshHigh()
+    else:
+        print('时间未到：{}'.format(datetime.datetime.now()))
 
 if __name__ == '__main__':
 

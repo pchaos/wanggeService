@@ -2,7 +2,7 @@
 """
 -------------------------------------------------
 
-@File    : updateData.py.py
+@File    : updateStockData.py.py
 
 Description : 每天更新数据
 
@@ -56,7 +56,7 @@ def importRPS():
     RPS.importStockListing(tdate)
 
 def importFreshHigh():
-    tdate = RPSprepare.getNearestTradedate(days=-7)
+    tdate = RPSprepare.getNearestTradedate(days=-10)
     FreshHigh.importList(tdate, n=(datetime.datetime.now().date() - tdate).days)
 
 def importALl():

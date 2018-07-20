@@ -45,12 +45,14 @@
                     <th>新高日期</th>
                     <th>低点日期</th>
                     <th>高低点间隔天数</th>
+                    <th>高点间隔天数</th>
                 {% endfor %}
             </tr>
             </thead>
             <tbody>
             <tr>
                 {% for v in object_list %}
+{#                {% for v in object_list|dictsort:"high" %}#}
                     <td>{{ forloop.counter }}</td>
                     {% if code|length != 6 %}
                         <td>
@@ -69,7 +71,7 @@
                     <td>
                         <a href="{% url 'stocks:freshhigh_search_list' %}?htradedate__gt={{ v.htradedate|addDays:-1|date:'Y-m-d' }}">{{ v.htradedate|date:'Y-m-d' }}</a>
                     </td>
-                    <td> {{ v.ltradedate|date:'Y-m-d' }}</td>
+                    <td> {{ v.ltradedate|date:'Y-m-d' }} {{ v.high }} aa</td>
                     <td> {{ v.htradedate|diffday:v.ltradedate }} </td>
                     {% if not forloop.counter|mod:1 %}
                         </tr>

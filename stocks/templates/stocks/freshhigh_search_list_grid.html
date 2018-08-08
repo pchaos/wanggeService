@@ -75,7 +75,7 @@
                     <td> {{ v.htradedate|diffday:v.ltradedate }} </td>
                     <!-- 高点间隔天数 -->
                     {% with forloop.counter as myc %}
-                    <td> {{ object_list.0.htradedate }} {{ forloop.counter }} {{ myc }}</td>
+{#                    <td> {{ object_list.0.htradedate }} {{ forloop.counter }} {{ myc }}</td>#}
                     {% endwith %}
                     {% if not forloop.counter|mod:1 %}
                         </tr>

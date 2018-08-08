@@ -529,11 +529,12 @@ class testQuantaxis(TestCase):
         code = '000002'
         tdate = '2017-1-1'
         end = datetime.datetime.now().date() - datetime.timedelta(10)
+        end= Listing.getNearestTradedate(end)
         data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end)
         data1 = qa.QAFetch.QATdx.QA_fetch_get_stock_day(code, '2017-01-01', end.strftime("%Y-%m-%d"), frequence='w')
 
         data2 = data.add_func(lambda x: qa.QA_data_day_resample(x))
-        self.assertTrue(len(data1) == len(data2), 'data1 len:{}, data2 len:{}'.format(data1, data2))
+        self.assertTrue(len(data1) == len(data2), '长度不匹配。data1 len:{}, data2 len:{}'.format(len(data1), len(data2)))
         self.assertTrue(
             data1[['close', 'open', 'high', 'vol', 'amount']].equals(data2[['close', 'open', 'high', 'vol', 'amount']]),
             'data1:{}, data2: {}'.format(data1[['close', 'open', 'high', 'vol', 'amount']],

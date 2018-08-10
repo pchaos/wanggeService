@@ -284,14 +284,19 @@ class HSGTCG(HSGTCGBase):
         for i in range(retryCount):
             df = cls.scrap(url, browser)
             if len(df) > 0:
-                # 修复持股数量
-                df['hvol'] = df['hvol'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
-                df['hamount'] = df['hamount'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
-                df['close'] = df['close'].astype(float)
-                df['tradedate'] = df['tradedate'].apply(lambda x: convertToDate(x)).astype(datetime.date)
-                df = df[df['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]  # 删除不是交易日的数据。这是东方财富网页版的bug
-                df.index = pd.RangeIndex(len(df.index))
-                break
+                try:
+                    # 修复持股数量
+                    df['hvol'] = df['hvol'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
+                    df['hamount'] = df['hamount'].apply(lambda x: HSGTCG.hz2Num(x)).astype(float)
+                    df['close'] = df['close'].astype(float)
+                    df['tradedate'] = df['tradedate'].apply(lambda x: convertToDate(x)).astype(datetime.date)
+                    df = df[df['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]  # 删除不是交易日的数据。这是东方财富网页版的bug
+                    df.index = pd.RangeIndex(len(df.index))
+                    break
+                except Exception as e:
+                    # 忽略异常数据
+                    print(e.args)
+                    print(code, df)
             else:
                 pass
 

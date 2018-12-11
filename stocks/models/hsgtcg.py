@@ -17,7 +17,7 @@ Change Activity:
 -------------------------------------------------
 """
 __author__ = 'pchaos'
-MINHAMOUNT = 8000  # 最小关注的北向持仓金额
+MINHAMOUNT = 5000  # 最小关注的北向持仓金额,单位：千万元
 
 from django.db import models
 from django.db import transaction
@@ -291,7 +291,7 @@ class HSGTCG(HSGTCGBase):
                     df['close'] = df['close'].astype(float)
                     df['tradedate'] = df['tradedate'].apply(lambda x: convertToDate(x)).astype(datetime.date)
                     df = df[df['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]  # 删除不是交易日的数据。这是东方财富网页版的bug
-                    df.index = pd.RangeIndex(len(df.index))
+                    df = pd.RangeIndex(len(df.index))
                     break
                 except Exception as e:
                     # 忽略异常数据
@@ -578,7 +578,7 @@ class HSGTCGHold(HSGTCGBase):
         for dfa in results:
             dfn = pd.concat([dfn, dfa])
         # dfn.reset_index(drop=True, inplace=True)
-        dfn.index = pd.RangeIndex(len(dfn.index))
+        dfn.index = pd.RangeIndex(len(dfn.myes))
         return dfn
 
     def __str__(self):

@@ -3,7 +3,7 @@
 -------------------------------------------------
    File Name：     test_jjp
    Description :
-   Author :       yg
+   Author :       pchaos
    date：          18-12-12
 -------------------------------------------------
    Change Activity:
@@ -16,7 +16,7 @@ from unittest import TestCase
 # from django.test import TestCase
 from stocks.tools.jjcg import JJP, getCodeList
 
-__author__ = 'yg'
+__author__ = 'pchaos'
 
 
 class TestJjp(TestCase):
@@ -32,7 +32,7 @@ class TestJjp(TestCase):
                 self.assertTrue(len(rd) == i, '报告日期返回为空！')
 
     def test_get_report_date_list_atSomeDay(self):
-        endDate = '2018-01-01'
+        endDate = 'http://blog.sina.com.cn/s/articlelist_1256938773_3_1.html2018-01-01'
         trueEndDate = '2017-12-31'
         self._check_reportdate_atsomeDay(endDate, trueEndDate)
         endDate = '2018-03-01'
@@ -83,12 +83,26 @@ class TestJjp(TestCase):
     def test_filterPercent(self):
         # 获取股票代码
         codelist = getCodeList()
-        code = codelist[:50]
+        codes = codelist[:50]
+        fcodes = self._filterPercent(codes)
+        print('返回过滤后的代码：{}'.format(fcodes))
+        reportDate = JJP.get_report_date_list()[-1]
+        print(self._check_get_jjp_report(fcodes, reportDate))
+
+        codes = codelist[:500]
+        self._filterPercent(codes)
+
+        codes = codelist
+        fcodes = self._filterPercent(codes)
+        fcodes2 = self._filterPercent(codes, percent=0.04)
+        self.assertTrue(len(fcodes2) < len(fcodes), '过滤条件percent大的，返回值应该小')
+
+    def _filterPercent(self, code, percent=0.03):
         reportDate = JJP.get_report_date_list()
         df1 = self._check_get_jjp_report(code, reportDate)
-        df = JJP.filterPercent(df1, reportDate)
-        s= '结果应比原始数据少： 原始个数：{}, 过滤后数据：{}'.format(len(df1), len(df))
-        self.assertTrue(len(df) < len(df1), s)
+        filterCodes = JJP.filterPercent(df1, reportDate, percent=percent)
+        s = '结果应比原始数据少： 原始个数：{}, 过滤后数据：{}'.format(len(df1), len(filterCodes))
+        self.assertTrue(len(filterCodes) < len(df1), s)
         print(s)
-        self.assertTrue(len(df) > 0, '未选出数据')
-        
+        self.assertTrue(len(filterCodes) > 0, '未选出数据')
+        return filterCodes

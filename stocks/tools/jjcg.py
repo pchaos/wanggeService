@@ -10,7 +10,7 @@ import os
 
 
 def getCodeList():
-    QA.QA_util_log_info('股票列表')
+    # QA.QA_util_log_info('股票列表')
     data = QA.QAFetch.QATdx.QA_fetch_get_stock_list('stock')
     # 获取股票代码
     return [i[0] for i in data.index]
@@ -108,10 +108,11 @@ class JJP():
         for rd in report_date[::-1]:
             # 报告日期反序
             if rd == report_date[-1]:
-                # 第一次判断
+                # 第一次判断code
                 tdf = JJP._filterPercent(df, report_date, percent)
             else:
-                pass
+                tdf = JJP._filterPercent(df, report_date, percent)
+                # pass
             if len(tdf)> 0:
                 alist.append(tdf)
         return JJP._df2code(alist)

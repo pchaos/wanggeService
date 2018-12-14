@@ -7,6 +7,7 @@ import QUANTAXIS as QA
 from pandas import pandas as pd, concat
 import datetime
 import os
+import math
 
 
 def getCodeList():
@@ -104,16 +105,19 @@ class JJP():
         :param percent:
         :return:
         '''
-        alist = []
+        i, alist = 0, []
         for rd in report_date[::-1]:
-            # 报告日期反序
+            # 报告日期反序后循环处理
+            # 第一次判断code
             if rd == report_date[-1]:
-                # 第一次判断code
-                tdf = JJP._filterPercent(df, report_date, percent)
+                tdf = JJP._filterPercent(df, rd, percent)
             else:
-                tdf = JJP._filterPercent(df, report_date, percent)
-                # pass
-            if len(tdf)> 0:
+                if i > 1:
+                    # 最多计算两个季度
+                    break
+                tdf = JJP._filterPercent(df, rd, percent)
+            i += 1
+            if len(tdf) > 0:
                 alist.append(tdf)
         return JJP._df2code(alist)
 
@@ -130,9 +134,12 @@ class JJP():
         return list(aset)
 
     @staticmethod
-    def _filterPercent(df, report_date, percent):
-        # df = df[((df['percent'] > percent) | ((df['percent'] < percent) & (df['percent'] + df['ssspercent'] >= percent)))]
-        return df[df['percent'] + df['ssspercent'] >= percent]
+    def _filterPercent(df, report_date='', percent=0.03):
+        tdf = df[df['report_date'] == report_date]
+        if percent >= 0:
+            return tdf[tdf['percent'] + tdf['ssspercent'] >= percent]
+        else:
+            return tdf[tdf['percent'] + tdf['ssspercent'] < math.fabs(percent)]
 
 # today = '{}'.format(datetime.datetime.now().strftime('%Y-%m-%d'))
 # jjp= JJP()

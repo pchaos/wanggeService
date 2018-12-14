@@ -85,7 +85,7 @@ class TestJjp(TestCase):
         codelist = getCodeList()
         codes = codelist[:50]
         fcodes = self._filterPercent(codes)
-        print('返回过滤后的代码：{}'.format(fcodes))
+        print('股票总数：{}, 占比%：{:5.2f}\n返回过滤后的代码：{}'.format(len(codes), len(fcodes)/len(codes)*100, fcodes))
         reportDate = JJP.get_report_date_list()[-1]
         print(self._check_get_jjp_report(fcodes, reportDate))
 

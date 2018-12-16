@@ -118,3 +118,6 @@ class TestJjp(TestCase):
             for item in fcodes:
                 f.write("{}\n".format('1{}'.format(item) if item[0] == '6' else '0{}'.format(item)))
 
+
+if __name__ == "__main__":
+    unittest.main()

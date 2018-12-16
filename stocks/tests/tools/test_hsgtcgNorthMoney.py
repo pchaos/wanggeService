@@ -28,6 +28,8 @@ class AppDynamicsJob(unittest.TestCase):
 
     def test_app_dynamics_job(self):
         hm= self.hm
+        df= hm.getData()
+        print(df)
         hm.nextPage()
         hm.nextPage()
         #

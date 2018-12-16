@@ -12,9 +12,10 @@
 """
 __author__ = 'pchaos'
 
-import time
+from bs4 import BeautifulSoup
+import time, datetime
 import pandas as pd
-from .eastmoneyBase import EASTMONEY
+from .eastmoneyBase import EASTMONEY, convertToDate
 
 
 class HSGTCGNorthMoney(EASTMONEY):
@@ -55,4 +56,40 @@ class HSGTCGNorthMoney(EASTMONEY):
 
         :return:
         '''
-        return pd.DataFrame()
+        try:
+            for x in ['lxml', 'xml', 'html5lib']:
+                # 可能会出现lxml版本大于4.1.1时，获取不到table
+                try:
+                    soup = BeautifulSoup(self.driver.page_source, x)
+                    table = soup.find_all(id='tb_ggtj')[0]
+                    if table:
+                        break
+                except:
+                    time.sleep(0.1)
+                    print('Error using BeautifulSoup {}'.format(x))
+            df = pd.read_html(str(table), header=1)[0]
+            # 交易日期 代码 名称 其他 收盘价 涨跌百分比 持股数量（股） 持股市值（元） 持股数量占A股百分比(%) 持股市值变化（元）【一日 五日 十日】
+            df.columns = ['tradedate', 'code', 'name', 'others', 'close', 'percent', 'hvol', 'hamount', 'hpercent',
+                          'oneday', 'fiveday', 'tenday']
+        except Exception as e:
+            print(e.args)
+            return pd.DataFrame()
+
+        if len(df) > 0:
+            try:
+                # 修复持股数量
+                df['hvol'] = df['hvol'].apply(lambda x: EASTMONEY.hz2Num(x)).astype(float)
+                df['hamount'] = df['hamount'].apply(lambda x: EASTMONEY.hz2Num(x)).astype(float)
+                df['close'] = df['close'].astype(float)
+                df['code'] = df['code'].apply(lambda x: '{}'.format(x).zfill(6))
+                df['tradedate'] = df['tradedate'].apply(lambda x: convertToDate(x)).astype(datetime.date)
+                # df = df[df['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]  # 删除不是交易日的数据。这是东方财富网页版的bug
+                # df = pd.RangeIndex(len(df.index))
+            except Exception as e:
+                # 忽略异常数据
+                print(e.args)
+                print(df['code'][0], df)
+        else:
+            pass
+        return df
+        # return pd.DataFrame()

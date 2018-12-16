@@ -115,7 +115,13 @@ class JJP():
                 if i > 1:
                     # 最多计算两个季度
                     break
+
                 tdf = JJP._filterPercent(df, rd, percent)
+                # 最后季度未出报告，则在上个季度按条件查询
+                tdf1 = JJP._filterPercent(df, report_date[-1], 0)
+                tcode = set(tdf1.code)
+                tdf = tdf[tdf['code'].isin(set(tdf1.code))==False]
+
             i += 1
             if len(tdf) > 0:
                 alist.append(tdf)
@@ -131,7 +137,9 @@ class JJP():
         aset = set()
         for df in alist:
             aset = aset | set(df.code)
-        return list(aset)
+        alist = list(aset)
+        alist.sort()
+        return alist
 
     @staticmethod
     def _filterPercent(df, report_date='', percent=0.03):

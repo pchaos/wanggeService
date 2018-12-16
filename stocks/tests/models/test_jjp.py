@@ -94,7 +94,7 @@ class TestJjp(TestCase):
 
         codes = codelist
         fcodes = self._filterPercent(codes)
-        fcodes2 = self._filterPercent(codes, percent=0.04)
+        fcodes2 = self._filterPercent(codes, percent=0.045)
         self.assertTrue(len(fcodes2) < len(fcodes), '过滤条件percent大的，返回值应该小')
 
     def _filterPercent(self, code, percent=0.03):
@@ -106,3 +106,15 @@ class TestJjp(TestCase):
         print(s)
         self.assertTrue(len(filterCodes) > 0, '未选出数据')
         return filterCodes
+
+    def test_filterPercent2File(self):
+        # 保存文件到临时目录
+        fname= '/dev/shm/temp/jjp{}.EBK'.format('20181123')
+        # 获取股票代码
+        codelist = getCodeList()
+        codes = codelist
+        fcodes = self._filterPercent(codes, percent=0.03)
+        with open(fname, 'w') as f:
+            for item in fcodes:
+                f.write("{}\n".format('1{}'.format(item) if item[0] == '6' else '0{}'.format(item)))
+

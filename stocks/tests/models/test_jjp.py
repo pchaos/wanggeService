@@ -12,8 +12,7 @@
 """
 
 from unittest import TestCase
-
-# from django.test import TestCase
+import unittest
 from stocks.tools.jjcg import JJP, getCodeList
 
 __author__ = 'pchaos'
@@ -109,7 +108,7 @@ class TestJjp(TestCase):
 
     def test_filterPercent2File(self):
         # 保存文件到临时目录
-        fname= '/dev/shm/temp/jjp{}.EBK'.format('20181123')
+        fname= '/dev/shm/temp/jjp{}.EBK'.format('20181214')
         # 获取股票代码
         codelist = getCodeList()
         codes = codelist

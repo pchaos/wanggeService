@@ -90,7 +90,20 @@ class EASTMONEY(metaclass=ABCMeta):
 
     def nextPage(self):
         if self.driver:
-            self.driver.find_element_by_link_text(u"下一页").click()
+            nextp=self.driver.find_element_by_link_text(u"下一页")
+            if nextp:
+                nextp.click()
+            return nextp
+
+    @abstractmethod
+    def save(self, df=None, fileName='/dev/shm/temp/test.csv'):
+        '''
+        保存结果
+        :param df:
+        :param fileName:
+        :return:
+        '''
+        pass
 
     def __del__(self):
         if self.autoCloseWebDriver and self.driver:

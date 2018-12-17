@@ -28,8 +28,11 @@ class AppDynamicsJob(unittest.TestCase):
 
     def test_app_dynamics_job(self):
         hm= self.hm
+        minimumHoldAmount = 5000
+        hm.minimumHoldAmount = minimumHoldAmount
         df= hm.getData()
         print(df)
+        print('股票市值小于{}万：\n{}'.format(minimumHoldAmount, df[df['hamount'] < minimumHoldAmount]))
         hm.nextPage()
         hm.nextPage()
         #

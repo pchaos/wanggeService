@@ -88,11 +88,11 @@ class EASTMONEY(metaclass=ABCMeta):
         '''
         pass
 
+    @retry(wait_exponential_multiplier=1000, wait_exponential_max=5000)
     def nextPage(self):
         if self.driver:
             nextp=self.driver.find_element_by_link_text(u"下一页")
-            if nextp:
-                nextp.click()
+            nextp.click()
             return nextp
 
     @abstractmethod
@@ -128,3 +128,13 @@ class EASTMONEY(metaclass=ABCMeta):
                     return str(np.round(float(astr) / 10000, 2))
         except:
             return '0'
+
+    @abstractmethod
+    def getTradeDate(self, endDate=datetime.datetime.today(), dayOfWeek=4):
+        '''
+        根据条件计算需要查询的交易日期
+        :param endDate:
+        :param dayOfWeek:
+        :return:
+        '''
+        pass

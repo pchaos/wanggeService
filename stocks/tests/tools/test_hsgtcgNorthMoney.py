@@ -12,7 +12,6 @@
 """
 __author__ = 'pchaos'
 
-
 import unittest, time, re
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
@@ -27,16 +26,20 @@ class AppDynamicsJob(unittest.TestCase):
         self.accept_next_alert = True
 
     def test_app_dynamics_job(self):
-        hm= self.hm
+        hm = self.hm
         minimumHoldAmount = 5000
         hm.minimumHoldAmount = minimumHoldAmount
-        df= hm.getData()
+        # hm.prepareEnv('2018-11-26')
+        # hm.prepareEnv('2018-12-1')
+        # hm.prepareEnv('2018-12-8')
+        hm.prepareEnv()
+        totalpage, df = hm.getData()
         print(df)
+        print('总页数：{}'.format(totalpage))
         print('股票市值小于{}万：\n{}'.format(minimumHoldAmount, df[df['hamount'] < minimumHoldAmount]))
-        hm.nextPage()
-        hm.nextPage()
         #
-        # driver.find_element_by_xpath("//body").click()
+        self.assertTrue(50 * totalpage >= len(df) >= 50 * (totalpage - 1),
+                        '总页数：{}, 返回数据长度：{}'.format(totalpage, len(df)))
 
     def is_element_present(self, how, what):
         try:
@@ -68,7 +71,6 @@ class AppDynamicsJob(unittest.TestCase):
         # To know more about the difference between verify and assert,
         # visit https://www.seleniumhq.org/docs/06_test_design_considerations.jsp#validating-results
         self.assertEqual([], self.verificationErrors)
-
 
 
 if __name__ == "__main__":

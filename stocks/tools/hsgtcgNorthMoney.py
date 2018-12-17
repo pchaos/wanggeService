@@ -3,11 +3,13 @@
 -------------------------------------------------
    File Name：     hsgtcgNorthMoney
    Description :
+    爬取东方财富北向持股数据；
+    原始网页：http://data.eastmoney.com/hsgtcg/StockStatistics.aspx
    Author :       pchaos
    date：          18-12-14
 -------------------------------------------------
    Change Activity:
-                   18-12-14:
+                   18-12-17:
 -------------------------------------------------
 """
 __author__ = 'pchaos'
@@ -22,7 +24,6 @@ class HSGTCGNorthMoney(EASTMONEY):
     # def __init__(self, url='', webdriverType='firefox', headless=False, waitTimeout=30, autoCloseWebDriver=True, minimumHoldAmount=5000):
     #     self.minimumHoldAmount = minimumHoldAmount
     #     super().__init__(url, webdriverType. headless, waitTimeout, autoCloseWebDriver)
-
 
     @property
     def minimumHoldAmount(self):
@@ -40,7 +41,24 @@ class HSGTCGNorthMoney(EASTMONEY):
     def minimumHoldAmount(self, value):
         self.__minimumHoldAmount = value
 
-    def prepareEnv(self):
+    @property
+    def tradeDate(self):
+        try:
+            self._tradeDate
+        except NameError:
+            self._tradeDate = datetime.datetime.today().strftime('%Y-%m-%d')
+        return self._tradeDate
+
+    @tradeDate.setter
+    def tradeDate(self, value):
+        if isinstance(value, str):
+            self._tradeDate = value
+        elif isinstance(value, datetime.datetime):
+            self._tradeDate = value.strftime('%Y-%m-%d')
+        else:
+            raise Exception("日期格式不对！ {}".format(value))
+
+    def prepareEnv(self, searchDate=None):
         ''' 获取数据前的准备工作
 
         :return:
@@ -48,46 +66,63 @@ class HSGTCGNorthMoney(EASTMONEY):
         if self.driver:
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")  # 执行JavaScript实现网页下拉倒底部
             time.sleep(0.5)
+            # 当日涨幅排序
+            self.driver.find_element_by_css_selector(
+                '#tb_ggtj > thead > tr:nth-child(1) > th:nth-child(6) > span').click();
             # 持股市值排序
             self.driver.find_element_by_css_selector(
                 '#tb_ggtj > thead > tr:nth-child(1) > th:nth-child(8) > span').click();
 
             # self.driver.find_element_by_xpath(
             #     u"(.//*[normalize-space(text()) and normalize-space(.)='近30日'])[1]/following::span[1]").click()
-            # 自定义区间
-            time.sleep(0.5)
-            self.driver.find_element_by_xpath('//*[@id="filter_ggtj"]/div[2]/ul/li[6]/span').click()
+            self.setCustomSearchDate(searchDate)
+            # 点击第一个日期输入框
+            self.driver.find_element_by_xpath('//*[@id="filter_ggtj"]/div[2]/ul/li[7]/div[1]/input[1]').click()
+            # 点击查询
+            self.driver.find_element_by_css_selector(
+                '#filter_ggtj > div.cate_type > ul > li.custom-date-search.end > div.search-btn').click();
+# 点击第一个日期输入框
+    def setCustomSearchDate(self, searchDate=None):
+        # 自定义区间
+        time.sleep(0.5)
 
-            # 设置自定义时间区间
-            dateScript = '''
+        self.driver.find_element_by_xpath('//*[@id="filter_ggtj"]/div[2]/ul/li[6]/span').click()
+        # 设置自定义时间区间
+        dateScript = '''
             el = document.querySelectorAll('#filter_ggtj > div.cate_type > ul > li.custom-date-search.end > div.date-input-wrap > input.date-input.date-search-start');
             el[0].value = ':date-search-start';
             el = document.querySelectorAll('#filter_ggtj > div.cate_type > ul > li.custom-date-search.end > div.date-input-wrap > input.date-input.date-search-end');
             el[0].value = ':date-search-end';
             '''
-            thedate = self.getTradeDate()
-            dateScript = dateScript.replace(":date-search-start", thedate).replace(":date-search-end", thedate)
-            # print('dateScript: {}'.format(dateScript))
-            self.driver.execute_script(dateScript)
-            self.driver.find_element_by_xpath('//*[@id="filter_ggtj"]/div[2]/ul/li[7]/div[1]/input[1]').click()
-            # 点击查询
-            self.driver.find_element_by_css_selector(
-                '#filter_ggtj > div.cate_type > ul > li.custom-date-search.end > div.search-btn').click();
+        self.tradeDate = self.getTradeDate(searchDate)
+        dateScript = dateScript.replace(":date-search-start", self.tradeDate).replace(":date-search-end", self.tradeDate)
+        # print('dateScript: {}'.format(dateScript))
+        self.driver.execute_script(dateScript)
 
-    def getTradeDate(self):
+    def getTradeDate(self, endDate=datetime.datetime.today(), dayOfWeek=4):
         '''
         根据条件计算需要查询的交易日期
+        :param endDate:
+        :param dayOfWeek: 默认为周五
         :return:
         '''
-        # todo 根据条件计算日期
-        thedate = "2018-12-14"
-        return thedate
+        # 根据条件计算日期
+        i, thedate = 0, endDate
+        if thedate is None:
+            thedate = datetime.datetime.today()
+        else:
+            thedate = convertToDate(thedate)
+        while thedate.weekday() != dayOfWeek:
+            i += 1
+            thedate = thedate - datetime.timedelta(i)
+        return thedate.strftime('%Y-%m-%d')
 
     def getData(self):
         ''' 获取数据
 
         :return:
         '''
+        totalPage = 1  # 总共访问的页数
         alist = []
         self.columns = ['tradedate', 'code', 'name', 'hamount']
         df = pd.DataFrame(columns=self.columns)
@@ -95,18 +130,19 @@ class HSGTCGNorthMoney(EASTMONEY):
 
             df = self.getCurentPageData()
             alist.append(df[df['hamount'] >= self.minimumHoldAmount])
-            time.sleep(0.8)
+            time.sleep(0.9)
             if len(df[df['hamount'] < self.minimumHoldAmount]) < 1:
                 # 满足市值条件，继续翻页查询
                 self.nextPage()
+                totalPage += 1
             else:
                 break
         # dataframe合并
         df = pd.DataFrame(columns=self.columns)
         for d in alist:
             df = pd.concat([df, d], ignore_index=True)
-        self.save(df, '{}北向资金{}.EBK'.format('/dev/shm/temp/', self.getTradeDate()))
-        return df
+        self.save(df, '{}北向资金{}.EBK'.format('/dev/shm/temp/', self.tradeDate))
+        return totalPage, df
 
     def getCurentPageData(self):
         df = pd.DataFrame()
@@ -153,4 +189,3 @@ class HSGTCGNorthMoney(EASTMONEY):
             return True
         else:
             return False
-

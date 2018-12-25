@@ -291,7 +291,7 @@ class HSGTCG(HSGTCGBase):
                     df['close'] = df['close'].astype(float)
                     df['tradedate'] = df['tradedate'].apply(lambda x: convertToDate(x)).astype(datetime.date)
                     df = df[df['tradedate'].apply(lambda x: Stocktradedate.if_tradeday(x))]  # 删除不是交易日的数据。这是东方财富网页版的bug
-                    df = pd.RangeIndex(len(df.index))
+                    df.index = pd.RangeIndex(len(df.index))
                     break
                 except Exception as e:
                     # 忽略异常数据
@@ -578,7 +578,7 @@ class HSGTCGHold(HSGTCGBase):
         for dfa in results:
             dfn = pd.concat([dfn, dfa])
         # dfn.reset_index(drop=True, inplace=True)
-        dfn.index = pd.RangeIndex(len(dfn.myes))
+        dfn.index = pd.RangeIndex(len(dfn.index))
         return dfn
 
     def __str__(self):

@@ -107,8 +107,10 @@ class TestJjp(TestCase):
         return filterCodes
 
     def test_filterPercent2File(self):
+        # 基金占比大于3%
         # 保存文件到临时目录
-        fname= '/dev/shm/temp/jjp{}.EBK'.format('20181214')
+        # fname= '/dev/shm/temp/jjp{}.EBK'.format('20181214')
+        fname= '/dev/shm/temp/jjp{}.EBK'.format('20181221')
         # 获取股票代码
         codelist = getCodeList()
         codes = codelist

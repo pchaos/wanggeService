@@ -179,9 +179,7 @@ class HSGTCGNorthMoney(EASTMONEY):
                 # df = pd.RangeIndex(len(df.index))
             except Exception as e:
                 # 忽略异常数据
-                print(e.args)    def __del__(self):
-        if self.autoCloseWebDriver and self.driver:
-            self.driver.close()
+                print(e.args)
                 print(df['code'][0], df)
         else:
             pass

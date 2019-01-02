@@ -17,6 +17,7 @@ __author__ = 'pchaos'
 from bs4 import BeautifulSoup
 import time, datetime
 import pandas as pd
+import QUANTAXIS as qa
 from .eastmoneyBase import EASTMONEY, convertToDate
 
 
@@ -114,7 +115,10 @@ class HSGTCGNorthMoney(EASTMONEY):
             thedate = convertToDate(thedate)
         while thedate.weekday() != dayOfWeek:
             i += 1
-            thedate = thedate - datetime.timedelta(i)
+            thedate = thedate - datetime.timedelta(1)
+        while not qa.QA_util_if_trade(thedate.strftime('%Y-%m-%d')):
+            # 判断时候交易日，否则往前查找，直到交易日
+            thedate = thedate - datetime.timedelta(1)
         return thedate.strftime('%Y-%m-%d')
 
     def getData(self):
@@ -175,7 +179,9 @@ class HSGTCGNorthMoney(EASTMONEY):
                 # df = pd.RangeIndex(len(df.index))
             except Exception as e:
                 # 忽略异常数据
-                print(e.args)
+                print(e.args)    def __del__(self):
+        if self.autoCloseWebDriver and self.driver:
+            self.driver.close()
                 print(df['code'][0], df)
         else:
             pass

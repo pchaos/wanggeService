@@ -26,6 +26,7 @@ class AppDynamicsJob(unittest.TestCase):
         self.accept_next_alert = True
 
     def test_app_dynamics_job(self):
+        # 测试北向资金大于minimumHoldAmount（5000）万
         hm = self.hm
         minimumHoldAmount = 5000
         hm.minimumHoldAmount = minimumHoldAmount

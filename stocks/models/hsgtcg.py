@@ -234,7 +234,7 @@ class HSGTCG(HSGTCGBase):
         try:
             bcount = 0  # 访问网页计数 当访问50次，关掉浏览器，重新打开
             # for code in [code[0] for code in list(hsgh.values_list('code'))]:
-            tdate = HSGTCG.getNearestTradedate(days=-5)  # 五个交易日内的港资买入超过八千万
+            tdate = HSGTCG.getNearestTradedate(days=-5)  # 五个交易日内的港资买入超过(MINHAMOUNT)千万元
             hsgh = HSGTCG.getlist().filter(tradedate__gte=tdate)
             for code in [code[0] for code in set(list(hsgh.values_list('code')))]:
 

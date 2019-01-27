@@ -2,7 +2,7 @@
 """
 -------------------------------------------------
    File Name：     test_hsgtcgNorthMoney
-   Description :
+   Description : 测试北向持股
    Author :       pchaos
    date：          18-12-16
 -------------------------------------------------
@@ -28,7 +28,8 @@ class AppDynamicsJob(unittest.TestCase):
     def test_app_dynamics_job(self):
         # 测试北向资金大于minimumHoldAmount（5000）万
         hm = self.hm
-        minimumHoldAmount = 5000
+        # minimumHoldAmount = 5000
+        minimumHoldAmount = 3000
         hm.minimumHoldAmount = minimumHoldAmount
         # hm.prepareEnv('2018-11-26')
         # hm.prepareEnv('2018-12-1')

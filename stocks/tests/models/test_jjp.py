@@ -85,7 +85,7 @@ class TestJjp(TestCase):
         codes = codelist[:50]
         fcodes = self._filterPercent(codes)
         print('股票总数：{}, 占比%：{:5.2f}\n返回过滤后的代码：{}'.format(len(codes), len(fcodes)/len(codes)*100, fcodes))
-        reportDate = JJP.get_report_date_list()[-1]
+        reportDate = JJP.get_report_date_list()[-2]
         print(self._check_get_jjp_report(fcodes, reportDate))
 
         codes = codelist[:500]
@@ -110,7 +110,7 @@ class TestJjp(TestCase):
         # 基金占比大于3%
         # 保存文件到临时目录
         # fname= '/dev/shm/temp/jjp{}.EBK'.format('20181214')
-        fname= '/dev/shm/temp/jjp{}.EBK'.format('20181221')
+        fname= '/dev/shm/temp/jjp{}.EBK'.format('20190125')
         # 获取股票代码
         codelist = getCodeList()
         codes = codelist

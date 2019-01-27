@@ -1,3 +1,8 @@
+'''
+一般来说，年报和中报的基金持股数据较为全面，一季度和三季度报告的基金持股不全，因此，每次更新基金持股3%的数据，应当都包括年报或者中报的数据。基金持股3%的数据，一个季度更新一次即可。
+'''
+
+
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
@@ -65,6 +70,28 @@ class JJP():
         df = pd.DataFrame(myres)
         df.columns = ['percent']
         df = df.reset_index()
+
+        return df
+
+    @staticmethod
+    def get_jjp_report_add_socialSecurityShareholding(code, report_date=[]):
+        '''
+            获取基金持股占比(包含社保基金（socialSecurityShareholding）)
+
+        :param code: 单个股票或股票列表
+        :param report_date: list of date;
+            example:
+            ['2018-03-31', '2018-06-30', '2018-09-30']
+
+        :return:
+        '''
+        # res=QA.QA_fetch_financial_report(['000002','000026','000415','000417','600100'],['2017-12-31','2018-03-31','2018-06-30','2018-09-30'])
+        res = QA.QA_fetch_financial_report(code, report_date)
+        # 基金占比
+        myres = res['fundsShareholding'] / res['listedAShares']
+        df = pd.DataFrame(myres)
+        df.columns = ['percent']
+        df = df.reset_index()
         #
         myres = res['socialSecurityShareholding'] / res['listedAShares']
         df1 = pd.DataFrame(myres)
@@ -97,7 +124,21 @@ class JJP():
         return alist[-listCount:]
 
     @staticmethod
-    def filterPercent(df, report_date=[], percent=0.03):
+    def filterPercent(df, report_date=[], percent=0.03, filter='taoboshi'):
+        '''
+        获取基金持股占比大于percent的代码列表
+        :param df:
+        :param report_date:
+        :param percent:
+        :return:
+        '''
+        if filter == 'taoboshi':
+            return JJP.filterPercentTaoboshi(df, report_date, percent)
+        else:
+            return JJP.filterPercentPreFilter(df, report_date, percent)
+
+    @staticmethod
+    def filterPercentPreFilter(df, report_date=[], percent=0.03):
         '''
         获取基金持股占比大于percent的代码列表
         :param df:
@@ -120,7 +161,32 @@ class JJP():
                 # 最后季度未出报告，则在上个季度按条件查询
                 tdf1 = JJP._filterPercent(df, report_date[-1], 0)
                 tcode = set(tdf1.code)
-                tdf = tdf[tdf['code'].isin(set(tdf1.code))==False]
+                tdf = tdf[tdf['code'].isin(set(tdf1.code)) == False]
+
+            i += 1
+            if len(tdf) > 0:
+                alist.append(tdf)
+            else:
+                i -= 1
+        return JJP._df2code(alist)
+
+    @staticmethod
+    def filterPercentTaoboshi(df, report_date=[], percent=0.03):
+        '''
+        获取基金持股占比大于percent的代码列表
+        :param df:
+        :param report_date:
+        :param percent:
+        :return:
+        '''
+        i, alist = 0, []
+        for rd in report_date[::-1]:
+            # 报告日期反序后循环处理
+            # 第一次判断code
+            tdf = JJP._filterPercent(df, rd, percent)
+            if i > 2:
+                # 最多计算三个季度
+                break
 
             i += 1
             if len(tdf) > 0:
@@ -144,10 +210,18 @@ class JJP():
     @staticmethod
     def _filterPercent(df, report_date='', percent=0.03):
         tdf = df[df['report_date'] == report_date]
+        # 计算时包含社保基金百分比
+        # if percent >= 0:
+        #     return tdf[tdf['percent'] + tdf['ssspercent'] >= percent]
+        # else:
+        #     return tdf[tdf['percent'] + tdf['ssspercent'] < math.fabs(percent)]
+        #
+
+        # 只计算基金百分比
         if percent >= 0:
-            return tdf[tdf['percent'] + tdf['ssspercent'] >= percent]
+            return tdf[tdf['percent']>= percent]
         else:
-            return tdf[tdf['percent'] + tdf['ssspercent'] < math.fabs(percent)]
+            return tdf[tdf['percent']< math.fabs(percent)]
 
 # today = '{}'.format(datetime.datetime.now().strftime('%Y-%m-%d'))
 # jjp= JJP()

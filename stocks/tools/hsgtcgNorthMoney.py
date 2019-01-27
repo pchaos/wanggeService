@@ -145,7 +145,7 @@ class HSGTCGNorthMoney(EASTMONEY):
         df = pd.DataFrame(columns=self.columns)
         for d in alist:
             df = pd.concat([df, d], ignore_index=True)
-        self.save(df, '{}北向资金{}.EBK'.format('/dev/shm/temp/', self.tradeDate))
+        self.save(df, '{}北向资金{}_{}万.EBK'.format('/dev/shm/temp/', self.tradeDate, self.minimumHoldAmount))
         return totalPage, df
 
     def getCurentPageData(self):

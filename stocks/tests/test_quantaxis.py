@@ -75,7 +75,7 @@ class testQuantaxis(TestCase):
         s.index  # 索引
         s.price  # 平均价(O+H+L+C)/4
         s.mean  # price的平均数
-        s.max  # price的最大值
+        s.max  # price的最大值s
         s.min  # price的最小值
         s.mad  # price的平均绝对偏差
         s.mode  # price的众数(没啥用)
@@ -539,3 +539,105 @@ class testQuantaxis(TestCase):
             data1[['close', 'open', 'high', 'vol', 'amount']].equals(data2[['close', 'open', 'high', 'vol', 'amount']]),
             'data1:{}, data2: {}'.format(data1[['close', 'open', 'high', 'vol', 'amount']],
                                          data2[['close', 'open', 'high', 'vol', 'amount']]))
+
+    def test_QAMA(self):
+        # 计算MA
+        # ind_list = qa.QAFetch.QATdx.QA_fetch_get_stock_list('index')
+        code = ['000001', '399001', '399006']
+        tdate = '2017-1-1'
+        end = datetime.datetime.now().date() - datetime.timedelta(10)
+        data = qa.QA_fetch_index_day_adv(code, start=tdate, end=end)
+        self.assertTrue(len(data.index)> 100, '返回数据太少： {}'.format(len(data.index)))
+
+    def test_QAMAS(self):
+        # 计算MAS
+        # ind_list = qa.QAFetch.QATdx.QA_fetch_get_stock_list('index')
+        code = ['000001', '399001', '399006']
+        tdate = '2017-1-1'
+        end = datetime.datetime.now().date() - datetime.timedelta(10)
+        data = qa.QA_fetch_index_day_adv(code, start=tdate, end=end)
+        self.assertTrue(len(data.index)> 100, '返回数据太少： {}'.format(len(data.index)))
+
+        mas = mas_select(code)
+        self.assertTrue(len(mas.index) > 100, '返回数据太少： {}'.format(len(data.index)))
+        print(mas)
+        # 验证code为多个指数时，返回值是否和code为单个指数返回结果相同
+        for c in code:
+            masc =mas_select(c)
+            print('{}\n{}'.format(c, masc))
+            # print(mas.loc[code[0]])
+            # todo 绘制图片
+
+
+
+# 定义均线强度，八条均线，
+def mas_select(code, date=None, short=10, long=250):
+    """
+    :param code_list: 选股范围，默认全市场
+    :param date: 选股日期，默认None为现在
+    :param short: 短期均线
+    :param long: 长期均线
+    :return: 返回选后的股票列表
+    """
+    date = getOrCheckDate(date)
+    data = qa_index_day(code, date, long)
+    ind_data = data.add_func(QA_indicator_MAS)
+    # # 选取最后两日的数据
+    # lastDate, _ = ind_data.index[-1]
+    # date = format(lastDate)
+    # ind_1 = ind_data.xs(date, level=0)
+    # ind_2 = ind_data.xs(qa.QA_util_get_last_day(date, 1), level=0)
+    # # 最后两日都有数据的股票代码
+    # code = list(set(ind_1.index) & set(ind_2.index))
+    return ind_data
+
+
+def qa_index_day(code_list, endDate=None, long=250):
+    endDate = getOrCheckDate(endDate)
+    long_days_ago = qa.QA_util_get_last_day(date=endDate, n=long)
+    data = qa.QA_fetch_index_day_adv(code=code_list, start=long_days_ago, end=endDate)
+    # data = data.to_qfq()  # 指数不需要复权
+    return data
+
+
+def getOrCheckDate(date=None):
+    # 返回最后的交易日
+    now = datetime.datetime.now().strftime('%Y-%m-%d')
+    if date is None:
+        date = now
+    date = qa.QA_util_get_real_date(date)
+    if date == now and datetime.datetime.now().strftime('%H:%M') < '09:30':
+        date = qa.QA_util_get_last_day(date, n=1)
+    return date
+
+
+def QA_indicator_MAS(DataFrame, *args, **kwargs):
+    """ 计算均线、轮动
+
+    Arguments:
+        DataFrame {[type]} -- [description]
+
+    Returns:
+        [type] -- [description]
+    """
+
+    def MA(Series, N):
+        return pd.Series.rolling(Series, N).mean()
+
+    def MAS(Series, days):
+        df = pd.DataFrame()
+        # CLOSE = Series
+        for N in days:
+            df['MA{}'.format(N)] = MA(Series, N) <= Series
+            df['MA{}'.format(N)] = df['MA{}'.format(N)].apply(lambda x: 1 if x else 0)
+            print('ma{}'.format(N))
+            print('Close')
+            print(MA(Series, N)[-10:])
+        print(Series[-10:])
+        df['MAS'] = df.sum(axis=1)
+        return df['MAS']
+
+    days = [5, 13, 21, 34, 55, 89, 144, 233]
+    CLOSE = DataFrame['close']
+    MAS = MAS(CLOSE, days)
+    return pd.DataFrame(MAS)

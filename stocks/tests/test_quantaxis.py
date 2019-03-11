@@ -20,6 +20,8 @@ __author__ = 'pchaos'
 from django.test import TestCase
 import datetime
 import QUANTAXIS as qa
+from QUANTAXIS.QAFetch import QATdx as tdx
+from QUANTAXIS.QAFetch.QATdx import ping
 import numpy as np
 import pandas as pd
 from stocks.models import Listing, STOCK_CATEGORY
@@ -98,6 +100,10 @@ class testQuantaxis(TestCase):
         # print(s.pct_change)
 
         # todo 测试前复权跨越分红周期后是否不同
+
+    def test_codelist(self):
+        codelist = qa.QA_fetch_stock_list_adv().code.tolist()
+        self.assertTrue(len(codelist) > 3000, '股票数量应该大于3000只，实际{}只。'.format(len(codelist)))
 
     def test_loop_QA_fetch_stock_day_adv(self):
         # 导入股票列表
@@ -529,7 +535,7 @@ class testQuantaxis(TestCase):
         code = '000002'
         tdate = '2017-1-1'
         end = datetime.datetime.now().date() - datetime.timedelta(10)
-        end= Listing.getNearestTradedate(end)
+        end = Listing.getNearestTradedate(end)
         data = qa.QA_fetch_stock_day_adv(code, start=tdate, end=end)
         data1 = qa.QAFetch.QATdx.QA_fetch_get_stock_day(code, '2017-01-01', end.strftime("%Y-%m-%d"), frequence='w')
 
@@ -540,6 +546,126 @@ class testQuantaxis(TestCase):
             'data1:{}, data2: {}'.format(data1[['close', 'open', 'high', 'vol', 'amount']],
                                          data2[['close', 'open', 'high', 'vol', 'amount']]))
 
+    def test_QATdx_QA_fetch_get_stock_day_multithread(self):
+        # 多线程获取日线数据
+        # stock_ip 60.191.117.167 future_ip 106.14.95.149 119.147.164.60 119.147.171.206
+        """
+        BAD RESPONSE 115.238.56.198
+BAD RESPONSE 115.238.90.165
+BAD RESPONSE 117.184.140.156
+BAD RESPONSE 119.147.164.60
+BAD RESPONSE 119.147.171.206
+BAD RESPONSE 119.29.51.30
+BAD RESPONSE 121.14.104.70
+BAD RESPONSE 121.14.104.72
+BAD RESPONSE 121.14.110.194
+BAD RESPONSE 121.14.2.7
+BAD RESPONSE 123.125.108.23
+BAD RESPONSE 123.125.108.24
+BAD RESPONSE 124.160.88.183
+BAD RESPONSE 180.153.18.17
+BAD RESPONSE 180.153.18.170
+BAD RESPONSE 180.153.18.171
+BAD RESPONSE 180.153.39.51
+BAD RESPONSE 218.108.47.69
+BAD RESPONSE 218.108.50.178
+BAD RESPONSE 218.108.98.244
+BAD RESPONSE 218.75.126.9
+BAD RESPONSE 218.9.148.108
+BAD RESPONSE 221.194.181.176
+BAD RESPONSE 59.173.18.69
+BAD RESPONSE 60.12.136.250
+BAD RESPONSE 60.191.117.167
+BAD RESPONSE 60.28.29.69
+BAD RESPONSE 61.135.142.73
+BAD RESPONSE 61.135.142.88
+BAD RESPONSE 61.152.107.168
+BAD RESPONSE 61.152.249.56
+BAD RESPONSE 61.153.144.179
+BAD RESPONSE 61.153.209.138
+BAD RESPONSE 61.153.209.139
+BAD RESPONSE hq.cjis.cn
+BAD RESPONSE hq1.daton.com.cn
+BAD RESPONSE jstdx.gtjas.com
+BAD RESPONSE shtdx.gtjas.com
+        :return:
+        """
+
+        import time
+        import multiprocessing
+        # from multiprocessing.dummy import Pool
+        from multiprocessing.dummy import Pool
+        # Get all worker processes
+        cores = multiprocessing.cpu_count()
+
+        # Start all worker processes
+
+        codelist = qa.QA_fetch_stock_list_adv().code.tolist()
+        codeListCount = 300
+        start = '2018-07-01'
+        end = '2019-01-01'
+        ips = getStockIPList(qa.QAUtil.stock_ip_list)
+        param = genParam(codelist[:codeListCount], start, end, IPList=ips[:cores])
+        # for x in param:
+        #     get_stock_day_map(x)
+        # data = map(get_stock_day, param)
+        # data = map(get_stock_day_map, param)
+        a = time.clock()
+        with Pool(processes=cores) as pool:
+            print("    | get_stock_day start.")
+            # data = pool.starmap(get_stock_day, param)
+            for i in range(cores):
+                pLen = int(len(param) / cores) + 1
+                data = pool.starmap_async(get_stock_day, param[int(i * pLen):int((i + 1) * pLen)])
+            # print(data)
+            pool.close()
+            pool.join()
+            print("    | get_stock_day done.")
+        b = time.clock()
+        t1 = b - a
+        print('type of data :{}'.format(type(data)))
+        data.get()
+        # for v in data:
+        #     print(v)
+        # print('get results counts: {}'.format(len(data)))
+        a = time.clock()
+        print("    | get_stock_day start.")
+        for code in codelist[:codeListCount]:
+            get_stock_day(code, start, end, '00', 'day', ips[0]['ip'], ips[0]['port'])
+        print("    | get_stock_day done.")
+        b = time.clock()
+        t2 = b - a
+        print('最快的ip：{} {}'.format(ips[0]['ip'], ips[0]['port']))
+        print('多线程时间：{}，单线程时间：{}'.format(t1, t2))
+
+    def test_QATdx_QA_fetch_get_stock_day_multiProcess(self):
+        import time
+        import multiprocessing
+        # Get all worker processes
+        cores = multiprocessing.cpu_count()
+        codelist = qa.QA_fetch_stock_list_adv().code.tolist()
+        codeListCount = 300
+        start = '2018-07-01'
+        end = '2019-01-01'
+        ips = getStockIPList(qa.QAUtil.stock_ip_list)
+        param = genParam(codelist[:codeListCount], start, end, IPList=ips[:cores])
+        a = time.clock()
+        pl = ParallelSim()
+        pl.add(get_stock_day, param)
+        data = pl.get_results()
+        b = time.clock()
+        t1 = b - a
+        # print('数量：{},多进程时间：{}'.format(len(param), t1))
+        a = time.clock()
+        print("    | get_stock_day start.")
+        for code in codelist[:codeListCount]:
+            get_stock_day(code, start, end, '00', 'day', ips[0]['ip'], ips[0]['port'])
+        print("    | get_stock_day done.")
+        b = time.clock()
+        t2 = b - a
+        print('最快的ip：{} {}'.format(ips[0]['ip'], ips[0]['port']))
+        print('多线程时间：{}，单线程时间：{}'.format(t1, t2))
+
     def test_QAMA(self):
         # 计算MA
         # ind_list = qa.QAFetch.QATdx.QA_fetch_get_stock_list('index')
@@ -547,40 +673,50 @@ class testQuantaxis(TestCase):
         tdate = '2017-1-1'
         end = datetime.datetime.now().date() - datetime.timedelta(10)
         data = qa.QA_fetch_index_day_adv(code, start=tdate, end=end)
-        self.assertTrue(len(data.index)> 100, '返回数据太少： {}'.format(len(data.index)))
+        self.assertTrue(len(data.index) > 100, '返回数据太少： {}'.format(len(data.index)))
 
     def test_QAMAS(self):
         # 计算MAS
         # ind_list = qa.QAFetch.QATdx.QA_fetch_get_stock_list('index')
         code = ['000001', '399001', '399006']
         tdate = '2017-1-1'
-        end = datetime.datetime.now().date() - datetime.timedelta(10)
-        data = qa.QA_fetch_index_day_adv(code, start=tdate, end=end)
-        self.assertTrue(len(data.index)> 100, '返回数据太少： {}'.format(len(data.index)))
+        # end = datetime.datetime.now().date() - datetime.timedelta(10)
+        # data = qa.QA_fetch_index_day_adv(code, start=tdate, end=end)
+        # self.assertTrue(len(data.index)> 100, '返回数据太少： {}'.format(len(data.index)))
+        #
+        # mas = mas_select(code)
+        # self.assertTrue(len(mas.index) > 100, '返回数据太少： {}'.format(len(data.index)))
+        # print(mas)
+        # # 验证code为多个指数时，返回值是否和code为单个指数返回结果相同
+        # for c in code:
+        #     masc =mas_select(c)
+        #     print('{}\n{}'.format(c, masc))
+        #     # print(mas.loc[code[0]])
+        #     # todo 绘制图片
 
-        mas = mas_select(code)
-        self.assertTrue(len(mas.index) > 100, '返回数据太少： {}'.format(len(data.index)))
+        end = '2019-02-01'
+        # data = qa.QA_fetch_index_day_adv(code, start=tdate, end=end)
+        mas = mas_select(code, endDate=end)
         print(mas)
         # 验证code为多个指数时，返回值是否和code为单个指数返回结果相同
         for c in code:
-            masc =mas_select(c)
+            masc = mas_select(c, endDate=end)
             print('{}\n{}'.format(c, masc))
             # print(mas.loc[code[0]])
             # todo 绘制图片
 
 
-
 # 定义均线强度，八条均线，
-def mas_select(code, date=None, short=10, long=250):
+def mas_select(code, endDate=None, short=10, long=250):
     """
     :param code_list: 选股范围，默认全市场
-    :param date: 选股日期，默认None为现在
+    :param endDate: 选股日期，默认None为现在
     :param short: 短期均线
     :param long: 长期均线
     :return: 返回选后的股票列表
     """
-    date = getOrCheckDate(date)
-    data = qa_index_day(code, date, long)
+    endDate = getOrCheckDate(endDate)
+    data = qa_index_day(code, endDate, long)
     ind_data = data.add_func(QA_indicator_MAS)
     # # 选取最后两日的数据
     # lastDate, _ = ind_data.index[-1]
@@ -641,3 +777,93 @@ def QA_indicator_MAS(DataFrame, *args, **kwargs):
     CLOSE = DataFrame['close']
     MAS = MAS(CLOSE, days)
     return pd.DataFrame(MAS)
+
+
+from multiprocessing import Pool, cpu_count
+
+
+class ParallelSim(object):
+    """ 多进程map类
+
+    """
+
+    def __init__(self, processes=cpu_count()):
+        self.pool = Pool(processes=processes)
+        self.total_processes = 0
+        self.completed_processes = 0
+        self.results = []
+        self.data = None
+        self.cores = processes  # cpu核心数量
+
+    def add(self, func, iter):
+        if isinstance(iter, list) and self.cores > 1:
+            for i in range(self.cores):
+                pLen = int(len(iter) / self.cores) + 1
+                self.data = self.pool.starmap_async(func, iter[int(i * pLen):int((i + 1) * pLen)],
+                                                    callback=self.complete)
+                self.total_processes += 1
+        else:
+            self.data = self.pool.starmap_async(func=func, iterable=iter, callback=self.complete)
+            self.total_processes += 1
+        self.data.get()
+
+    def complete(self, result):
+        self.results.extend(result)
+        self.completed_processes += 1
+        print('Progress: {:.2f}%'.format((self.completed_processes / self.total_processes) * 100))
+
+    def run(self):
+        self.pool.close()
+        self.pool.join()
+
+    def get_results(self):
+        return self.results
+
+
+def get_stock_day(code, start_date, end_date, if_fq='00', frequence='day', ip=None, port=None):
+    # print(code, ip, port)
+    return tdx.QA_fetch_get_stock_day(code, start_date, end_date, if_fq, frequence, ip, port)
+
+
+def get_stock_day_map(x):
+    return tdx.QA_fetch_get_stock_day(x[0], x[1], x[2], x[3], x[4], x[5], x[6])
+
+
+def getStockIPList(ip_list=[], n=0):
+    ''' 根据ping排序返回可用的ip列表
+
+    :param n: 最多返回的ip数量， 当可用ip数量小于n，返回所有可用的ip
+    :return:
+    '''
+    import pickle
+    import os
+    filename = '/tmp/stockiplist.pickle'
+    if os.path.isfile(filename):
+        with open(filename, 'rb') as filehandle:
+            # read the data as binary data stream
+            results = pickle.load(filehandle)
+            print('loading stock ip list.')
+    else:
+        data_stock = [(ping(x['ip'], x['port'], 'stock'), x) for x in ip_list]
+        results = []
+        for data, x in data_stock:
+            # 删除ping不通的数据
+            if data < datetime.timedelta(0, 9, 0):
+                results.append((data, x))
+        # 按照ping值从小大大排序
+        results = [x[1] for x in sorted(results, key=lambda x: x[0])]
+        with open(filename, 'wb') as filehandle:
+            # store the data as binary data stream
+            pickle.dump(results, filehandle)
+            print('saving stock ip list.')
+    if n == 0:
+        return results
+    else:
+        return results[:n]
+
+
+def genParam(codelist, start_date, end_date, if_fq='00', frequence='day', IPList=[]):
+    count = len(IPList)
+    my_iterator = iter(range(len(codelist)))
+    return [(code, start_date, end_date, if_fq, frequence, IPList[i % count]['ip'], IPList[i % count]['port'])
+            for code, i in [(code, next(my_iterator) % count) for code in codelist]]

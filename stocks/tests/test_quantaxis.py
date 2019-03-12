@@ -652,19 +652,65 @@ BAD RESPONSE shtdx.gtjas.com
         a = time.clock()
         pl = ParallelSim()
         pl.add(get_stock_day, param)
+        pl.run()
         data = pl.get_results()
         b = time.clock()
         t1 = b - a
+        data = list(data)
+        print(len(data))
         # print('数量：{},多进程时间：{}'.format(len(param), t1))
         a = time.clock()
         print("    | get_stock_day start.")
-        for code in codelist[:codeListCount]:
-            get_stock_day(code, start, end, '00', 'day', ips[0]['ip'], ips[0]['port'])
+        # for code in codelist[:codeListCount]:
+        #     get_stock_day(code, start, end, '00', 'day', ips[0]['ip'], ips[0]['port'])
         print("    | get_stock_day done.")
         b = time.clock()
         t2 = b - a
         print('最快的ip：{} {}'.format(ips[0]['ip'], ips[0]['port']))
+
+    def test_QATdx_QA_fetch_get_stock_day_ping(self):
+        import time
+        import multiprocessing
+        # Get all worker processes
+        cores = multiprocessing.cpu_count()
+        codeListCount = 300
+        start = '2018-07-01'
+        end = '2019-01-01'
+        ips = [(x['ip'], x['port']) for x in qa.QAUtil.stock_ip_list]
+        a = time.clock()
+        pl = ParallelSim()
+        pl.add(ping, ips)
+        pl.run()
+        data = pl.get_results()
+        b = time.clock()
+        t1 = b - a
+        data = list(data)
+        print(len(data))
+        print(data)
+        a = time.clock()
+        ips = getStockIPList(qa.QAUtil.stock_ip_list)
+        b = time.clock()
+        t2 = b - a
+        print(ips)
         print('多线程时间：{}，单线程时间：{}'.format(t1, t2))
+
+    def test_getStockIPListByMultiProcess(self):
+        # 多进程ping
+        import time
+        a = time.time()
+        ips = getStockIPListByMultiProcess(qa.QAUtil.stock_ip_list)
+        self.assertTrue(len(ips) > 1, '未获取到ip列表。')
+        print(ips)
+        b = time.time()
+        t1 = b - a
+        a = time.time()
+        ips2 = getStockIPList(qa.QAUtil.stock_ip_list)
+        self.assertTrue(len(ips) > 1, '未获取到ip列表。')
+        print(ips2)
+        b = time.time()
+        t2 = b - a
+        print('多线程时间：{}，单线程时间：{}'.format(t1, t2))
+        self.assertTrue(abs(len(ips) == len(ips2)) < 5, '能ping通的ip数量不同：{} {}'.format(len(ips), len(ips2)))
 
     def test_QAMA(self):
         # 计算MA
@@ -784,7 +830,9 @@ from multiprocessing import Pool, cpu_count
 
 class ParallelSim(object):
     """ 多进程map类
-
+        pl = ParallelSim()
+        pl.add(yourFunc, yourIter)
+        pl.get_results()
     """
 
     def __init__(self, processes=cpu_count()):
@@ -850,6 +898,52 @@ def getStockIPList(ip_list=[], n=0):
             # 删除ping不通的数据
             if data < datetime.timedelta(0, 9, 0):
                 results.append((data, x))
+        # 按照ping值从小大大排序
+        results = [x[1] for x in sorted(results, key=lambda x: x[0])]
+        with open(filename, 'wb') as filehandle:
+            # store the data as binary data stream
+            pickle.dump(results, filehandle)
+            print('saving stock ip list.')
+    if n == 0:
+        return results
+    else:
+        return results[:n]
+
+
+def getStockIPListByMultiProcess(ip_list=[], n=0):
+    ''' 根据ping排序返回可用的ip列表
+
+    :param n: 最多返回的ip数量， 当可用ip数量小于n，返回所有可用的ip
+    :return:
+    '''
+
+    def myPing(ip, port, type_):
+        return ping(ip, port.type_), {'ip': ip, 'port': port}
+
+    import pickle
+    import os
+    filename = '/tmp/stockipListMP.pickle'
+    if os.path.isfile(filename):
+        with open(filename, 'rb') as filehandle:
+            # read the data as binary data stream
+            results = pickle.load(filehandle)
+            print('loading stock ip list.')
+    else:
+        ips = [(x['ip'], x['port']) for x in ip_list]
+        pl = ParallelSim()
+        pl.add(ping, ips)
+        pl.run()
+        data = pl.get_results()
+        data_stock = list(data)
+        results = []
+        for i in range(len(data_stock)):
+            # 删除ping不通的数据
+            if data_stock[i] < datetime.timedelta(0, 9, 0):
+                results.append((data_stock[i], ip_list[i]))
+        # for data, x in data_stock:
+        #     # 删除ping不通的数据
+        #     if data < datetime.timedelta(0, 9, 0):
+        #         results.append((data, x))
         # 按照ping值从小大大排序
         results = [x[1] for x in sorted(results, key=lambda x: x[0])]
         with open(filename, 'wb') as filehandle:

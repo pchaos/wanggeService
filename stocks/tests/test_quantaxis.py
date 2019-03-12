@@ -711,6 +711,9 @@ BAD RESPONSE shtdx.gtjas.com
         t2 = b - a
         print('多线程时间：{}，单线程时间：{}'.format(t1, t2))
         self.assertTrue(abs(len(ips) == len(ips2)) < 5, '能ping通的ip数量不同：{} {}'.format(len(ips), len(ips2)))
+        diff=[x for x in ips if x not in ips2]
+        diff2=[x for x in ips2 if x not in ips]
+        print('多进程ip不在单线程ip中：{}\n反之：{}'.format(diff, diff2))
 
     def test_QAMA(self):
         # 计算MA
